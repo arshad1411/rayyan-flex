@@ -19,6 +19,7 @@ import {
   DEBTLIST,
   QUOTATIONENTRY,
   QUOTATIONLIST,
+  PRICELIST,
 } from "./paths";
 
 import Login from "../pages/Login/page";
@@ -43,6 +44,7 @@ import DebtList from "../pages/DebtList/page";
 import AdminList from "../pages/AdminList/page";
 import QuotationEntry from "../pages/QuotationEntry/page";
 import QuotationList from "../pages/QuotationList/page";
+import PriceList from "../pages/PriceList/page";
 
 export const routes = [
   { path: LOGIN, element: <Login /> },
@@ -95,5 +97,9 @@ export const routes = [
   {
     path: QUOTATIONLIST,
     element: <QuotationList />,
+  },
+  {
+    path: PRICELIST,
+    element: <PriceList />,
   },
 ];

@@ -19,6 +19,7 @@ import DeliveryIcon from "../icons/DeliveryIcon";
 import MoneyExpenseIcon from "../icons/MoneyExpenseIcon";
 import ApproveListIcon from "../icons/ApproveIcon";
 import { LocalExpenseIcon } from "../icons";
+import PriceListIcon from "../icons/PriceListIcon";
 import {
   ADMINLIST,
   LOCALENTRY,
@@ -38,6 +39,7 @@ import {
   QUOTATIONENTRY,
   QUOTATIONLIST,
   DASHBOARD,
+  PRICELIST,
 } from "../../router/paths";
 
 const Sidebar = () => {
@@ -402,6 +404,13 @@ const Sidebar = () => {
             </Link>
           </div>
         )}
+        <div
+          className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+            isActive(PRICELIST) ? " bg-[#9E77D2]" : ""
+          }`}
+        >
+          <PriceListIcon /> {!hamburger && "PriceList"}
+        </div>
       </div>
     </div>
   );

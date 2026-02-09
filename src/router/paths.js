@@ -19,6 +19,7 @@ const ADMINENTRY = "/adminentry";
 const DEBTLIST = "/debtlist";
 const QUOTATIONENTRY = "/quotationentry";
 const QUOTATIONLIST = "/quotationlist";
+const PRICELIST = "/pricelist";
 
 export {
   LOGIN,
@@ -41,4 +42,5 @@ export {
   DEBTLIST,
   QUOTATIONENTRY,
   QUOTATIONLIST,
+  PRICELIST,
 };

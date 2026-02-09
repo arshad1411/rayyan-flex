@@ -118,7 +118,7 @@ const AdminEntry = () => {
             />
           </div>
           <div>
-            <InputField
+            <Input
               name={"admin_amount"}
               placeholder={"Amount"}
               value={expenceAmount}
