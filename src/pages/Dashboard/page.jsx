@@ -141,7 +141,7 @@ const Dashboard = () => {
           ]}
         />
         <DashboardCard
-          title={"Local Gapy Expenses"}
+          title={"Local Gpay Expenses"}
           titleColor={"text-red-800"}
           totalAmount={total.localExpenseGpayTotal}
           amountdetails={[
@@ -493,7 +493,7 @@ const Dashboard = () => {
               value: admin.totalAsmathgetincash,
             },
             {
-              name: "Get in Gapy",
+              name: "Get in Gpay",
               value: admin.totalAsmathgetingpay,
             },
             {
@@ -505,7 +505,7 @@ const Dashboard = () => {
               value: admin.totalAsmathgiveincash,
             },
             {
-              name: "Give in Gapy",
+              name: "Give in Gpay",
               value: admin.totalAsmathgiveingpay,
             },
             {
@@ -525,7 +525,7 @@ const Dashboard = () => {
               value: admin.totalIbugetincash,
             },
             {
-              name: "Get in Gapy",
+              name: "Get in Gpay",
               value: admin.totalIbugetingpay,
             },
             {
@@ -537,7 +537,7 @@ const Dashboard = () => {
               value: admin.totalIbugiveincash,
             },
             {
-              name: "Give in Gapy",
+              name: "Give in Gpay",
               value: admin.totalIbugiveingpay,
             },
             {

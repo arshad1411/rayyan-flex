@@ -173,7 +173,7 @@ const Sidebar = () => {
             </Link>
             <Link
               to={LOCALLIST}
-              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
                 hamburger && "justify-center"
               }${isActive(LOCALLIST) ? " bg-[#9E77D2]" : ""}`}
             >
@@ -183,7 +183,7 @@ const Sidebar = () => {
             {
               <Link
                 to={LOCALPAIDLIST}
-                className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+                className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
                   hamburger && "justify-center"
                 }${isActive(LOCALPAIDLIST) ? " bg-[#9E77D2]" : ""}`}
               >
@@ -193,7 +193,7 @@ const Sidebar = () => {
             }
             <Link
               to={LOCALPENDINGLIST}
-              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
                 hamburger && "justify-center"
               }${isActive(LOCALPENDINGLIST) ? " bg-[#9E77D2]" : ""}`}
             >
@@ -202,7 +202,7 @@ const Sidebar = () => {
             </Link>
             <Link
               to={LOCALPARTYLIST}
-              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
                 hamburger && "justify-center"
               }${isActive(LOCALPARTYLIST) ? " bg-[#9E77D2]" : ""}`}
             >
