@@ -18,10 +18,13 @@ export { default as OutstandingIcon } from "./OutstandingIcon";
 export { default as AccountIcon } from "./AccountIcon";
 export { default as CashIcon } from "./CashIcon";
 export { default as GpayIcon } from "./GpayIcon";
+export { default as SaveIcon } from "./SaveIcon";
+export { default as EntryIcon } from "./EntryIcon";
+export { default as ApproveListIcon } from "./ApproveListIcon";
+export { default as DashboardIcon } from "./DashboardIcon";
+export { default as MoneyExpenseIcon } from "./MoneyExpenseIcon";
 
 export { default as PriceListIcon } from "./PriceListIcon";
 
 export { default as ApproveIcon } from "./ApproveIcon";
 export { default as ClearIcon } from "./ClearIcon";
-
-export { default as MoenyExpenseIcon } from "./MoenyExpenseIcon";

@@ -1,4 +1,4 @@
-const MoenyExpenseIcon = ({
+const MoneyExpenseIcon = ({
   width = 24,
   height = 24,
   color = "#292D32",
@@ -52,4 +52,4 @@ const MoenyExpenseIcon = ({
   );
 };
 
-export default MoenyExpenseIcon;
+export default MoneyExpenseIcon;

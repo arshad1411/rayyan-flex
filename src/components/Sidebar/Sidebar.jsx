@@ -1,17 +1,42 @@
 import { useEffect, useState } from "react";
 
 import { Link, useLocation } from "react-router-dom";
-import Logo from "../../assets/logo2.jpg";
+import Logo from "../../assets/rayyanflexlogo.png";
 import HamburgerIcon from "../icons/HamburgerIcon";
 import DashboardIcon from "../icons/DashboardIcon";
 import LocalSalesIcon from "../icons/LocalSalesIcon";
 import ArrowDownIcon from "../icons/ArrowDownIcon";
 import QuotationIcon from "../icons/QuotationIcon";
-import {
-  // ADMINENTRY,
+import ListIcon from "../icons/ListIcon";
+import PendingIcon from "../icons/PendingIcon";
+import PartyIcon from "../icons/PartyIcon";
+import EntryIcon from "../icons/EntryIcon";
 
-  // CHARTOVERIEW,
-  // CHARTPARTICULAR,
+import GstSalesIcon from "../icons/GstSalesIcon";
+import GstExpenseIcon from "../icons/GstExpenseIcon";
+import AdminIcon from "../icons/AdminIcon";
+import DeliveryIcon from "../icons/DeliveryIcon";
+import MoneyExpenseIcon from "../icons/MoneyExpenseIcon";
+import ApproveListIcon from "../icons/ApproveIcon";
+import { LocalExpenseIcon } from "../icons";
+import {
+  ADMINLIST,
+  LOCALENTRY,
+  LOCALPAIDLIST,
+  LOCALPENDINGLIST,
+  LOCALLIST,
+  LOCALPARTYLIST,
+  LOCALEXPENSEENTRY,
+  LOCALEXPENSELIST,
+  LOCALEXPENSEAPPROVE,
+  GSTENTRY,
+  GSTDELIVERYSLIP,
+  GSTEXPENSELIST,
+  GSTSALESLIST,
+  GSTEXPENSEENTRY,
+  DEBTLIST,
+  QUOTATIONENTRY,
+  QUOTATIONLIST,
   DASHBOARD,
 } from "../../router/paths";
 
@@ -86,11 +111,18 @@ const Sidebar = () => {
   return (
     <div
       className={`h-[98vh]  p-5 bg-[#24252B] m-2 rounded-xl relative ${
-        hamburger ? "w-[120px]" : "w-[250px]"
+        hamburger ? "w-30" : "w-62.5"
       }`}
     >
       <div className="flex justify-between items-center">
-        <img src={Logo} width={120} height={50} alt="rayyanflex" />
+        <img
+          src={Logo}
+          width={120}
+          height={50}
+          alt="rayyanflex"
+          background
+          color="#24252B"
+        />
 
         <div className="cursor-pointer" onClick={toggleHamburger}>
           <HamburgerIcon />
@@ -102,52 +134,12 @@ const Sidebar = () => {
         <>
           <Link
             to={DASHBOARD}
-            className={`flex items-center gap-4 px-3 py-2 text-white text-lg hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+            className={`flex items-center gap-4 px-3 py-2 font-semibold text-white text-[20px] hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
               hamburger ? "justify-center" : ""
             } ${isActive(DASHBOARD) ? " bg-[#9E77D2]" : ""}`}
           >
             <DashboardIcon /> {!hamburger && "Dashboard"}
           </Link>
-
-          {/* <div
-              className="flex items-center px-3 py-2 justify-between cursor-pointer"
-              onClick={() => toggleSubmenu("chart")}
-            >
-              <div className="flex items-center">
-                <ChartIcon />{" "}
-                {!hamburger && (
-                  <p className="ml-4 text-white text-lg ">Chart</p>
-                )}
-              </div>
-              <ArrowDownIcon
-                className={`${openSubmenu.chart ? "rotate-180" : ""}`}
-              />
-            </div>
-
-            {openSubmenu.chart && (
-              <div
-                className={`flex flex-col gap-1 ${hamburger ? "ml-0" : "ml-4"}`}
-              >
-                <Link
-                  to={CHARTOVERIEW}
-                  className={`flex items-center gap-4 px-3 py-2 text-white text-lg hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-                    hamburger && "justify-center"
-                  }${isActive(CHARTOVERIEW) ? " bg-[#9E77D2]" : ""}`}
-                >
-                  <ChartOverviewIcon />
-                  {!hamburger && <span>Overview</span>}
-                </Link>
-                <Link
-                  to={CHARTPARTICULAR}
-                  className={`flex items-center gap-4 px-3 py-2 text-white text-lg hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-                    hamburger && "justify-center"
-                  }${isActive(CHARTPARTICULAR) ? " bg-[#9E77D2]" : ""}`}
-                >
-                  <ChartParticular />
-                  {!hamburger && <span>Particular</span>}
-                </Link>
-              </div>
-            )} */}
         </>
         )
         <div
@@ -157,49 +149,259 @@ const Sidebar = () => {
           <div className="flex items-center">
             <LocalSalesIcon />{" "}
             {!hamburger && (
-              <p className="ml-4 text-white text-lg ">Local Sales</p>
+              <p className="ml-4 text-white text-[20px] font-semibold ">
+                Local Sales
+              </p>
             )}
           </div>
           <ArrowDownIcon
             className={`${openSubmenu.local ? "rotate-180" : ""}`}
           />
         </div>
-        {/* {openSubmenu.admin && (
+        {openSubmenu.local && (
           <div className={`flex flex-col gap-1 ${hamburger ? "ml-0" : "ml-4"}`}>
             <Link
-              to={ADMINENTRY}
-              className={`flex items-center gap-4 px-3 py-2 text-white text-lg hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+              to={LOCALENTRY}
+              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
                 hamburger && "justify-center"
-              }${isActive(ADMINENTRY) ? " bg-[#9E77D2]" : ""}`}
+              }${isActive(LOCALENTRY) ? " bg-[#9E77D2]" : ""}`}
             >
-              <EnteryIcon />
+              <EntryIcon />
               {!hamburger && <span>Entry</span>}
             </Link>
             <Link
-              to={ADMINLIST}
-              className={`flex items-center gap-4 px-3 py-2 text-white text-lg hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+              to={LOCALLIST}
+              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
                 hamburger && "justify-center"
-              }${isActive(ADMINLIST) ? " bg-[#9E77D2]" : ""}`}
+              }${isActive(LOCALLIST) ? " bg-[#9E77D2]" : ""}`}
+            >
+              <ListIcon />
+              {!hamburger && <span>List</span>}
+            </Link>
+            {
+              <Link
+                to={LOCALPAIDLIST}
+                className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+                  hamburger && "justify-center"
+                }${isActive(LOCALPAIDLIST) ? " bg-[#9E77D2]" : ""}`}
+              >
+                <ApproveListIcon />
+                {!hamburger && <span>Approved List</span>}
+              </Link>
+            }
+            <Link
+              to={LOCALPENDINGLIST}
+              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+                hamburger && "justify-center"
+              }${isActive(LOCALPENDINGLIST) ? " bg-[#9E77D2]" : ""}`}
+            >
+              <PendingIcon />
+              {!hamburger && <span>Pending List</span>}
+            </Link>
+            <Link
+              to={LOCALPARTYLIST}
+              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+                hamburger && "justify-center"
+              }${isActive(LOCALPARTYLIST) ? " bg-[#9E77D2]" : ""}`}
+            >
+              <PartyIcon />
+              {!hamburger && <span>Party List</span>}
+            </Link>
+          </div>
+        )}
+        <div
+          className="flex items-center px-3 py-2 justify-between cursor-pointer"
+          onClick={() => toggleSubmenu("localExpense")}
+        >
+          <div className="flex items-center">
+            <LocalExpenseIcon />{" "}
+            {!hamburger && (
+              <p className="ml-4 text-[20px] font-semibold text-white text-lg ">
+                Local Expense
+              </p>
+            )}
+          </div>
+          <ArrowDownIcon
+            className={`${openSubmenu.localExpense ? "rotate-180" : ""}`}
+          />
+        </div>
+        {openSubmenu.localExpense && (
+          <div className={`flex flex-col gap-1 ${hamburger ? "ml-0" : "ml-4"}`}>
+            <Link
+              to={LOCALEXPENSEENTRY}
+              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+                hamburger && "justify-center"
+              }${isActive(LOCALEXPENSEENTRY) ? " bg-[#9E77D2]" : ""}`}
+            >
+              <EntryIcon />
+              {!hamburger && <span>Entry</span>}
+            </Link>
+            <Link
+              to={LOCALEXPENSELIST}
+              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+                hamburger && "justify-center"
+              }${isActive(LOCALEXPENSELIST) ? " bg-[#9E77D2]" : ""}`}
+            >
+              <ListIcon />
+              {!hamburger && <span>List</span>}
+            </Link>
+            {
+              <Link
+                to={LOCALEXPENSEAPPROVE}
+                className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+                  hamburger && "justify-center"
+                }${isActive(LOCALEXPENSEAPPROVE) ? " bg-[#9E77D2]" : ""}`}
+              >
+                <ApproveListIcon />
+                {!hamburger && <span>Approved List</span>}
+              </Link>
+            }
+          </div>
+        )}
+        <div
+          className="flex items-center px-3 py-2 text-[20px] font-semibold  justify-between cursor-pointer"
+          onClick={() => toggleSubmenu("gstsales")}
+        >
+          <div className="flex items-center">
+            <GstSalesIcon />{" "}
+            {!hamburger && (
+              <p className="ml-4 text-[20px] font-semibold  text-white ">
+                Gst Sales
+              </p>
+            )}
+          </div>
+          <ArrowDownIcon
+            className={`${openSubmenu.gstsales ? "rotate-180" : ""}`}
+          />
+        </div>
+        {openSubmenu.gstsales && (
+          <div className={`flex flex-col gap-1 ${hamburger ? "ml-0" : "ml-4"}`}>
+            <Link
+              to={GSTENTRY}
+              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold  hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+                hamburger && "justify-center"
+              }${isActive(GSTENTRY) ? " bg-[#9E77D2]" : ""}`}
+            >
+              <EntryIcon />
+              {!hamburger && <span>Entry</span>}
+            </Link>
+            <Link
+              to={GSTSALESLIST}
+              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold  hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+                hamburger && "justify-center"
+              }${isActive(GSTSALESLIST) ? " bg-[#9E77D2]" : ""}`}
+            >
+              <ListIcon />
+              {!hamburger && <span>List</span>}
+            </Link>
+            <Link
+              to={GSTDELIVERYSLIP}
+              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold  hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+                hamburger && "justify-center"
+              }${isActive(GSTDELIVERYSLIP) ? " bg-[#9E77D2]" : ""}`}
+            >
+              <DeliveryIcon />
+              {!hamburger && <span>Delivery Slip</span>}
+            </Link>
+          </div>
+        )}
+        <div
+          className="flex items-center px-3 py-2 justify-between cursor-pointer"
+          onClick={() => toggleSubmenu("gstExpense")}
+        >
+          <div className="flex items-center">
+            <GstExpenseIcon />{" "}
+            {!hamburger && (
+              <p className="ml-4 text-white text-[20px] font-semibold  ">
+                Gst Expense
+              </p>
+            )}
+          </div>
+          <ArrowDownIcon
+            className={`${openSubmenu.gstExpense ? "rotate-180" : ""}`}
+          />
+        </div>
+        {openSubmenu.gstExpense && (
+          <div className={`flex flex-col gap-1 ${hamburger ? "ml-0" : "ml-4"}`}>
+            <Link
+              to={GSTEXPENSEENTRY}
+              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold  hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+                hamburger && "justify-center"
+              }${isActive(GSTEXPENSEENTRY) ? " bg-[#9E77D2]" : ""}`}
+            >
+              <EntryIcon />
+              {!hamburger && <span>Entry</span>}
+            </Link>
+            <Link
+              to={GSTEXPENSELIST}
+              className={`flex items-center gap-4 px-3 py-2 text-white  text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+                hamburger && "justify-center"
+              }${isActive(GSTEXPENSELIST) ? " bg-[#9E77D2]" : ""}`}
             >
               <ListIcon />
               {!hamburger && <span>List</span>}
             </Link>
           </div>
-        )} */}
+        )}
+        {
+          <>
+            <Link
+              to={ADMINLIST}
+              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+                isActive(ADMINLIST) ? " bg-[#9E77D2]" : ""
+              }`}
+            >
+              <AdminIcon /> {!hamburger && "Admin"}
+            </Link>
+
+            <Link
+              to={DEBTLIST}
+              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+                isActive(DEBTLIST) ? " bg-[#9E77D2]" : ""
+              }`}
+            >
+              <MoneyExpenseIcon color="#fff" /> {!hamburger && "Debt"}
+            </Link>
+          </>
+        }
         <div
-          className="flex items-center px-3 py-2 justify-between cursor-pointer"
+          className="flex items-center px-3 py-2 justify-between  text-[20px]font-semibold  cursor-pointer"
           onClick={() => toggleSubmenu("quotation")}
         >
           <div className="flex items-center">
             <QuotationIcon />{" "}
             {!hamburger && (
-              <p className="ml-4 text-white text-lg ">Quotation</p>
+              <p className="ml-4 text-white text-[20px] font-semibold">
+                Quotation
+              </p>
             )}
           </div>
           <ArrowDownIcon
             className={`${openSubmenu.quotation ? "rotate-180" : ""}`}
           />
         </div>
+        {openSubmenu.quotation && (
+          <div className={`flex flex-col gap-1 ${hamburger ? "ml-0" : "ml-4"}`}>
+            <Link
+              to={QUOTATIONENTRY}
+              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+                hamburger && "justify-center"
+              }${isActive(QUOTATIONENTRY) ? " bg-[#9E77D2]" : ""}`}
+            >
+              <EntryIcon />
+              {!hamburger && <span>Entry</span>}
+            </Link>
+            <Link
+              to={QUOTATIONLIST}
+              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
+                hamburger && "justify-center"
+              }${isActive(QUOTATIONLIST) ? " bg-[#9E77D2]" : ""}`}
+            >
+              <ListIcon />
+              {!hamburger && <span>List</span>}
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
