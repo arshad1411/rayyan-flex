@@ -1,153 +1,51 @@
-import AdminList from "../pages/AdminList";
-import Dashboard from "../pages/Dashboard";
-import DebtList from "../pages/DebtList";
-import GstDeliverySlip from "../pages/GstDeliverySlip";
-import GstEntry from "../pages/GstEntry/page";
-import GstExpenseEntry from "../pages/GstExpenseEntry";
-import GstExpenseList from "../pages/GstExpenseList";
-import GstSalesList from "../pages/GstSalesList";
-import LocalExpenseApprove from "../pages/LoacalExpenseApprove/page";
-import LocalEntry from "../pages/LocalEntry";
-import LocalExpenseEntry from "../pages/LocalExpenseEntry";
-import LocalExpenseList from "../pages/LocalExpenseList";
-import LocalList from "../pages/LocalList";
-import LocalPaidList from "../pages/LocalPaidList";
-import LocalPartyList from "../pages/LocalPartyList";
-import LocalPendingList from "../pages/LocalPendingList";
-import Login from "../pages/Login";
+import { appConfig } from "../config/appConfig";
+import LoginPage from "../pages/Login";
 import NotFound from "../pages/NotFound";
-import OutstandingAccount from "../pages/OutstandingAccount";
-import OutstandingCash from "../pages/OutstandingCash";
-import OutstandingGpay from "../pages/OutstandingGpay";
-import PriceList from "../pages/PriceList";
-import QuotationEntry from "../pages/QuotationEntry";
-import QuotationList from "../pages/QuotationList";
-import {
-  ADMINLIST,
-  DASHBOARD,
-  DEBTLIST,
-  GSTDELIVERYSLIP,
-  GSTENTRY,
-  GSTEXPENSEENTRY,
-  GSTEXPENSELIST,
-  GSTSALESLIST,
-  LOCALENTRY,
-  LOCALEXPENSEAPPROVE,
-  LOCALEXPENSEENTRY,
-  LOCALEXPENSELIST,
-  LOCALLIST,
-  LOCALPAIDLIST,
-  LOCALPARTYLIST,
-  LOCALPENDINGLIST,
-  LOGIN,
-  OUTSTANDINGACCOUNT,
-  OUTSTANDINGCASH,
-  OUTSTANDINGGPAY,
-  PRICELIST,
-  QUOTATIONENTRY,
-  QUOTATIONLIST,
-} from "./paths";
+import { elementMap } from "./elementMap";
+import { LOGIN } from "./paths";
 
-const routes = [
-  {
+const buildRoutes = () => {
+  const routes = [];
+  routes.push({
     path: LOGIN,
-    element: <Login />,
-  },
-  {
-    path: DASHBOARD,
-    element: <Dashboard />,
-  },
+    element: <LoginPage />,
+  });
 
-  {
-    path: LOCALENTRY,
-    element: <LocalEntry />,
-  },
-  {
-    path: LOCALLIST,
-    element: <LocalList />,
-  },
-  {
-    path: LOCALPAIDLIST,
-    element: <LocalPaidList />,
-  },
-  {
-    path: LOCALPENDINGLIST,
-    element: <LocalPendingList />,
-  },
-  {
-    path: LOCALPARTYLIST,
-    element: <LocalPartyList />,
-  },
-  {
-    path: LOCALEXPENSEENTRY,
-    element: <LocalExpenseEntry />,
-  },
-  {
-    path: LOCALEXPENSELIST,
-    element: <LocalExpenseList />,
-  },
-  {
-    path: LOCALEXPENSEAPPROVE,
-    element: <LocalExpenseApprove />,
-  },
-  {
-    path: GSTENTRY,
-    element: <GstEntry />,
-  },
-  {
-    path: GSTSALESLIST,
-    element: <GstSalesList />,
-  },
-  {
-    path: GSTDELIVERYSLIP,
-    element: <GstDeliverySlip />,
-  },
-  {
-    path: GSTEXPENSEENTRY,
-    element: <GstExpenseEntry />,
-  },
-  {
-    path: GSTEXPENSELIST,
-    element: <GstExpenseList />,
-  },
+  appConfig.forEach((item) => {
+    // 🔹 Normal link
+    if (item.type === "link") {
+      const Component = elementMap[item.elementKey];
 
-  {
-    path: ADMINLIST,
-    element: <AdminList />,
-  },
+      if (Component) {
+        routes.push({
+          path: item.path,
+          element: <Component />,
+        });
+      }
+    }
 
-  {
-    path: DEBTLIST,
-    element: <DebtList />,
-  },
-  {
-    path: QUOTATIONENTRY,
-    element: <QuotationEntry />,
-  },
-  {
-    path: QUOTATIONLIST,
-    element: <QuotationList />,
-  },
-  {
-    path: OUTSTANDINGACCOUNT,
-    element: <OutstandingAccount />,
-  },
-  {
-    path: OUTSTANDINGCASH,
-    element: <OutstandingCash />,
-  },
-  {
-    path: OUTSTANDINGGPAY,
-    element: <OutstandingGpay />,
-  },
-  {
-    path: PRICELIST,
-    element: <PriceList />,
-  },
-  {
+    // 🔹 Submenu children
+    if (item.type === "submenu") {
+      item.children.forEach((child) => {
+        const Component = elementMap[child.elementKey];
+
+        if (Component) {
+          routes.push({
+            path: child.path,
+            element: <Component />,
+          });
+        }
+      });
+    }
+  });
+
+  // 🔹 Not Found
+  routes.push({
     path: "*",
     element: <NotFound />,
-  },
-];
+  });
 
-export { routes };
+  return routes;
+};
+
+export const routes = buildRoutes();

@@ -8,7 +8,7 @@ const LOCALPARTYLIST = "/localpartylist";
 const LOCALEXPENSEENTRY = "/localexpenseentry";
 const LOCALEXPENSELIST = "/localexpenselist";
 const LOCALEXPENSEAPPROVE = "/localexpenseapprove";
-const GSTENTRY = "/gstsalesentry";
+const GSTSALESENTRY = "/gstsalesentry";
 const GSTSALESLIST = "/gstsaleslist";
 const GSTDELIVERYSLIP = "/gstsalesdelivery";
 const GSTEXPENSEENTRY = "/gstexpenseentry";
@@ -27,9 +27,9 @@ export {
   DASHBOARD,
   DEBTLIST,
   GSTDELIVERYSLIP,
-  GSTENTRY,
   GSTEXPENSEENTRY,
   GSTEXPENSELIST,
+  GSTSALESENTRY,
   GSTSALESLIST,
   LOCALENTRY,
   LOCALEXPENSEAPPROVE,

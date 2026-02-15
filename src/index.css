@@ -1,44 +1,15 @@
 @import "tailwindcss";
+
 body {
   margin: 0;
   padding: 0;
-  font-family: "Poppins", sans-serif;
   box-sizing: border-box;
 }
 
-@font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-Regular.ttf") format("truetype");
-  font-weight: 300; /* font-light */
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-Medium.ttf") format("truetype");
-  font-weight: 400; /* font-normal */
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-SemiBold.ttf") format("truetype");
-  font-weight: 500; /* font-medium */
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-Bold.ttf") format("truetype");
-  font-weight: 700; /* font-bold */
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins-ExtraBold.ttf") format("truetype");
-  font-weight: 800; /* font-extrabold */
-  font-style: normal;
+*,
+html,
+body {
+  font-family: "Poppins", sans-serif;
 }
 
 .Toastify__close-button {

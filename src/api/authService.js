@@ -6,5 +6,16 @@ export const loginUser = async (identifier, password) => {
     password,
   });
 
-  return data;
+  const { jwt } = data;
+
+  const userResponse = await axiosInstance.get("/users/me?populate=role", {
+    headers: {
+      Authorization: `Bearer ${jwt}`,
+    },
+  });
+
+  return {
+    ...data,
+    role: userResponse.data.role?.type,
+  };
 };

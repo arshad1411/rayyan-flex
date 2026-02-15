@@ -13,11 +13,11 @@ const AuthProvider = ({ children }) => {
 
   const login = (data) => {
     localStorage.setItem("jwt", data.jwt);
-    localStorage.setItem("user", JSON.stringify(data.user));
-    localStorage.setItem("role", data.user.role?.type);
+    localStorage.setItem("user", JSON.stringify(data));
+    localStorage.setItem("role", data.role);
 
     setUser(data.user);
-    setRole(data.user.role?.type);
+    setRole(data.role);
   };
 
   const logout = () => {

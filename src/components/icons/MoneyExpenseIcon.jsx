@@ -1,7 +1,7 @@
 const MoneyExpenseIcon = ({
   width = 24,
   height = 24,
-  color = "#292D32",
+  color = "#FFFFFF",
   ...props
 }) => {
   return (
