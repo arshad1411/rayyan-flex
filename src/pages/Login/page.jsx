@@ -8,11 +8,11 @@ import {
 } from "../../components/icons";
 import InputField from "../../components/InputField/InputField";
 import { useAuth } from "../../context/auth-context";
+import { DASHBOARD, LOCALENTRY } from "../../router/paths";
 
 const Login = () => {
-  const navigate = useNavigate();
   const { login } = useAuth();
-
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     identifier: "",
     password: "",
@@ -37,9 +37,13 @@ const Login = () => {
     try {
       const data = await loginUser(formData.identifier, formData.password);
 
-      login(data); // Save to context + localStorage
+      login(data);
 
-      navigate("/dashboard"); // Redirect after login
+      if (data.role === "superadmin") {
+        navigate(DASHBOARD);
+      } else {
+        navigate(LOCALENTRY);
+      }
     } catch (error) {
       setErrorMessage(
         error?.response?.data?.error?.message || "Invalid username or password",

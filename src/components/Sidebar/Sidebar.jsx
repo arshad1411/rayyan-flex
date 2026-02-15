@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Logo from "../../assets/rayyanflexlogo.png";
 import { appConfig } from "../../config/appConfig";
 import { useAuth } from "../../context/auth-context";
-import { ArrowDownIcon, HamburgerIcon } from "../icons";
+import { ArrowDownIcon, HamburgerIcon, LogoutIcon } from "../icons";
 
 const Sidebar = () => {
   const { pathname } = useLocation();
-  const { user } = useAuth();
-  const userRole = user?.role;
+  const { role, logout } = useAuth();
+
+  const Navigate = useNavigate();
 
   const [collapsed, setCollapsed] = useState(false);
   const [openMenu, setOpenMenu] = useState(null);
@@ -21,19 +22,19 @@ const Sidebar = () => {
 
   const filteredMenu = useMemo(() => {
     return appConfig
-      .filter((item) => item.roles.includes(userRole))
+      .filter((item) => item.roles.includes(role))
       .map((item) => {
         if (item.type === "submenu") {
           return {
             ...item,
             children: item.children.filter((child) =>
-              child.roles.includes(userRole),
+              child.roles.includes(role),
             ),
           };
         }
         return item;
       });
-  }, [userRole]);
+  }, [role]);
 
   useEffect(() => {
     filteredMenu.forEach((menu) => {
@@ -45,6 +46,12 @@ const Sidebar = () => {
       }
     });
   }, [pathname, filteredMenu]);
+
+  const handleLogout = () => {
+    logout();
+    Navigate("/");
+  };
+
   const MenuItem = ({ icon, label, path }) => {
     const Icon = icon;
 
@@ -114,6 +121,16 @@ const Sidebar = () => {
             <SubMenu key={menu.key} menu={menu} />
           ),
         )}
+      </div>
+      <div className="absolute bottom-5">
+        <button
+          className={`${
+            collapsed ? "w-[50px] justify-center" : "w-[210px]"
+          } bg-[#2D2D35] text-white text-lg  py-3 px-4 rounded-full flex items-center gap-2 hover:bg-[#9E77D2] focus:bg-[#9E77D2]`}
+          onClick={handleLogout}
+        >
+          <LogoutIcon /> {!collapsed && "Logout"}
+        </button>
       </div>
     </div>
   );
