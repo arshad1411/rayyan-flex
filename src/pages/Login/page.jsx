@@ -1,100 +1,98 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { loginUser } from "../../api/authService";
 import Button from "../../components/Button/Button";
 import {
   PasswordEyeCloseIcon,
   PasswordEyeOpenIcon,
-} from "../../components/icons/index";
+} from "../../components/icons";
 import InputField from "../../components/InputField/InputField";
+import { useAuth } from "../../context/auth-context";
 
 const Login = () => {
-  // const role = Cookies.get("role");
   const navigate = useNavigate();
-  // useEffect(() => {
-  //   if (role) {
-  //     if (role === "superadmin") {
-  //       navigate("/dashboard");
-  //     } else {
-  //       navigate("/localentry");
-  //     }
-  //   }
-  // }, [role]);
-  const [Username, setUsername] = useState("");
-  const [Password, setPassword] = useState("");
-  const [ShowPassword, setShowPassword] = useState(false);
+  const { login } = useAuth();
+
+  const [formData, setFormData] = useState({
+    identifier: "",
+    password: "",
+  });
+
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage("");
+    setLoading(true);
 
-    // try {
-    //   const data = { identifier: Username, password: Password };
-    //   const response = await LoginAuth(data);
-    //   if (response.status === 200) {
-    //     setToken(response.data);
-    //     const roleFromCookie = Cookies.get("role");
+    try {
+      const data = await loginUser(formData.identifier, formData.password);
 
-    //     if (!roleFromCookie) {
-    //       const role = await getUserFromLocalCookie();
+      login(data); // Save to context + localStorage
 
-    //       if (role === "superadmin") {
-    //         navigate("/dashboard");
-    //       } else {
-    //         navigate("/localentry");
-    //       }
-    //     }
-    //   } else {
-    //     setErrorMessage(response.data.message);
-    //   }
-    // } catch (error) {
-    //   if (error.response && error.response.status === 400) {
-    //     setErrorMessage("Incorrect username or password");
-    //   } else {
-    //     setErrorMessage("An unexpected error occurred, please try again later");
-    //   }
-    // }
+      navigate("/dashboard"); // Redirect after login
+    } catch (error) {
+      setErrorMessage(
+        error?.response?.data?.error?.message || "Invalid username or password",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="h-screen flex items-center justify-center">
-      <div className="w-[500px] p-4 flex flex-col rounded-xl shadow-md bg-[#fbfcfe] border border-[#878da0]">
-        <h1 className="text-md">Welcome To Rayyan Graphics</h1>
-        <h6 className="text-sm text-[#555e7c]">Sign in to continue</h6>
-        <form onSubmit={handleSubmit} className="mt-4">
+    <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="w-[450px] p-6 rounded-xl shadow-lg bg-white border">
+        <h1 className="text-xl font-semibold">Welcome To Rayyan Graphics</h1>
+        <p className="text-sm text-gray-500 mb-6">Sign in to continue</p>
+
+        <form onSubmit={handleSubmit}>
           <InputField
-            placeholder={"Username"}
-            name={"username"}
-            value={Username}
-            onChange={(e) => setUsername(e.target.value)}
-            required={true}
+            placeholder="Username or Email"
+            name="identifier"
+            value={formData.identifier}
+            onChange={handleChange}
+            required
           />
-          <label className="text-sm mb-0">Password</label>
+
+          <label className="text-sm">Password</label>
           <div
             className={`w-full border border-[#9e77d2] rounded-md px-2 py-2 mt-1 mb-2 flex items-center justify-between`}
           >
             <input
               name="password"
-              type={ShowPassword ? "text" : "password"}
               placeholder="password"
-              value={Password}
-              onChange={(e) => setPassword(e.target.value)}
+              type={showPassword ? "text" : "password"}
+              value={formData.password}
+              onChange={handleChange}
               className="w-full focus:outline-none"
               required
             />
-            {ShowPassword ? (
+            {showPassword ? (
               <PasswordEyeCloseIcon onClick={() => setShowPassword(false)} />
             ) : (
               <PasswordEyeOpenIcon onClick={() => setShowPassword(true)} />
             )}
           </div>
-          {errorMessage && <p className="text-red-500 mt-5">{errorMessage}</p>}
+
+          {errorMessage && (
+            <p className="text-red-500 text-sm mb-3">{errorMessage}</p>
+          )}
+
           <Button
-            type={"submit"}
-            label={"LOGIN"}
-            classvalues={
-              "mt-5 bg-[#6a23c9] text-white flex justify-center w-full"
-            }
+            type="submit"
+            label={loading ? "Logging in..." : "LOGIN"}
+            className="mt-4 bg-[#6a23c9] text-white w-full justify-center"
+            disabled={loading}
           />
         </form>
       </div>
