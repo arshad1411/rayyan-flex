@@ -1,416 +1,241 @@
-import { useEffect, useState } from "react";
-
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import Logo from "../../assets/rayyanflexlogo.png";
-import HamburgerIcon from "../icons/HamburgerIcon";
-import DashboardIcon from "../icons/DashboardIcon";
-import LocalSalesIcon from "../icons/LocalSalesIcon";
-import ArrowDownIcon from "../icons/ArrowDownIcon";
-import QuotationIcon from "../icons/QuotationIcon";
-import ListIcon from "../icons/ListIcon";
-import PendingIcon from "../icons/PendingIcon";
-import PartyIcon from "../icons/PartyIcon";
-import EntryIcon from "../icons/EntryIcon";
 
-import GstSalesIcon from "../icons/GstSalesIcon";
-import GstExpenseIcon from "../icons/GstExpenseIcon";
-import AdminIcon from "../icons/AdminIcon";
-import DeliveryIcon from "../icons/DeliveryIcon";
-import MoneyExpenseIcon from "../icons/MoneyExpenseIcon";
-import ApproveListIcon from "../icons/ApproveIcon";
-import { LocalExpenseIcon } from "../icons";
-import PriceListIcon from "../icons/PriceListIcon";
+import {
+  AdminIcon,
+  ApproveListIcon,
+  ArrowDownIcon,
+  DashboardIcon,
+  DeliveryIcon,
+  EntryIcon,
+  GstExpenseIcon,
+  GstSalesIcon,
+  HamburgerIcon,
+  ListIcon,
+  LocalExpenseIcon,
+  LocalSalesIcon,
+  MoneyExpenseIcon,
+  PartyIcon,
+  PendingIcon,
+  PriceListIcon,
+  QuotationIcon,
+} from "../icons";
+
 import {
   ADMINLIST,
-  LOCALENTRY,
-  LOCALPAIDLIST,
-  LOCALPENDINGLIST,
-  LOCALLIST,
-  LOCALPARTYLIST,
-  LOCALEXPENSEENTRY,
-  LOCALEXPENSELIST,
-  LOCALEXPENSEAPPROVE,
-  GSTENTRY,
+  DASHBOARD,
+  DEBTLIST,
   GSTDELIVERYSLIP,
+  GSTENTRY,
+  GSTEXPENSEENTRY,
   GSTEXPENSELIST,
   GSTSALESLIST,
-  GSTEXPENSEENTRY,
-  DEBTLIST,
+  LOCALENTRY,
+  LOCALEXPENSEAPPROVE,
+  LOCALEXPENSEENTRY,
+  LOCALEXPENSELIST,
+  LOCALLIST,
+  LOCALPAIDLIST,
+  LOCALPARTYLIST,
+  LOCALPENDINGLIST,
+  PRICELIST,
   QUOTATIONENTRY,
   QUOTATIONLIST,
-  DASHBOARD,
-  PRICELIST,
 } from "../../router/paths";
 
 const Sidebar = () => {
-  const location = useLocation();
+  const { pathname } = useLocation();
+  const [collapsed, setCollapsed] = useState(false);
+  const [openMenu, setOpenMenu] = useState(null);
 
-  const pathname = location.pathname;
-  const [openSubmenu, setOpenSubmenu] = useState({
-    chart: false,
-    local: false,
-    localExpense: false,
-    gstsales: false,
-    gstExpense: false,
-    admin: false,
-    quotation: false,
-    outstanding: false,
-  });
-  const [hamburger, setHamburger] = useState(false);
+  const isActive = (path) => pathname.startsWith(path);
 
-  const toggleSubmenu = (menu) => {
-    setOpenSubmenu((prevState) => ({
-      ...Object.fromEntries(Object.keys(prevState).map((key) => [key, false])),
-      [menu]: !prevState[menu],
-    }));
+  const toggleMenu = (key) => {
+    setOpenMenu((prev) => (prev === key ? null : key));
   };
 
-  const isActive = (to) => pathname?.startsWith(to);
+  // -------- MENU CONFIG --------
+  const menuConfig = useMemo(
+    () => [
+      {
+        type: "link",
+        label: "Dashboard",
+        icon: <DashboardIcon />,
+        path: DASHBOARD,
+      },
+      {
+        type: "submenu",
+        key: "local",
+        label: "Local Sales",
+        icon: <LocalSalesIcon />,
+        items: [
+          { label: "Entry", icon: <EntryIcon />, path: LOCALENTRY },
+          { label: "List", icon: <ListIcon />, path: LOCALLIST },
+          {
+            label: "Approved List",
+            icon: <ApproveListIcon />,
+            path: LOCALPAIDLIST,
+          },
+          {
+            label: "Pending List",
+            icon: <PendingIcon />,
+            path: LOCALPENDINGLIST,
+          },
+          { label: "Party List", icon: <PartyIcon />, path: LOCALPARTYLIST },
+        ],
+      },
+      {
+        type: "submenu",
+        key: "localExpense",
+        label: "Local Expense",
+        icon: <LocalExpenseIcon />,
+        items: [
+          { label: "Entry", icon: <EntryIcon />, path: LOCALEXPENSEENTRY },
+          { label: "List", icon: <ListIcon />, path: LOCALEXPENSELIST },
+          {
+            label: "Approved List",
+            icon: <ApproveListIcon />,
+            path: LOCALEXPENSEAPPROVE,
+          },
+        ],
+      },
+      {
+        type: "submenu",
+        key: "gstsales",
+        label: "GST Sales",
+        icon: <GstSalesIcon />,
+        items: [
+          { label: "Entry", icon: <EntryIcon />, path: GSTENTRY },
+          { label: "List", icon: <ListIcon />, path: GSTSALESLIST },
+          {
+            label: "Delivery Slip",
+            icon: <DeliveryIcon />,
+            path: GSTDELIVERYSLIP,
+          },
+        ],
+      },
+      {
+        type: "submenu",
+        key: "gstExpense",
+        label: "GST Expense",
+        icon: <GstExpenseIcon />,
+        items: [
+          { label: "Entry", icon: <EntryIcon />, path: GSTEXPENSEENTRY },
+          { label: "List", icon: <ListIcon />, path: GSTEXPENSELIST },
+        ],
+      },
+      {
+        type: "link",
+        label: "Admin",
+        icon: <AdminIcon />,
+        path: ADMINLIST,
+      },
+      {
+        type: "link",
+        label: "Debt",
+        icon: <MoneyExpenseIcon />,
+        path: DEBTLIST,
+      },
+      {
+        type: "submenu",
+        key: "quotation",
+        label: "Quotation",
+        icon: <QuotationIcon />,
+        items: [
+          { label: "Entry", icon: <EntryIcon />, path: QUOTATIONENTRY },
+          { label: "List", icon: <ListIcon />, path: QUOTATIONLIST },
+        ],
+      },
+      {
+        type: "link",
+        label: "Price List",
+        icon: <PriceListIcon />,
+        path: PRICELIST,
+      },
+    ],
+    [],
+  );
 
+  // Auto open submenu on route change
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setOpenSubmenu((prevState) => {
-      const updatedState = { ...prevState };
-      const submenuPaths = {
-        chart: ["/chartoverview", "/chartparticular"],
-        local: [
-          "/localentry",
-          "/locallist",
-          "/localpaidlist",
-          "/localpendinglist",
-          "/localpartylist",
-        ],
-        localExpense: [
-          "/localexpenseentry",
-          "/localexpenselist",
-          "/localexpenseapprove",
-        ],
-        gstsales: ["/gstsalesentry", "/gstsaleslist", "/gstsalesdelivery"],
-        gstExpense: ["/gstexpenseentry", "/gstexpenselist"],
-        admin: ["/adminlist"],
-        debt: ["/debtlist"],
-        quotation: ["/quotationentry", "/quotationlist"],
-        outstanding: [
-          "/outstandingaccount",
-          "/outstandingcash",
-          "/outstandinggpay",
-        ],
-      };
-
-      Object.keys(updatedState).forEach((menu) => {
-        updatedState[menu] =
-          submenuPaths[menu]?.some((path) => pathname === path) || false;
-      });
-
-      return updatedState;
+    menuConfig.forEach((menu) => {
+      if (menu.type === "submenu") {
+        const isChildActive = menu.items.some((item) =>
+          pathname.startsWith(item.path),
+        );
+        if (isChildActive) setOpenMenu(menu.key);
+      }
     });
-  }, [pathname]);
+  }, [pathname, menuConfig]);
 
-  const toggleHamburger = () => {
-    setHamburger(!hamburger);
+  // -------- COMPONENTS --------
+  const MenuItem = ({ icon, label, path }) => (
+    <Link
+      to={path}
+      className={`flex items-center gap-4 px-3 py-2 rounded-full text-white text-lg font-semibold transition-all duration-200
+        ${collapsed ? "justify-center" : ""}
+        ${isActive(path) ? "bg-[#9E77D2]" : "hover:bg-[#9E77D2]"}`}
+    >
+      {icon}
+      {!collapsed && <span>{label}</span>}
+    </Link>
+  );
+
+  const SubMenu = ({ menu }) => {
+    const isOpen = openMenu === menu.key;
+
+    return (
+      <>
+        <div
+          className="flex items-center justify-between px-3 py-2 cursor-pointer"
+          onClick={() => toggleMenu(menu.key)}
+        >
+          <div className="flex items-center gap-4 text-white text-lg font-semibold">
+            {menu.icon}
+            {!collapsed && <span>{menu.label}</span>}
+          </div>
+          {!collapsed && (
+            <ArrowDownIcon className={isOpen ? "rotate-180" : ""} />
+          )}
+        </div>
+
+        {isOpen && (
+          <div className={`flex flex-col gap-1 ${collapsed ? "" : "ml-6"}`}>
+            {menu.items.map((item) => (
+              <MenuItem key={item.path} {...item} />
+            ))}
+          </div>
+        )}
+      </>
+    );
   };
 
   return (
     <div
-      className={`h-[98vh]  p-5 bg-[#24252B] m-2 rounded-xl relative ${
-        hamburger ? "w-30" : "w-62.5"
-      }`}
+      className={`h-[98vh] p-5 bg-[#24252B] m-2 rounded-xl transition-all duration-300
+        ${collapsed ? "w-20" : "w-64"}`}
     >
+      {/* Header */}
       <div className="flex justify-between items-center">
-        <img
-          src={Logo}
-          width={120}
-          height={50}
-          alt="rayyanflex"
-          background
-          color="#24252B"
-        />
-
-        <div className="cursor-pointer" onClick={toggleHamburger}>
+        {!collapsed && <img src={Logo} width={120} alt="RayyanFlex Logo" />}
+        <div
+          className="cursor-pointer"
+          onClick={() => setCollapsed(!collapsed)}
+        >
           <HamburgerIcon />
         </div>
       </div>
 
-      <div className="mt-4 flex flex-col gap-1">
-        (
-        <>
-          <Link
-            to={DASHBOARD}
-            className={`flex items-center gap-4 px-3 py-2 font-semibold text-white text-[20px] hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-              hamburger ? "justify-center" : ""
-            } ${isActive(DASHBOARD) ? " bg-[#9E77D2]" : ""}`}
-          >
-            <DashboardIcon /> {!hamburger && "Dashboard"}
-          </Link>
-        </>
-        )
-        <div
-          className="flex items-center px-3 py-2 justify-between cursor-pointer"
-          onClick={() => toggleSubmenu("local")}
-        >
-          <div className="flex items-center">
-            <LocalSalesIcon />{" "}
-            {!hamburger && (
-              <p className="ml-4 text-white text-[20px] font-semibold ">
-                Local Sales
-              </p>
-            )}
-          </div>
-          <ArrowDownIcon
-            className={`${openSubmenu.local ? "rotate-180" : ""}`}
-          />
-        </div>
-        {openSubmenu.local && (
-          <div className={`flex flex-col gap-1 ${hamburger ? "ml-0" : "ml-4"}`}>
-            <Link
-              to={LOCALENTRY}
-              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-                hamburger && "justify-center"
-              }${isActive(LOCALENTRY) ? " bg-[#9E77D2]" : ""}`}
-            >
-              <EntryIcon />
-              {!hamburger && <span>Entry</span>}
-            </Link>
-            <Link
-              to={LOCALLIST}
-              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-                hamburger && "justify-center"
-              }${isActive(LOCALLIST) ? " bg-[#9E77D2]" : ""}`}
-            >
-              <ListIcon />
-              {!hamburger && <span>List</span>}
-            </Link>
-            {
-              <Link
-                to={LOCALPAIDLIST}
-                className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-                  hamburger && "justify-center"
-                }${isActive(LOCALPAIDLIST) ? " bg-[#9E77D2]" : ""}`}
-              >
-                <ApproveListIcon />
-                {!hamburger && <span>Approved List</span>}
-              </Link>
-            }
-            <Link
-              to={LOCALPENDINGLIST}
-              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-                hamburger && "justify-center"
-              }${isActive(LOCALPENDINGLIST) ? " bg-[#9E77D2]" : ""}`}
-            >
-              <PendingIcon />
-              {!hamburger && <span>Pending List</span>}
-            </Link>
-            <Link
-              to={LOCALPARTYLIST}
-              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-                hamburger && "justify-center"
-              }${isActive(LOCALPARTYLIST) ? " bg-[#9E77D2]" : ""}`}
-            >
-              <PartyIcon />
-              {!hamburger && <span>Party List</span>}
-            </Link>
-          </div>
+      {/* Menu */}
+      <div className="mt-6 flex flex-col gap-2">
+        {menuConfig.map((menu) =>
+          menu.type === "link" ? (
+            <MenuItem key={menu.path} {...menu} />
+          ) : (
+            <SubMenu key={menu.key} menu={menu} />
+          ),
         )}
-        <div
-          className="flex items-center px-3 py-2 justify-between cursor-pointer"
-          onClick={() => toggleSubmenu("localExpense")}
-        >
-          <div className="flex items-center">
-            <LocalExpenseIcon />{" "}
-            {!hamburger && (
-              <p className="ml-4 text-[20px] font-semibold text-white text-lg ">
-                Local Expense
-              </p>
-            )}
-          </div>
-          <ArrowDownIcon
-            className={`${openSubmenu.localExpense ? "rotate-180" : ""}`}
-          />
-        </div>
-        {openSubmenu.localExpense && (
-          <div className={`flex flex-col gap-1 ${hamburger ? "ml-0" : "ml-4"}`}>
-            <Link
-              to={LOCALEXPENSEENTRY}
-              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-                hamburger && "justify-center"
-              }${isActive(LOCALEXPENSEENTRY) ? " bg-[#9E77D2]" : ""}`}
-            >
-              <EntryIcon />
-              {!hamburger && <span>Entry</span>}
-            </Link>
-            <Link
-              to={LOCALEXPENSELIST}
-              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-                hamburger && "justify-center"
-              }${isActive(LOCALEXPENSELIST) ? " bg-[#9E77D2]" : ""}`}
-            >
-              <ListIcon />
-              {!hamburger && <span>List</span>}
-            </Link>
-            {
-              <Link
-                to={LOCALEXPENSEAPPROVE}
-                className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-                  hamburger && "justify-center"
-                }${isActive(LOCALEXPENSEAPPROVE) ? " bg-[#9E77D2]" : ""}`}
-              >
-                <ApproveListIcon />
-                {!hamburger && <span>Approved List</span>}
-              </Link>
-            }
-          </div>
-        )}
-        <div
-          className="flex items-center px-3 py-2 text-[20px] font-semibold  justify-between cursor-pointer"
-          onClick={() => toggleSubmenu("gstsales")}
-        >
-          <div className="flex items-center">
-            <GstSalesIcon />{" "}
-            {!hamburger && (
-              <p className="ml-4 text-[20px] font-semibold  text-white ">
-                Gst Sales
-              </p>
-            )}
-          </div>
-          <ArrowDownIcon
-            className={`${openSubmenu.gstsales ? "rotate-180" : ""}`}
-          />
-        </div>
-        {openSubmenu.gstsales && (
-          <div className={`flex flex-col gap-1 ${hamburger ? "ml-0" : "ml-4"}`}>
-            <Link
-              to={GSTENTRY}
-              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold  hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-                hamburger && "justify-center"
-              }${isActive(GSTENTRY) ? " bg-[#9E77D2]" : ""}`}
-            >
-              <EntryIcon />
-              {!hamburger && <span>Entry</span>}
-            </Link>
-            <Link
-              to={GSTSALESLIST}
-              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold  hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-                hamburger && "justify-center"
-              }${isActive(GSTSALESLIST) ? " bg-[#9E77D2]" : ""}`}
-            >
-              <ListIcon />
-              {!hamburger && <span>List</span>}
-            </Link>
-            <Link
-              to={GSTDELIVERYSLIP}
-              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold  hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-                hamburger && "justify-center"
-              }${isActive(GSTDELIVERYSLIP) ? " bg-[#9E77D2]" : ""}`}
-            >
-              <DeliveryIcon />
-              {!hamburger && <span>Delivery Slip</span>}
-            </Link>
-          </div>
-        )}
-        <div
-          className="flex items-center px-3 py-2 justify-between cursor-pointer"
-          onClick={() => toggleSubmenu("gstExpense")}
-        >
-          <div className="flex items-center">
-            <GstExpenseIcon />{" "}
-            {!hamburger && (
-              <p className="ml-4 text-white text-[20px] font-semibold  ">
-                Gst Expense
-              </p>
-            )}
-          </div>
-          <ArrowDownIcon
-            className={`${openSubmenu.gstExpense ? "rotate-180" : ""}`}
-          />
-        </div>
-        {openSubmenu.gstExpense && (
-          <div className={`flex flex-col gap-1 ${hamburger ? "ml-0" : "ml-4"}`}>
-            <Link
-              to={GSTEXPENSEENTRY}
-              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold  hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-                hamburger && "justify-center"
-              }${isActive(GSTEXPENSEENTRY) ? " bg-[#9E77D2]" : ""}`}
-            >
-              <EntryIcon />
-              {!hamburger && <span>Entry</span>}
-            </Link>
-            <Link
-              to={GSTEXPENSELIST}
-              className={`flex items-center gap-4 px-3 py-2 text-white  text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-                hamburger && "justify-center"
-              }${isActive(GSTEXPENSELIST) ? " bg-[#9E77D2]" : ""}`}
-            >
-              <ListIcon />
-              {!hamburger && <span>List</span>}
-            </Link>
-          </div>
-        )}
-        {
-          <>
-            <Link
-              to={ADMINLIST}
-              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-                isActive(ADMINLIST) ? " bg-[#9E77D2]" : ""
-              }`}
-            >
-              <AdminIcon /> {!hamburger && "Admin"}
-            </Link>
-
-            <Link
-              to={DEBTLIST}
-              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-                isActive(DEBTLIST) ? " bg-[#9E77D2]" : ""
-              }`}
-            >
-              <MoneyExpenseIcon color="#fff" /> {!hamburger && "Debt"}
-            </Link>
-          </>
-        }
-        <div
-          className="flex items-center px-3 py-2 justify-between  text-[20px]font-semibold  cursor-pointer"
-          onClick={() => toggleSubmenu("quotation")}
-        >
-          <div className="flex items-center">
-            <QuotationIcon />{" "}
-            {!hamburger && (
-              <p className="ml-4 text-white text-[20px] font-semibold">
-                Quotation
-              </p>
-            )}
-          </div>
-          <ArrowDownIcon
-            className={`${openSubmenu.quotation ? "rotate-180" : ""}`}
-          />
-        </div>
-        {openSubmenu.quotation && (
-          <div className={`flex flex-col gap-1 ${hamburger ? "ml-0" : "ml-4"}`}>
-            <Link
-              to={QUOTATIONENTRY}
-              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-                hamburger && "justify-center"
-              }${isActive(QUOTATIONENTRY) ? " bg-[#9E77D2]" : ""}`}
-            >
-              <EntryIcon />
-              {!hamburger && <span>Entry</span>}
-            </Link>
-            <Link
-              to={QUOTATIONLIST}
-              className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-                hamburger && "justify-center"
-              }${isActive(QUOTATIONLIST) ? " bg-[#9E77D2]" : ""}`}
-            >
-              <ListIcon />
-              {!hamburger && <span>List</span>}
-            </Link>
-          </div>
-        )}
-        <div
-          className={`flex items-center gap-4 px-3 py-2 text-white text-[20px] font-semibold hover:bg-[#9E77D2] focus:bg-[#9E77D2] rounded-full  ${
-            isActive(PRICELIST) ? " bg-[#9E77D2]" : ""
-          }`}
-        >
-          <PriceListIcon /> {!hamburger && "PriceList"}
-        </div>
       </div>
     </div>
   );

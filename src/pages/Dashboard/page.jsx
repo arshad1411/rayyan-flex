@@ -1,16 +1,33 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DashboardCard from "../../components/DashboardCard/DashboardCard";
 import Datepicker from "../../components/Datepicker/Datepicker";
 import MainLayout from "../../layouts/MainLayout";
+import { DashboardApi } from "../../controllers/DashboardApi";
 
 const Dashboard = () => {
   const [FromDate, setFromDate] = useState(null);
   const [ToDate, setToDate] = useState(null);
-  // eslint-disable-next-line no-unused-vars
   const [Loading, setLoading] = useState(false);
-  // eslint-disable-next-line no-unused-vars
   const [DashboardData, setDashboardData] = useState({});
 
+  useEffect(() => {
+    if ((FromDate && ToDate) || (!FromDate && !ToDate)) {
+      getDashboardData();
+    }
+  }, [FromDate, ToDate]);
+
+  const getDashboardData = async () => {
+    setLoading(true);
+    try {
+      const response = await DashboardApi(FromDate, ToDate);
+      const data = response;
+      setDashboardData(data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
   const {
     localsales = {},
     localexpense = {},
@@ -40,7 +57,7 @@ const Dashboard = () => {
         {/* Local Cash */}
         <DashboardCard
           title={"Local Sales Cash"}
-          titleColor={"text-green-900"}
+          titleColor={"text-green-800"}
           totalAmount={total.localSalesPaidCashTotal}
           amountdetails={[
             {
@@ -141,7 +158,7 @@ const Dashboard = () => {
           ]}
         />
         <DashboardCard
-          title={"Local Gpay Expenses"}
+          title={"Local Gapy Expenses"}
           titleColor={"text-red-800"}
           totalAmount={total.localExpenseGpayTotal}
           amountdetails={[
@@ -172,7 +189,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-3 gap-4 mt-4">
         <DashboardCard
           title={`Gst Sales (${(gst?.totalgstsaleswithoutgst || 0).toFixed(
-            2,
+            2
           )})`}
           titleColor={"text-green-800"}
           totalAmount={gst?.totalgstsaleswithgst || 0}
@@ -493,7 +510,7 @@ const Dashboard = () => {
               value: admin.totalAsmathgetincash,
             },
             {
-              name: "Get in Gpay",
+              name: "Get in Gapy",
               value: admin.totalAsmathgetingpay,
             },
             {
@@ -505,7 +522,7 @@ const Dashboard = () => {
               value: admin.totalAsmathgiveincash,
             },
             {
-              name: "Give in Gpay",
+              name: "Give in Gapy",
               value: admin.totalAsmathgiveingpay,
             },
             {
@@ -525,7 +542,7 @@ const Dashboard = () => {
               value: admin.totalIbugetincash,
             },
             {
-              name: "Get in Gpay",
+              name: "Get in Gapy",
               value: admin.totalIbugetingpay,
             },
             {
@@ -537,7 +554,7 @@ const Dashboard = () => {
               value: admin.totalIbugiveincash,
             },
             {
-              name: "Give in Gpay",
+              name: "Give in Gapy",
               value: admin.totalIbugiveingpay,
             },
             {

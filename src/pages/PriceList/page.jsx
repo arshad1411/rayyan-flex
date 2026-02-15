@@ -1,5 +1,5 @@
-import MainLayout from "../../layouts/MainLayout";
 import Price from "../../assets/pricelist.jpg";
+import MainLayout from "../../layouts/MainLayout";
 
 const PriceList = () => {
   return (

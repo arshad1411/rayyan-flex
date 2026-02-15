@@ -1,63 +1,95 @@
+import AdminList from "../pages/AdminList";
+import Dashboard from "../pages/Dashboard";
+import DebtList from "../pages/DebtList";
+import GstDeliverySlip from "../pages/GstDeliverySlip";
+import GstEntry from "../pages/GstEntry/page";
+import GstExpenseEntry from "../pages/GstExpenseEntry";
+import GstExpenseList from "../pages/GstExpenseList";
+import GstSalesList from "../pages/GstSalesList";
+import LocalExpenseApprove from "../pages/LoacalExpenseApprove/page";
+import LocalEntry from "../pages/LocalEntry";
+import LocalExpenseEntry from "../pages/LocalExpenseEntry";
+import LocalExpenseList from "../pages/LocalExpenseList";
+import LocalList from "../pages/LocalList";
+import LocalPaidList from "../pages/LocalPaidList";
+import LocalPartyList from "../pages/LocalPartyList";
+import LocalPendingList from "../pages/LocalPendingList";
+import Login from "../pages/Login";
+import NotFound from "../pages/NotFound";
+import OutstandingAccount from "../pages/OutstandingAccount";
+import OutstandingCash from "../pages/OutstandingCash";
+import OutstandingGpay from "../pages/OutstandingGpay";
+import PriceList from "../pages/PriceList";
+import QuotationEntry from "../pages/QuotationEntry";
+import QuotationList from "../pages/QuotationList";
 import {
-  LOGIN,
-  DASHBOARD,
-  LOCALENTRY,
-  LOCALLIST,
-  LOCALPAIDLIST,
-  LOCALPENDINGLIST,
-  LOCALPARTYLIST,
   ADMINLIST,
+  DASHBOARD,
+  DEBTLIST,
+  GSTDELIVERYSLIP,
+  GSTENTRY,
+  GSTEXPENSEENTRY,
+  GSTEXPENSELIST,
+  GSTSALESLIST,
+  LOCALENTRY,
   LOCALEXPENSEAPPROVE,
   LOCALEXPENSEENTRY,
   LOCALEXPENSELIST,
-  GSTENTRY,
-  GSTSALESLIST,
-  GSTDELIVERYSLIP,
-  GSTEXPENSEENTRY,
-  GSTEXPENSELIST,
-  ADMINENTRY,
-  DEBTLIST,
+  LOCALLIST,
+  LOCALPAIDLIST,
+  LOCALPARTYLIST,
+  LOCALPENDINGLIST,
+  LOGIN,
+  OUTSTANDINGACCOUNT,
+  OUTSTANDINGCASH,
+  OUTSTANDINGGPAY,
+  PRICELIST,
   QUOTATIONENTRY,
   QUOTATIONLIST,
-  PRICELIST,
 } from "./paths";
 
-import Login from "../pages/Login/page";
-import Dashboard from "../pages/Dashboard/page";
-import LocalEntry from "../pages/LocalEntry/page";
-import LocalList from "../pages/LocalList/page";
-import LocalPaidList from "../pages/LocalPaidList/page";
-import LocalPending from "../pages/LocalPending/page";
-import LocalPartyList from "../pages/LocalPartyList/page";
-import AdminEntry from "../pages/AdminList/page";
+const routes = [
+  {
+    path: LOGIN,
+    element: <Login />,
+  },
+  {
+    path: DASHBOARD,
+    element: <Dashboard />,
+  },
 
-import LocalExpenseEntry from "../pages/LocalExpensesEntry/page";
-import LocalExpenseList from "../pages/LocalExpenseList/page";
-import LocalExpenseApprove from "../pages/LocalExpenseApprove/page";
-import GstEntry from "../pages/GstEntry/page";
-import GstSalesList from "../pages/GstSalesList/page";
-import GstDeliverySlip from "../pages/GstDeliverySlip/page";
-import GstExpenseEntry from "../pages/GstExpenseEntry/page";
-import GstExpenseList from "../pages/GstExpenseList/page";
-import DebtList from "../pages/DebtList/page";
-
-import AdminList from "../pages/AdminList/page";
-import QuotationEntry from "../pages/QuotationEntry/page";
-import QuotationList from "../pages/QuotationList/page";
-import PriceList from "../pages/PriceList/page";
-
-export const routes = [
-  { path: LOGIN, element: <Login /> },
-  { path: DASHBOARD, element: <Dashboard /> },
-  { path: LOCALENTRY, element: <LocalEntry /> },
-  { path: LOCALLIST, element: <LocalList /> },
-  { path: LOCALPAIDLIST, element: <LocalPaidList /> },
-  { path: LOCALPENDINGLIST, element: <LocalPending /> },
-  { path: LOCALPARTYLIST, element: <LocalPartyList /> },
-  { path: ADMINLIST, element: <AdminEntry /> },
-  { path: LOCALEXPENSEENTRY, element: <LocalExpenseEntry /> },
-  { path: LOCALEXPENSELIST, element: <LocalExpenseList /> },
-  { path: LOCALEXPENSEAPPROVE, element: <LocalExpenseApprove /> },
+  {
+    path: LOCALENTRY,
+    element: <LocalEntry />,
+  },
+  {
+    path: LOCALLIST,
+    element: <LocalList />,
+  },
+  {
+    path: LOCALPAIDLIST,
+    element: <LocalPaidList />,
+  },
+  {
+    path: LOCALPENDINGLIST,
+    element: <LocalPendingList />,
+  },
+  {
+    path: LOCALPARTYLIST,
+    element: <LocalPartyList />,
+  },
+  {
+    path: LOCALEXPENSEENTRY,
+    element: <LocalExpenseEntry />,
+  },
+  {
+    path: LOCALEXPENSELIST,
+    element: <LocalExpenseList />,
+  },
+  {
+    path: LOCALEXPENSEAPPROVE,
+    element: <LocalExpenseApprove />,
+  },
   {
     path: GSTENTRY,
     element: <GstEntry />,
@@ -78,14 +110,12 @@ export const routes = [
     path: GSTEXPENSELIST,
     element: <GstExpenseList />,
   },
-  {
-    path: ADMINENTRY,
-    element: <AdminEntry />,
-  },
+
   {
     path: ADMINLIST,
     element: <AdminList />,
   },
+
   {
     path: DEBTLIST,
     element: <DebtList />,
@@ -99,7 +129,25 @@ export const routes = [
     element: <QuotationList />,
   },
   {
+    path: OUTSTANDINGACCOUNT,
+    element: <OutstandingAccount />,
+  },
+  {
+    path: OUTSTANDINGCASH,
+    element: <OutstandingCash />,
+  },
+  {
+    path: OUTSTANDINGGPAY,
+    element: <OutstandingGpay />,
+  },
+  {
     path: PRICELIST,
     element: <PriceList />,
   },
+  {
+    path: "*",
+    element: <NotFound />,
+  },
 ];
+
+export { routes };

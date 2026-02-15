@@ -1,6 +1,6 @@
 import React from "react";
 
-export const ClearIcon = ({
+const ClearIcon = ({
   color = "#292D32",
   width = "14",
   height = "14",

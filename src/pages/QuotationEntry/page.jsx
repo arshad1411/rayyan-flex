@@ -1,8 +1,12 @@
+import MainLayout from "../../layouts/MainLayout";
+
 const QuotationEntry = () => {
   return (
-    <div>
-      <h1>Reports Page</h1>
-    </div>
+    <MainLayout>
+      <div className="flex justify-between">
+        <h1 className="text-2xl font-medium  mb-4">Quotation Entry</h1>{" "}
+      </div>
+    </MainLayout>
   );
 };
 

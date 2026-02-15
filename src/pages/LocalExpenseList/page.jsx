@@ -1,8 +1,12 @@
+import MainLayout from "../../layouts/MainLayout";
+
 const LocalExpenseList = () => {
   return (
-    <div>
-      <h1>Reports Page</h1>
-    </div>
+    <MainLayout>
+      <div className="flex justify-between">
+        <h1 className="text-2xl font-medium  mb-4">Local Expense List</h1>{" "}
+      </div>
+    </MainLayout>
   );
 };
 

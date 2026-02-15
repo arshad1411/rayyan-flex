@@ -1,5 +1,3 @@
-import React from "react";
-
 const EntryIcon = ({
   color = "#ffffff",
   width = "20",

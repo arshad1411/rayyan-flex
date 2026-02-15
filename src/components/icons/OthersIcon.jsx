@@ -1,7 +1,9 @@
-const AccountIcon = ({
+import React from "react";
+
+const OthersIcon = ({
   color = "#ffffff",
-  width = "20",
-  height = "20",
+  width = "22",
+  height = "22",
   ...props
 }) => {
   return (
@@ -14,7 +16,7 @@ const AccountIcon = ({
       {...props}
     >
       <path
-        d="M12.37 2.15003L21.37 5.75C21.72 5.89 22 6.31 22 6.68V10C22 10.55 21.55 11 21 11H3C2.45 11 2 10.55 2 10V6.68C2 6.31 2.28 5.89 2.63 5.75L11.63 2.15003C11.83 2.07003 12.17 2.07003 12.37 2.15003Z"
+        d="M8 2V5"
         stroke={color}
         strokeWidth="1.5"
         strokeMiterlimit="10"
@@ -22,7 +24,7 @@ const AccountIcon = ({
         strokeLinejoin="round"
       />
       <path
-        d="M22 22H2V19C2 18.45 2.45 18 3 18H21C21.55 18 22 18.45 22 19V22Z"
+        d="M16 2V5"
         stroke={color}
         strokeWidth="1.5"
         strokeMiterlimit="10"
@@ -30,7 +32,7 @@ const AccountIcon = ({
         strokeLinejoin="round"
       />
       <path
-        d="M4 18V11"
+        d="M7 11H15"
         stroke={color}
         strokeWidth="1.5"
         strokeMiterlimit="10"
@@ -38,7 +40,7 @@ const AccountIcon = ({
         strokeLinejoin="round"
       />
       <path
-        d="M8 18V11"
+        d="M7 15H12"
         stroke={color}
         strokeWidth="1.5"
         strokeMiterlimit="10"
@@ -46,7 +48,7 @@ const AccountIcon = ({
         strokeLinejoin="round"
       />
       <path
-        d="M12 18V11"
+        d="M15 22H9C4 22 3 19.94 3 15.82V9.65C3 4.95 4.67 3.69 8 3.5H16C19.33 3.68 21 4.95 21 9.65V16"
         stroke={color}
         strokeWidth="1.5"
         strokeMiterlimit="10"
@@ -54,34 +56,9 @@ const AccountIcon = ({
         strokeLinejoin="round"
       />
       <path
-        d="M16 18V11"
+        d="M21 16L15 22V19C15 17 16 16 18 16H21Z"
         stroke={color}
         strokeWidth="1.5"
-        strokeMiterlimit="10"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M20 18V11"
-        stroke={color}
-        strokeWidth="1.5"
-        strokeMiterlimit="10"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M1 22H23"
-        stroke={color}
-        strokeWidth="1.5"
-        strokeMiterlimit="10"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M12 8.5C12.8284 8.5 13.5 7.82843 13.5 7C13.5 6.17157 12.8284 5.5 12 5.5C11.1716 5.5 10.5 6.17157 10.5 7C10.5 7.82843 11.1716 8.5 12 8.5Z"
-        stroke={color}
-        strokeWidth="1.5"
-        strokeMiterlimit="10"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -89,4 +66,4 @@ const AccountIcon = ({
   );
 };
 
-export default AccountIcon;
+export default OthersIcon;

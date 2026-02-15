@@ -1,4 +1,4 @@
-const Input = ({
+const InputField = ({
   type = "text",
   name,
   value,
@@ -28,7 +28,7 @@ const Input = ({
         placeholder={placeholder}
         value={value}
         onChange={handleInputChange}
-        className={`w-full border border-gray-400 rounded-md mb-2 focus:outline-none pt-1.5 pr-2.5 pb-1 pl-2 h-9 ${className}`}
+        className={`w-full border border-gray-400 rounded-md mb-2 focus:outline-none pt-[6px] pr-[10px] pb-[5px] pl-[8px] h-9 ${className}`}
         required={required}
         autoComplete="off"
         readOnly={readOnly}
@@ -38,4 +38,4 @@ const Input = ({
   );
 };
 
-export default Input;
+export default InputField;
