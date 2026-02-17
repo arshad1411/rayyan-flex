@@ -1,8 +1,8 @@
 "use client";
-import CalendarIcon from "../icons/CalenderIcon";
+import CalendarIcon from "../../components/icons/CalendarIcon";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
-import { ClearIcon } from "../icons/ClearIcon";
+import ClearIcon from "../../components/icons/ClearIcon";
 import Button from "../Button/Button";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";

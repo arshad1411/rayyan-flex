@@ -1,20 +1,15 @@
 import { useState } from "react";
-import { CustomerUpdateApi } from "../../controllers/customerApi";
 import AutocompleteField from "../AutocompleteField/AutocompleteField";
-import EditButton from "../EditButton/EditButton";
 import InputField from "../InputField/InputField";
 import Button from "../Button/Button";
 import { ClearIcon } from "../icons";
-import { GstCustomerUpdateApi } from "../../controllers/gstcustomerApi";
-import { toast } from "react-toastify";
-
 const CustomerField = ({
   customerName,
   setCustomerName,
   phoneno,
   setPhoneno,
   customerData,
-  GetFunction,
+
   address,
   setAddress,
   gstNo,
@@ -24,50 +19,6 @@ const CustomerField = ({
   isGstCustomer = false,
 }) => {
   const [Open, setOpen] = useState(false);
-  const UpdateUser = async () => {
-    if (SelectCustomerID) {
-      if (!isGstCustomer) {
-        const data = {
-          data: {
-            name: customerName,
-            phonenumber: phoneno,
-          },
-        };
-        const userupdated = await CustomerUpdateApi(SelectCustomerID, data);
-        if (userupdated.status === 200) {
-          console.log(userupdated.data.data);
-          setSelectedCustomerID(userupdated.data.data.id);
-          setCustomerName(userupdated.data.data.attributes.name);
-          setPhoneno(userupdated.data.data.attributes.phonenumber);
-          setOpen(false);
-          toast.success("You have successfully updated Customer");
-          GetFunction();
-        }
-      } else {
-        const data = {
-          data: {
-            name: customerName,
-            address: address,
-            gstno: gstNo,
-          },
-        };
-        const gstuserupdated = await GstCustomerUpdateApi(
-          SelectCustomerID,
-          data,
-        );
-
-        if (gstuserupdated.status === 200) {
-          setSelectedCustomerID(gstuserupdated.data.data.id);
-          setCustomerName(gstuserupdated.data.data.attributes.name);
-          setAddress(gstuserupdated.data.data.attributes.address);
-          setGstNo(gstuserupdated.data.data.attributes.gstno);
-          setOpen(false);
-        }
-      }
-    } else {
-      setOpen(false);
-    }
-  };
 
   const handleCustomerChange = (e, newValue, field) => {
     console.log(newValue, field);
@@ -175,7 +126,8 @@ const CustomerField = ({
 
   return (
     <div
-      className={`grid grid-cols-${isGstCustomer ? "3" : "2"} gap-4 mt-4 mb-8`}
+      className={`grid grid-cols-${isGstCustomer ? "3" : "2"} gap-4  font-semibold
+      mt-4 mb-8`}
     >
       <AutocompleteField
         label="Customer Name"
@@ -301,7 +253,7 @@ const CustomerField = ({
                 <Button
                   label="Update"
                   classvalues={"bg-[#9E77D2] w-full text-white mt-3"}
-                  onClick={UpdateUser}
+                  onClick={""}
                 />
               </div>
             </div>

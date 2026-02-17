@@ -1,9 +1,9 @@
 import { Fragment, useState } from "react";
-import { materialdata } from "../../lib/materialdata";
+import { materialdata } from "../../components/lib/materialdata";
 import Button from "../Button/Button";
 import { AddIcon, DeleteIcon } from "../icons";
 import InputField from "../InputField/InputField";
-import AutocompleteField from "../AutocompleteField/AutocompleteField";
+import AutocompleteField from "../../components/AutocompleteField/AutocompleteField";
 
 const FormDataInput = ({ formData, setFormData, calculateTotalAmount }) => {
   const [AddErrMsg, setAddErrMsg] = useState("");
