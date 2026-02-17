@@ -1,5 +1,3 @@
-import React from "react";
-
 const AddIcon = ({
   color = "#292D32",
   width = "24",

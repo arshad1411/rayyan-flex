@@ -1,5 +1,3 @@
-import React from "react";
-
 const ClearIcon = ({
   color = "#292D32",
   width = "14",
