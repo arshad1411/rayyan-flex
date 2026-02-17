@@ -1,9 +1,10 @@
 import { Fragment, useState } from "react";
-import { materialdata } from "../../components/lib/materialdata";
+
+import { materialdata } from "../../lib/materialdata";
+import AutocompleteField from "../AutocompleteField/AutocompleteField";
 import Button from "../Button/Button";
 import { AddIcon, DeleteIcon } from "../icons";
 import InputField from "../InputField/InputField";
-import AutocompleteField from "../../components/AutocompleteField/AutocompleteField";
 
 const FormDataInput = ({ formData, setFormData, calculateTotalAmount }) => {
   const [AddErrMsg, setAddErrMsg] = useState("");
@@ -99,20 +100,20 @@ const FormDataInput = ({ formData, setFormData, calculateTotalAmount }) => {
       const width = Number.parseFloat(newFormData[index].width) || 0;
       const height = Number.parseFloat(newFormData[index].height) || 0;
       const sqFtPrice = Number.parseFloat(newFormData[index].sq_ft_price) || 0;
-      const piececount = Number.parseFloat(newFormData[index].piece_count) || 0;
+      const pieceCount = Number.parseFloat(newFormData[index].piece_count) || 0;
 
-      const totals = width * height * sqFtPrice * piececount || 0;
+      const totals = width * height * sqFtPrice * pieceCount || 0;
       const totalRounded = totals.toFixed(2);
-      const sizecheck = width * height;
+      const sizeCheck = width * height;
 
       if (width && height && sqFtPrice) {
         if (
           totalRounded >= 100 &&
-          (sizecheck >= 10 || sizecheck * piececount >= 20 || sqFtPrice > 10)
+          (sizeCheck >= 10 || sizeCheck * pieceCount >= 20 || sqFtPrice > 10)
         ) {
           newFormData[index].total = totalRounded;
         } else {
-          newFormData[index].total = 100 * piececount;
+          newFormData[index].total = 100 * pieceCount;
         }
       } else {
         newFormData[index].total = 0;
@@ -188,7 +189,7 @@ const FormDataInput = ({ formData, setFormData, calculateTotalAmount }) => {
                   onClick={() => removeRow(index)}
                   icon1={<DeleteIcon color="#ffffff" />}
                   icon2={<DeleteIcon />}
-                  classvalues={"h-[38px] mt-5.5 border-gray-400"}
+                  className={"h-[38px] mt-5.5 border-gray-400"}
                 />
               </div>
             </>
@@ -215,7 +216,7 @@ const FormDataInput = ({ formData, setFormData, calculateTotalAmount }) => {
                       onClick={() => removeRow(index)}
                       icon1={<DeleteIcon color="#ffffff" />}
                       icon2={<DeleteIcon />}
-                      classvalues={"h-[38px] mt-5.5 border-gray-400"}
+                      className={"h-[38px] mt-5.5 border-gray-400"}
                     />
                   </div>
                 </>

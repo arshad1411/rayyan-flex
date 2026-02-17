@@ -1,15 +1,20 @@
-import { useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "react-toastify";
+import { getCustomers, updateCustomer } from "../../api/customer";
+import { getGstCustomers, updateGstCustomer } from "../../api/gstCustomer";
 import AutocompleteField from "../AutocompleteField/AutocompleteField";
-import InputField from "../InputField/InputField";
 import Button from "../Button/Button";
+import EditButton from "../EditButton/EditButton";
 import { ClearIcon } from "../icons";
+import InputField from "../InputField/InputField";
+
+const normalize = (str) => str?.toLowerCase().replace(/\s+/g, "").trim();
+
 const CustomerField = ({
   customerName,
   setCustomerName,
   phoneno,
   setPhoneno,
-  customerData,
-
   address,
   setAddress,
   gstNo,
@@ -18,129 +23,179 @@ const CustomerField = ({
   setSelectedCustomerID,
   isGstCustomer = false,
 }) => {
-  const [Open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [customerData, setCustomerData] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleCustomerChange = (e, newValue, field) => {
-    console.log(newValue, field);
-    if (!newValue) {
-      setCustomerName("");
-      setSelectedCustomerID("");
+  /* -------------------------------------------
+     Fetch Customers Based On Type
+  --------------------------------------------*/
+
+  const fetchCustomers = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const data = isGstCustomer
+        ? await getGstCustomers()
+        : await getCustomers();
+
+      setCustomerData(data || []);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to load customers");
+    } finally {
+      setLoading(false);
+    }
+  }, [isGstCustomer]);
+
+  useEffect(() => {
+    fetchCustomers();
+  }, [fetchCustomers]);
+
+  /* -------------------------------------------
+     Reset + Apply Helpers
+  --------------------------------------------*/
+
+  const resetFields = useCallback(() => {
+    setCustomerName("");
+    setSelectedCustomerID("");
+    isGstCustomer ? (setAddress(""), setGstNo("")) : setPhoneno("");
+  }, [
+    isGstCustomer,
+    setCustomerName,
+    setSelectedCustomerID,
+    setAddress,
+    setGstNo,
+    setPhoneno,
+  ]);
+
+  const applyCustomer = useCallback(
+    (customer) => {
+      if (!customer) return resetFields();
+
+      setSelectedCustomerID(customer.documentId || "");
+      setCustomerName(customer.name || "");
+
       if (isGstCustomer) {
-        setAddress("");
-        setGstNo("");
+        setAddress(customer.address || "");
+        setGstNo(customer.gstno || "");
       } else {
-        setPhoneno("");
+        setPhoneno(customer.phonenumber || "");
       }
+    },
+    [
+      isGstCustomer,
+      setSelectedCustomerID,
+      setCustomerName,
+      setAddress,
+      setGstNo,
+      setPhoneno,
+      resetFields,
+    ],
+  );
+
+  /* -------------------------------------------
+     Autocomplete Logic
+  --------------------------------------------*/
+
+  const handleCustomerChange = useCallback(
+    (value, field) => {
+      if (!value) return resetFields();
+
+      const selected = customerData.find((customer) => {
+        if (field === "name")
+          return normalize(customer.name) === normalize(value);
+
+        if (field === "phone" && !isGstCustomer)
+          return normalize(customer.phonenumber) === normalize(value);
+
+        if (field === "gst" && isGstCustomer)
+          return normalize(customer.gstno) === normalize(value);
+
+        if (field === "address" && isGstCustomer)
+          return normalize(customer.address) === normalize(value);
+
+        return false;
+      });
+
+      applyCustomer(selected);
+    },
+    [customerData, isGstCustomer, applyCustomer, resetFields],
+  );
+
+  /* -------------------------------------------
+     Update
+  --------------------------------------------*/
+
+  const handleUpdate = async () => {
+    if (!SelectCustomerID) {
+      setOpen(false);
       return;
     }
 
-    const normalize = (str) => str?.toLowerCase().replace(/\s+/g, "").trim(); // Remove spaces and lowercase
+    try {
+      const updated = isGstCustomer
+        ? await updateGstCustomer(SelectCustomerID, {
+            name: customerName,
+            address,
+            gstno: gstNo,
+          })
+        : await updateCustomer(SelectCustomerID, {
+            name: customerName,
+            phonenumber: phoneno,
+          });
 
-    const selectedCustomer = customerData.find((data) => {
-      const attr = data.attributes;
-
-      if (field === "name") {
-        return normalize(attr.name) === normalize(newValue);
-      }
-      if (field === "phone" && !isGstCustomer) {
-        return normalize(attr.phonenumber) === normalize(newValue);
-      }
-      if (field === "gst" && isGstCustomer) {
-        return normalize(attr.gstno) === normalize(newValue);
-      }
-      if (field === "address" && isGstCustomer) {
-        return normalize(attr.address) === normalize(newValue);
-      }
-      return false;
-    });
-
-    if (selectedCustomer) {
-      const { id, attributes } = selectedCustomer;
-
-      setSelectedCustomerID(id || "");
-      setCustomerName(attributes.name || "");
-
-      if (isGstCustomer) {
-        setAddress(attributes.address || "");
-        setGstNo(attributes.gstno || "");
-      } else {
-        setPhoneno(attributes.phonenumber || "");
-      }
-    } else {
-      setCustomerName("");
-      setSelectedCustomerID("");
-      if (isGstCustomer) {
-        setAddress("");
-        setGstNo("");
-      } else {
-        setPhoneno("");
-      }
+      applyCustomer(updated);
+      setOpen(false);
+      toast.success("Customer updated successfully");
+      fetchCustomers(); // refresh list
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to update customer");
     }
   };
 
-  const handleBlur = (field, fieldname) => {
-    console.log(field);
+  /* -------------------------------------------
+     Memoized Options
+  --------------------------------------------*/
 
-    const normalize = (str) => str?.toLowerCase().replace(/\s+/g, "").trim();
+  const nameOptions = useMemo(
+    () => [...new Set(customerData.map((c) => c.name).filter(Boolean))],
+    [customerData],
+  );
 
-    let inputValue = "";
+  const phoneOptions = useMemo(
+    () => [...new Set(customerData.map((c) => c.phonenumber).filter(Boolean))],
+    [customerData],
+  );
 
-    if (field === "name") {
-      inputValue = customerName;
-    } else if (field === "phone" && !isGstCustomer) {
-      inputValue = phoneno;
-    } else if (field === "gst" && isGstCustomer) {
-      inputValue = gstNo;
-    } else if (field === "address" && isGstCustomer) {
-      inputValue = address;
-    }
+  const addressOptions = useMemo(
+    () => [...new Set(customerData.map((c) => c.address).filter(Boolean))],
+    [customerData],
+  );
 
-    if (!inputValue || normalize(inputValue) === "") {
-      return;
-    }
+  const gstOptions = useMemo(
+    () => [...new Set(customerData.map((c) => c.gstno).filter(Boolean))],
+    [customerData],
+  );
 
-    let existingCustomer;
-
-    if (field === "name") {
-      existingCustomer = customerData.find(
-        (data) => normalize(data.attributes.name) === normalize(customerName),
-      );
-    } else if (field === "phone" && !isGstCustomer) {
-      existingCustomer = customerData.find(
-        (data) => normalize(data.attributes.phonenumber) === normalize(phoneno),
-      );
-    } else if (field === "gst" && isGstCustomer) {
-      existingCustomer = customerData.find(
-        (data) => normalize(data.attributes.gstno) === normalize(gstNo),
-      );
-    } else if (field === "address" && isGstCustomer) {
-      existingCustomer = customerData.find(
-        (data) => normalize(data.attributes.address) === normalize(address),
-      );
-    }
-
-    if (existingCustomer) {
-      handleCustomerChange(null, existingCustomer.attributes[fieldname], field);
-    }
-  };
+  /* -------------------------------------------
+     Render
+  --------------------------------------------*/
 
   return (
     <div
-      className={`grid grid-cols-${isGstCustomer ? "3" : "2"} gap-4  font-semibold
-      mt-4 mb-8`}
+      className={`grid grid-cols-${isGstCustomer ? "3" : "2"} gap-4 mt-4 mb-8`}
     >
+      {loading && <p className="text-sm text-gray-500">Loading...</p>}
+
       <AutocompleteField
         label="Customer Name"
         value={customerName}
-        onInputChange={(e, newInputValue) => setCustomerName(newInputValue)}
-        onChange={(e, newValue) => handleCustomerChange(e, newValue, "name")}
-        onBlur={() => handleBlur("name", "name")}
-        options={[
-          ...new Set(
-            customerData.map((data) => data.attributes.name).filter(Boolean),
-          ),
-        ]}
-        required={true}
+        onInputChange={(e, v) => setCustomerName(v)}
+        onChange={(e, v) => handleCustomerChange(v, "name")}
+        options={nameOptions}
+        required
       />
 
       {isGstCustomer ? (
@@ -148,35 +203,18 @@ const CustomerField = ({
           <AutocompleteField
             label="Address"
             value={address}
-            onInputChange={(e, newInputValue) => setAddress(newInputValue)}
-            onChange={(e, newValue) =>
-              handleCustomerChange(e, newValue, "address")
-            }
-            options={[
-              ...new Set(
-                customerData
-                  .map((data) => data.attributes.address)
-                  .filter(Boolean),
-              ),
-            ]}
-            // required={true}
+            onInputChange={(e, v) => setAddress(v)}
+            onChange={(e, v) => handleCustomerChange(v, "address")}
+            options={addressOptions}
           />
+
           <div className="flex gap-2 items-end">
             <AutocompleteField
               label="GST No"
               value={gstNo}
-              onInputChange={(e, newInputValue) => setGstNo(newInputValue)}
-              onChange={(e, newValue) =>
-                handleCustomerChange(e, newValue, "gst")
-              }
-              onBlur={() => handleBlur("gst", "gstno")}
-              options={[
-                ...new Set(
-                  customerData
-                    .filter((data) => data.attributes.gstno)
-                    .map((data) => data.attributes.gstno),
-                ),
-              ]}
+              onInputChange={(e, v) => setGstNo(v)}
+              onChange={(e, v) => handleCustomerChange(v, "gst")}
+              options={gstOptions}
             />
             {SelectCustomerID && (
               <div className="h-9">
@@ -190,18 +228,9 @@ const CustomerField = ({
           <AutocompleteField
             label="Phone Number"
             value={phoneno}
-            onInputChange={(e, newInputValue) => setPhoneno(newInputValue)}
-            onChange={(e, newValue) =>
-              handleCustomerChange(e, newValue, "phone")
-            }
-            onBlur={() => handleBlur("phone", "phonenumber")}
-            options={[
-              ...new Set(
-                customerData
-                  .map((data) => data.attributes.phonenumber)
-                  .filter(Boolean),
-              ),
-            ]}
+            onInputChange={(e, v) => setPhoneno(v)}
+            onChange={(e, v) => handleCustomerChange(v, "phone")}
+            options={phoneOptions}
             type="tel"
           />
           {SelectCustomerID && (
@@ -212,58 +241,60 @@ const CustomerField = ({
         </div>
       )}
 
-      <div>
-        {Open && (
-          <>
-            <div className="absolute top-0 left-0 w-full h-full  flex items-center justify-center z-[999]">
-              <div className="relative mx-auto w-full max-w-[24rem] rounded-lg overflow-hidden shadow-sm bg-white p-4">
-                <div className="flex justify-end my-1">
-                  <ClearIcon onClick={() => setOpen(false)} />
-                </div>
-                <InputField
-                  name="customerName"
-                  placeholder="Customer Name"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                />
-                {isGstCustomer ? (
-                  <>
-                    <InputField
-                      name="address"
-                      placeholder="Address"
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                    />
-                    <InputField
-                      name="gstNo"
-                      placeholder="GST No"
-                      value={gstNo}
-                      onChange={(e) => setGstNo(e.target.value)}
-                    />
-                  </>
-                ) : (
-                  <InputField
-                    name="phoneno"
-                    placeholder="Phone Number"
-                    value={phoneno}
-                    onChange={(e) => setPhoneno(e.target.value)}
-                  />
-                )}
-
-                <Button
-                  label="Update"
-                  classvalues={"bg-[#9E77D2] w-full text-white mt-3"}
-                  onClick={""}
-                />
+      {/* Modal (same as before) */}
+      {open && (
+        <>
+          <div className="absolute inset-0 flex items-center justify-center z-[999]">
+            <div className="relative w-full max-w-[24rem] rounded-lg shadow bg-white p-4">
+              <div className="flex justify-end mb-2">
+                <ClearIcon onClick={() => setOpen(false)} />
               </div>
+
+              <InputField
+                name="customerName"
+                placeholder="Customer Name"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+              />
+
+              {isGstCustomer ? (
+                <>
+                  <InputField
+                    name="address"
+                    placeholder="Address"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                  />
+                  <InputField
+                    name="gstNo"
+                    placeholder="GST No"
+                    value={gstNo}
+                    onChange={(e) => setGstNo(e.target.value)}
+                  />
+                </>
+              ) : (
+                <InputField
+                  name="phoneno"
+                  placeholder="Phone Number"
+                  value={phoneno}
+                  onChange={(e) => setPhoneno(e.target.value)}
+                />
+              )}
+
+              <Button
+                label="Update"
+                className="bg-[#9E77D2] w-full text-white mt-3"
+                onClick={handleUpdate}
+              />
             </div>
-            <div
-              className="bg-[#0000007d] h-full absolute top-0 left-0 w-full flex items-center justify-center z-[998]"
-              onClick={() => setOpen(false)}
-            ></div>
-          </>
-        )}
-      </div>
+          </div>
+
+          <div
+            className="absolute inset-0 bg-black/50 z-[998]"
+            onClick={() => setOpen(false)}
+          />
+        </>
+      )}
     </div>
   );
 };

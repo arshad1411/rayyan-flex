@@ -1,23 +1,15 @@
 import { appConfig } from "../config/appConfig";
-import LocalEntryPage from "../pages/LocalEntry";
 import LoginPage from "../pages/Login";
 import NotFound from "../pages/NotFound";
 import { elementMap } from "./elementMap";
 import { LOGIN } from "./paths";
-import { LOCALENTRY } from "./paths";
 
 const buildRoutes = () => {
   const routes = [];
-  routes.push(
-    {
-      path: LOGIN,
-      element: <LoginPage />,
-    },
-    {
-      path: LOCALENTRY,
-      element: <LocalEntryPage />,
-    },
-  );
+  routes.push({
+    path: LOGIN,
+    element: <LoginPage />,
+  });
 
   appConfig.forEach((item) => {
     // 🔹 Normal link

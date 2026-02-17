@@ -1,24 +1,25 @@
-import MainLayout from "../../layouts/MainLayout";
+import { useCallback, useRef, useState } from "react";
 import Button from "../../components/Button/Button";
-import { AddIcon } from "../../components/icons";
-import { DateUiPicker } from "../../components/Datepicker/Datepicker";
-import InputField from "../../components/InputField/InputField";
 import CustomerField from "../../components/CustomerField/CustomerField";
+import { DateUiPicker } from "../../components/Datepicker/Datepicker";
 import FormDataInput from "../../components/FormDataInput/FormDataInput";
+import { AddIcon } from "../../components/icons";
+import InputField from "../../components/InputField/InputField";
 import PrintUi from "../../components/PrintUi/PrintUi";
 import PrintUipdf from "../../components/PrintUipdf/PrintUipdf";
-import { useState, useCallback, useRef } from "react";
-import { setCurrentTime } from "../../components/utils/DatewithTime";
-import CurrencyConverter from "../../components/utils/CurrencyConverter";
+import MainLayout from "../../layouts/MainLayout";
+
 import dayjs from "dayjs";
-import { useReactToPrint } from "react-to-print";
 import generatePDF from "react-to-pdf";
+import { useReactToPrint } from "react-to-print";
 import { toast } from "react-toastify";
 import CashIcon from "../../components/icons/CashIcon";
-import GpayIcon from "../../components/icons/GpayIcon";
-import SaveIcon from "../../components/icons/SaveIcon";
 import DeleteIcon from "../../components/icons/DeleteIcon";
+import GpayIcon from "../../components/icons/GpayIcon";
 import PrinterIcon from "../../components/icons/PrinterIcon";
+import SaveIcon from "../../components/icons/SaveIcon";
+import CurrencyConverter from "../../utils/CurrencyConverter";
+import { setCurrentTime } from "../../utils/DatewithTime";
 
 const LocalEntryPage = () => {
   const [serialNo, setSerialNo] = useState("");
