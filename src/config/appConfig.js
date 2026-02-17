@@ -100,7 +100,7 @@ export const appConfig = [
         icon: PartyIcon,
         path: LOCALPARTYLIST,
         elementKey: "LocalPartyList",
-        roles: [ROLES.SuperAdmin],
+        roles: [ROLES.SuperAdmin, ROLES.Authenticated],
       },
     ],
   },
