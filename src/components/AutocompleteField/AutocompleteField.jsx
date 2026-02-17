@@ -11,7 +11,7 @@ const AutocompleteField = ({
 }) => {
   return (
     <div className="w-full">
-      <label className="text-base">{label}</label>
+      <label className="text-base font-semibold">{label}</label>
       <Autocomplete
         freeSolo
         options={options.filter(Boolean)}

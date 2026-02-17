@@ -3,7 +3,7 @@ import Button from "../../components/Button/Button";
 import CustomerField from "../../components/CustomerField/CustomerField";
 import { DateUiPicker } from "../../components/Datepicker/Datepicker";
 import FormDataInput from "../../components/FormDataInput/FormDataInput";
-import { AddIcon } from "../../components/icons";
+import { AddIcon, SavePdfIcon } from "../../components/icons";
 import InputField from "../../components/InputField/InputField";
 import PrintUi from "../../components/PrintUi/PrintUi";
 import PrintUipdf from "../../components/PrintUipdf/PrintUipdf";
@@ -157,9 +157,9 @@ const LocalEntryPage = () => {
         <Button
           onClick={() => ""}
           label={"Add New"}
-          icon1={<AddIcon />}
-          icon2={<AddIcon />}
-          classvalues={"bg-[#0b6bcb] text-white border-0"}
+          icon1={<AddIcon color="#fff" />}
+          icon2={<AddIcon color="#fff" />}
+          className={"bg-[#0b6bcb] text-white border-0"}
         />
       </div>
       <form onSubmit={handleSubmit} id="flexform">
@@ -267,7 +267,7 @@ const LocalEntryPage = () => {
                       icon1={<DeleteIcon color="#fff" />}
                       icon2={<DeleteIcon color="#000" />}
                       disabled={Status?.cash[index]}
-                      classvalues={
+                      className={
                         "h-[38px] mt-5.5 border-gray-400 disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-400  disabled:bg-gray-300"
                       }
                     />
@@ -321,7 +321,7 @@ const LocalEntryPage = () => {
                       onClick={() => handleRemoveGpayRow(index)}
                       icon1={<DeleteIcon color="#fff" />}
                       icon2={<DeleteIcon color="#000" />}
-                      classvalues={
+                      className={
                         "h-[38px] mt-5.5 border-gray-400 disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-400 disabled:bg-gray-300"
                       }
                       disabled={Status?.gpay[index]}
@@ -329,7 +329,7 @@ const LocalEntryPage = () => {
                   </div>
                 </div>
               ))}
-              <div className="flex justify-end items-center mt-4 font-semibold gap-4">
+              <div className="flex justify-end items-center mt-4  gap-4">
                 <p className="text-red-500">{gpayErrorMsg}</p>
 
                 <Button
@@ -350,7 +350,7 @@ const LocalEntryPage = () => {
                 label={"Save as PDF"}
                 icon1={<SavePdfIcon color="#fff" />}
                 icon2={<SavePdfIcon color="#fff" />}
-                classvalues={
+                className={
                   "bg-[#10B981] hover:bg-[#059669] text-white border-0"
                 }
                 onClick={() => generatePDF(pdfref, { filename: "page.pdf" })}
@@ -361,7 +361,7 @@ const LocalEntryPage = () => {
                 onClick={() => reactToPrintFn()}
                 icon1={<PrinterIcon color="#fff" />}
                 icon2={<PrinterIcon color="#fff" />}
-                classvalues={
+                className={
                   "bg-[#2563EB] hover:bg-[#0049e9] text-white border-0"
                 }
               />
@@ -373,7 +373,7 @@ const LocalEntryPage = () => {
             label={EditID ? "Update" : "Save"}
             icon1={<SaveIcon color="#fff" />}
             icon2={<SaveIcon color="#fff" />}
-            classvalues={
+            className={
               "bg-[#4F46E5] hover:bg-[#4338CA] text-white px-4 py-2 rounded-lg border-0"
             }
             disabled={""}

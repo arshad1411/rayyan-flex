@@ -21,7 +21,7 @@ const InputField = ({
 
   return (
     <div className="flex flex-col w-full">
-      <label className="text-base">{placeholder}</label>
+      <label className="text-base font-semibold">{placeholder}</label>
       <input
         name={name}
         type={type}
