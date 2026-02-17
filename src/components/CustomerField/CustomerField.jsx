@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import { getCustomers, updateCustomer } from "../../api/customer";
-import { getGstCustomers, updateGstCustomer } from "../../api/gstCustomer";
+import { updateCustomer } from "../../api/customer";
+import { updateGstCustomer } from "../../api/gstCustomer";
 import AutocompleteField from "../AutocompleteField/AutocompleteField";
 import Button from "../Button/Button";
 import EditButton from "../EditButton/EditButton";
@@ -11,6 +11,8 @@ import InputField from "../InputField/InputField";
 const normalize = (str) => str?.toLowerCase().replace(/\s+/g, "").trim();
 
 const CustomerField = ({
+  customerData,
+  fetchCustomers,
   customerName,
   setCustomerName,
   phoneno,
@@ -24,33 +26,6 @@ const CustomerField = ({
   isGstCustomer = false,
 }) => {
   const [open, setOpen] = useState(false);
-  const [customerData, setCustomerData] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  /* -------------------------------------------
-     Fetch Customers Based On Type
-  --------------------------------------------*/
-
-  const fetchCustomers = useCallback(async () => {
-    try {
-      setLoading(true);
-
-      const data = isGstCustomer
-        ? await getGstCustomers()
-        : await getCustomers();
-
-      setCustomerData(data || []);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to load customers");
-    } finally {
-      setLoading(false);
-    }
-  }, [isGstCustomer]);
-
-  useEffect(() => {
-    fetchCustomers();
-  }, [fetchCustomers]);
 
   /* -------------------------------------------
      Reset + Apply Helpers
@@ -187,8 +162,6 @@ const CustomerField = ({
     <div
       className={`grid grid-cols-${isGstCustomer ? "3" : "2"} gap-4 mt-4 mb-8`}
     >
-      {loading && <p className="text-sm text-gray-500">Loading...</p>}
-
       <AutocompleteField
         label="Customer Name"
         value={customerName}

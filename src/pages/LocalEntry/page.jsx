@@ -1,409 +1,351 @@
-import { useCallback, useRef, useState } from "react";
+import dayjs from "dayjs";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import generatePDF from "react-to-pdf";
+import { useReactToPrint } from "react-to-print";
+import { toast } from "react-toastify";
+
 import Button from "../../components/Button/Button";
 import CustomerField from "../../components/CustomerField/CustomerField";
 import { DateUiPicker } from "../../components/Datepicker/Datepicker";
 import FormDataInput from "../../components/FormDataInput/FormDataInput";
-import { AddIcon, SavePdfIcon } from "../../components/icons";
 import InputField from "../../components/InputField/InputField";
 import PrintUi from "../../components/PrintUi/PrintUi";
 import PrintUipdf from "../../components/PrintUipdf/PrintUipdf";
 import MainLayout from "../../layouts/MainLayout";
 
-import dayjs from "dayjs";
-import generatePDF from "react-to-pdf";
-import { useReactToPrint } from "react-to-print";
-import { toast } from "react-toastify";
-import CashIcon from "../../components/icons/CashIcon";
-import DeleteIcon from "../../components/icons/DeleteIcon";
-import GpayIcon from "../../components/icons/GpayIcon";
-import PrinterIcon from "../../components/icons/PrinterIcon";
-import SaveIcon from "../../components/icons/SaveIcon";
-import CurrencyConverter from "../../utils/CurrencyConverter";
+import {
+  AddIcon,
+  PrinterIcon,
+  SaveIcon,
+  SavePdfIcon,
+} from "../../components/icons";
+
+import { createCustomer, getCustomers } from "../../api/customer";
+import {
+  createLocalEntry,
+  getLocalEntryById,
+  updateLocalEntry,
+} from "../../api/localEntry";
+import CurrencyConverter from "../../components/CurrencyConverter/CurrencyConverter";
+import { useAuth } from "../../context/auth-context";
+import { LOCALENTRY } from "../../router/paths";
 import { setCurrentTime } from "../../utils/DatewithTime";
 
-const LocalEntryPage = () => {
-  const [serialNo, setSerialNo] = useState("");
-  const [changeDate, setChangeDate] = useState(setCurrentTime(new Date()));
-  const [Notes, setNotes] = useState("");
-  // eslint-disable-next-line no-unused-vars
-  const [CustomerData, setCustomerData] = useState([]);
-  const [selectCustomerID, setSelectCustomerID] = useState("");
-  const [customerName, setCustomerName] = useState("");
-  const [phoneno, setPhoneno] = useState("");
-  const [formData, setFormData] = useState([]);
+const LocalEntry = () => {
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get("editid");
+
+  const navigate = useNavigate();
+  const { role } = useAuth();
+
   const contentRef = useRef(null);
-  const pdfref = useRef(null);
-  const [cashData, setCashData] = useState([{ date: null, amount: "" }]);
-  // eslint-disable-next-line no-unused-vars
-  const [gpayData, setGpayData] = useState([{ date: null, amount: "" }]);
-  const [amount, setAmount] = useState(0);
-  const [cashErrorMsg, setCashErrorMsg] = useState("");
-  // eslint-disable-next-line no-unused-vars
-  const [gpayErrorMsg, setGpayErrorMsg] = useState("");
-  // eslint-disable-next-line no-unused-vars
-  const [balance, setbalance] = useState(0);
-  // eslint-disable-next-line no-unused-vars
-  const [errorMessage, setErrorMessage] = useState("");
-  // eslint-disable-next-line no-unused-vars
-  const [errorBool, setErrorBool] = useState(false);
-  // eslint-disable-next-line no-unused-vars
-  const [Status, setStatus] = useState(null);
-  // eslint-disable-next-line no-unused-vars
-  const [EditID, setEditID] = useState(null);
-  // eslint-disable-next-line no-unused-vars
-  const [Advance, setAdvance] = useState(0);
+  const pdfRef = useRef(null);
 
-  const reactToPrintFn = useReactToPrint({
-    contentRef,
-    documentTitle: `Bill-${serialNo}`,
-    onAfterPrint: () => toast.success("Print successful"),
-  });
+  /* ---------------- STATE ---------------- */
 
-  // Calculate the total amount
-  const calculateTotalAmount = useCallback((formData) => {
-    const total = formData.reduce((sum, item) => {
-      return sum + (Number.parseFloat(item.total) || 0);
-    }, 0);
-    const finalAmount = Math.round(total).toFixed(2);
-    setAmount(finalAmount);
+  const [loading, setLoading] = useState(false);
+  const [documentId, setDocumentId] = useState(null);
+
+  const [billNo, setBillNo] = useState("");
+  const [date, setDate] = useState(setCurrentTime(new Date()));
+  const [note, setNote] = useState("");
+
+  const [customerId, setCustomerId] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [customerList, setCustomerList] = useState([]);
+
+  const [flexData, setFlexData] = useState([]);
+  const [cashData, setCashData] = useState([
+    { cash_date: null, cash_amount: 0 },
+  ]);
+  const [gpayData, setGpayData] = useState([
+    { gpay_date: null, gpay_amount: 0 },
+  ]);
+
+  const [error, setError] = useState("");
+
+  /* ---------------- CALCULATIONS ---------------- */
+
+  const totalAmount = useMemo(() => {
+    return flexData.reduce(
+      (sum, item) => sum + (Number.parseFloat(item.per_piece_total || 0) || 0),
+      0,
+    );
+  }, [flexData]);
+
+  console.log(totalAmount);
+
+  const receivedAmount = useMemo(() => {
+    const cashTotal = cashData.reduce(
+      (sum, item) => sum + (Number.parseFloat(item.cash_amount || 0) || 0),
+      0,
+    );
+    const gpayTotal = gpayData.reduce(
+      (sum, item) => sum + (Number.parseFloat(item.gpay_amount || 0) || 0),
+      0,
+    );
+    return cashTotal + gpayTotal;
+  }, [cashData, gpayData]);
+
+  const balanceAmount = useMemo(() => {
+    return totalAmount - receivedAmount;
+  }, [totalAmount, receivedAmount]);
+
+  useEffect(() => {
+    if (balanceAmount < 0) {
+      setError("Balance cannot be negative");
+    } else {
+      setError("");
+    }
+  }, [balanceAmount]);
+
+  /* ---------------- LOAD CUSTOMERS ---------------- */
+
+  const loadCustomers = useCallback(async () => {
+    try {
+      const data = await getCustomers();
+      setCustomerList(data);
+    } catch {
+      setCustomerList([]);
+    }
   }, []);
 
-  //handle change
-  const handleCashChange = useCallback(
-    (index, e, name) => {
-      let value;
-      if (name) {
-        value = e;
-      } else {
-        ({ name, value } = e.target);
-      }
+  /* ---------------- LOAD EDIT ---------------- */
 
-      const updatedCashData = [...cashData];
-      updatedCashData[index][name] = value;
-      setCashData(updatedCashData);
-    },
-    [cashData],
-  );
+  const loadEditData = useCallback(async (id) => {
+    try {
+      const data = await getLocalEntryById(id);
+      if (!data) return;
 
-  //handle add
-  const handleAddCashRow = useCallback(() => {
-    setCashErrorMsg("");
-    const activeRow = cashData[cashData.length - 1];
+      setDocumentId(data.documentId);
+      setBillNo(data.bill_no);
+      setDate(data.date);
+      setNote(data.note);
 
-    if (activeRow.date === null || activeRow.amount === 0) {
-      setCashErrorMsg("Please enter date and amount");
-      return;
+      setCustomerId(data.customer?.documentId);
+      setCustomerName(data.customer?.name);
+      setPhone(data.customer?.phonenumber);
+
+      setFlexData(data.flex || []);
+      setCashData(data.cash || []);
+      setGpayData(data.gpay || []);
+    } catch {
+      toast.error("Failed to load entry");
     }
+  }, []);
 
-    setCashData([...cashData, { date: null, amount: 0 }]);
-  }, [cashData]);
+  useEffect(() => {
+    loadCustomers();
+    if (editId) loadEditData(editId);
+  }, [editId, loadCustomers, loadEditData]);
 
-  //handleremove
-  const handleRemoveCashRow = useCallback(
-    (index) => {
-      const updatedCashData = [...cashData];
-      updatedCashData.splice(index, 1);
-      setCashData(updatedCashData);
-    },
-    [cashData],
-  );
-  //gpay change
-  const handleGpayChange = useCallback(
-    (index, e, name) => {
-      let value;
-      if (name) {
-        value = e;
-      } else {
-        ({ name, value } = e.target);
-      }
-
-      const updatedGpayData = [...gpayData];
-      updatedGpayData[index][name] = value;
-      setGpayData(updatedGpayData);
-    },
-    [gpayData],
-  );
-  //add gpay row
-  const handleAddGpayRow = useCallback(() => {
-    setGpayErrorMsg("");
-    const activeRow = gpayData[gpayData.length - 1];
-
-    if (activeRow.date === null || activeRow.amount === 0) {
-      setGpayErrorMsg("Please enter date and amount");
-      return;
-    }
-
-    setGpayData([...gpayData, { date: null, amount: 0 }]);
-  }, [gpayData]);
-  //remove gpay row
-  const handleRemoveGpayRow = useCallback(
-    (index) => {
-      if (gpayData.length === 1) return;
-
-      const newGpayData = [...gpayData];
-      newGpayData.splice(index, 1);
-      setGpayData(newGpayData);
-    },
-    [gpayData],
-  );
+  /* ---------------- SUBMIT ---------------- */
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (flexData.length === 0) {
+      toast.error("Please add at least one size");
+      return;
+    }
+
+    if (error) {
+      toast.error(error);
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      let finalCustomerId = customerId;
+
+      if (!customerId) {
+        if (!customerName.trim()) {
+          toast.error("Customer name is required");
+          return;
+        }
+
+        const createdCustomer = await createCustomer({
+          name: customerName,
+          phonenumber: phone,
+        });
+
+        finalCustomerId = createdCustomer.documentId;
+        setCustomerId(finalCustomerId);
+        await loadCustomers();
+      }
+
+      const payload = {
+        bill_no: billNo,
+        date,
+        note,
+        customer: finalCustomerId,
+        flex: flexData,
+        cash: cashData,
+        gpay: gpayData,
+        recieved_amount: receivedAmount,
+        balance_amount: balanceAmount,
+        total_amount: totalAmount,
+        current_state: balanceAmount === 0 ? "paid" : "pending",
+      };
+
+      if (!documentId) {
+        const created = await createLocalEntry(payload);
+        setDocumentId(created.documentId);
+        toast.success("Local entry created successfully");
+      } else {
+        await updateLocalEntry(documentId, payload);
+        toast.success("Local entry updated successfully");
+      }
+    } catch {
+      toast.error("Failed to save entry");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  /* ---------------- PRINT ---------------- */
+
+  const handlePrint = useReactToPrint({
+    contentRef,
+    documentTitle: `Bill-${billNo}`,
+    onAfterPrint: () => toast.success("Print successful"),
+  });
+
+  /* ---------------- CLEAR ---------------- */
+
+  const clearForm = () => {
+    setDocumentId(null);
+    setBillNo("");
+    setDate(setCurrentTime(new Date()));
+    setNote("");
+    setCustomerId("");
+    setCustomerName("");
+    setPhone("");
+    setFlexData([]);
+    setCashData([{ cash_date: null, cash_amount: 0 }]);
+    setGpayData([{ gpay_date: null, gpay_amount: 0 }]);
+    navigate(LOCALENTRY);
+  };
+
+  /* ---------------- UI ---------------- */
+
   return (
     <MainLayout>
-      <h1 className="text-2xl font-medium  mb-4">Local Entry</h1>
+      <h1 className="text-2xl font-medium">Local Entry</h1>
+
       <div className="flex justify-end">
         <Button
-          onClick={() => ""}
-          label={"Add New"}
+          onClick={clearForm}
+          label="Add New"
           icon1={<AddIcon color="#fff" />}
-          icon2={<AddIcon color="#fff" />}
-          className={"bg-[#0b6bcb] text-white border-0"}
+          className="bg-[#0b6bcb] text-white border-0"
         />
       </div>
-      <form onSubmit={handleSubmit} id="flexform">
-        <div className="grid grid-cols-3 gap-4  font-semibold my-2">
-          {
+
+      <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+        <div className="grid grid-cols-4 gap-4 my-2">
+          {role === "superadmin" && (
             <>
-              <div className="flex flex-col" style={{ lineHeight: "10px" }}>
-                <label className="text-base">Date</label>
-                <div className="relative">
-                  <DateUiPicker
-                    onChange={(newValue) => {
-                      const gettime = setCurrentTime(newValue);
-                      setChangeDate(gettime);
-                    }}
-                    label="Date"
-                    value={changeDate}
-                    className={"w-full"}
-                  />
-                </div>
-              </div>
-              <div>
-                <InputField
-                  name={"bill_no"}
-                  placeholder={"Bill No"}
-                  value={serialNo}
-                  onChange={(e) => setSerialNo(e.target.value)}
-                />
-              </div>
-            </>
-          }
-
-          <div>
-            <InputField
-              name={"note"}
-              placeholder={"Note"}
-              value={Notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <CustomerField
-          customerData={CustomerData}
-          SelectCustomerID={selectCustomerID}
-          setSelectedCustomerID={setSelectCustomerID}
-          setCustomerName={setCustomerName}
-          customerName={customerName}
-          setPhoneno={setPhoneno}
-          phoneno={phoneno}
-        />
-
-        <FormDataInput
-          formData={formData}
-          setFormData={setFormData}
-          calculateTotalAmount={calculateTotalAmount}
-        />
-        <div className="grid grid-cols-4 gap-4 mt-4 mb-12">
-          <div className="flex flex-col">
-            <p className="text-base font-semibold">Total Amount</p>
-            <CurrencyConverter amount={amount} />
-          </div>
-          <div className="flex flex-col">
-            <p className="text-base font-semibold">Total Balance</p>
-            <CurrencyConverter amount={balance} />
-            {errorBool && <p style={{ color: "red" }}>{errorMessage}</p>}
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="border-r-2 border-gray-300">
-            <div>
-              {cashData.map((cashRow, index) => (
-                <div className="grid grid-cols-3 gap-3mb-2" key={index}>
-                  <div className="flex flex-col col-span-1   font-semibold  relative">
-                    <label className="text-base">Cash Date</label>
-                    <DateUiPicker
-                      value={cashRow.date ? dayjs(cashRow.date) : null}
-                      onChange={(newValue) => {
-                        if (!newValue) {
-                          handleCashChange(index, null, "date");
-                        } else {
-                          const gettime = setCurrentTime(newValue);
-                          handleCashChange(index, gettime, "date");
-                        }
-                      }}
-                      label="Cash Date"
-                      // minDate={role === "superadmin" ? false : new Date()}
-                      disabled={Status?.cash[index]}
-                      isClearable={true}
-                      className={`disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-400`}
-                    />
-                  </div>
-                  <div className="flex gap-2 col-span-2 font-semibold mr-3">
-                    <InputField
-                      name={"amount"}
-                      type={"number"}
-                      placeholder={"Cash Amount"}
-                      value={cashRow.amount}
-                      onChange={(e) => handleCashChange(index, e)}
-                      disabled={Status?.cash[index]}
-                      className={`disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-400`}
-                    />
-
-                    <Button
-                      onClick={() => handleRemoveCashRow(index)}
-                      icon1={<DeleteIcon color="#fff" />}
-                      icon2={<DeleteIcon color="#000" />}
-                      disabled={Status?.cash[index]}
-                      className={
-                        "h-[38px] mt-5.5 border-gray-400 disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-400  disabled:bg-gray-300"
-                      }
-                    />
-                  </div>
-                </div>
-              ))}
-              <div className="flex justify-end items-center mt-4 mr-3 gap-4">
-                <p className="text-red-500">{cashErrorMsg}</p>
-
-                <Button
-                  onClick={handleAddCashRow}
-                  label={"Add Cash"}
-                  icon1={<CashIcon />}
-                  icon2={<CashIcon color="#292D32" />}
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <div>
-              {gpayData.map((gpayRow, index) => (
-                <div className="grid grid-cols-3 gap-3 mb-2 " key={index}>
-                  <div className="flex flex-col col-span-1  font-semibold relative">
-                    <label className="text-base">Gpay Date</label>
-                    <DateUiPicker
-                      value={gpayRow.date ? dayjs(gpayRow.date) : null}
-                      onChange={(newValue) => {
-                        if (!newValue) {
-                          handleGpayChange(index, null, "date");
-                        } else {
-                          const gettime = setCurrentTime(newValue);
-                          handleGpayChange(index, gettime, "date");
-                        }
-                      }}
-                      label="Gpay Date"
-                      isClearable={true}
-                      disabled={Status?.gpay[index]}
-                      className={`disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-400`}
-                    />
-                  </div>
-                  <div className="flex gap-2 col-span-2 font-semibold mr-3">
-                    <InputField
-                      name={"amount"}
-                      placeholder={"Gpay Amount"}
-                      value={gpayRow.amount}
-                      onChange={(e) => handleGpayChange(index, e)}
-                      disabled={Status?.gpay[index]}
-                      className={`disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-400`}
-                    />
-                    <Button
-                      onClick={() => handleRemoveGpayRow(index)}
-                      icon1={<DeleteIcon color="#fff" />}
-                      icon2={<DeleteIcon color="#000" />}
-                      className={
-                        "h-[38px] mt-5.5 border-gray-400 disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-400 disabled:bg-gray-300"
-                      }
-                      disabled={Status?.gpay[index]}
-                    />
-                  </div>
-                </div>
-              ))}
-              <div className="flex justify-end items-center mt-4  gap-4">
-                <p className="text-red-500">{gpayErrorMsg}</p>
-
-                <Button
-                  onClick={handleAddGpayRow}
-                  label={"Add Gpay"}
-                  icon1={<GpayIcon />}
-                  icon2={<GpayIcon color="#292D32" />}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-end items-center gap-4 mt-10">
-          {EditID && (
-            <>
-              <Button
-                label={"Save as PDF"}
-                icon1={<SavePdfIcon color="#fff" />}
-                icon2={<SavePdfIcon color="#fff" />}
-                className={
-                  "bg-[#10B981] hover:bg-[#059669] text-white border-0"
-                }
-                onClick={() => generatePDF(pdfref, { filename: "page.pdf" })}
+              <DateUiPicker
+                value={date}
+                label="Date"
+                onChange={(d) => setDate(setCurrentTime(d))}
               />
-
-              <Button
-                label={"Print Bill"}
-                onClick={() => reactToPrintFn()}
-                icon1={<PrinterIcon color="#fff" />}
-                icon2={<PrinterIcon color="#fff" />}
-                className={
-                  "bg-[#2563EB] hover:bg-[#0049e9] text-white border-0"
-                }
+              <InputField
+                placeholder="Bill No"
+                value={billNo}
+                onChange={(e) => setBillNo(e.target.value)}
               />
             </>
           )}
+
+          <InputField
+            placeholder="Note"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
+        </div>
+
+        <CustomerField
+          customerData={customerList}
+          fetchCustomers={loadCustomers}
+          setCustomerData={setCustomerList}
+          SelectCustomerID={customerId}
+          setSelectedCustomerID={setCustomerId}
+          customerName={customerName}
+          setCustomerName={setCustomerName}
+          phoneno={phone}
+          setPhoneno={setPhone}
+        />
+
+        <FormDataInput formData={flexData} setFormData={setFlexData} />
+
+        <div className="grid grid-cols-4 gap-4 mt-4 mb-12">
+          <CurrencyConverter amount={totalAmount} label="Total Amount" />
+          <CurrencyConverter amount={receivedAmount} label="Received Amount" />
+          <CurrencyConverter
+            amount={balanceAmount}
+            label="Balance Amount"
+            error={error}
+          />
+        </div>
+
+        <div className="flex justify-end gap-4">
+          {documentId && (
+            <>
+              <Button
+                label="Save as PDF"
+                onClick={() => generatePDF(pdfRef, { filename: "bill.pdf" })}
+                icon1={<SavePdfIcon color="#fff" />}
+                className="bg-green-600 text-white"
+              />
+              <Button
+                label="Print"
+                onClick={handlePrint}
+                icon1={<PrinterIcon color="#fff" />}
+                className="bg-blue-600 text-white"
+              />
+            </>
+          )}
+
           <Button
-            type={"submit"}
-            form={"flexform"}
-            label={EditID ? "Update" : "Save"}
+            type="submit"
+            label={documentId ? "Update" : "Save"}
             icon1={<SaveIcon color="#fff" />}
-            icon2={<SaveIcon color="#fff" />}
-            className={
-              "bg-[#4F46E5] hover:bg-[#4338CA] text-white px-4 py-2 rounded-lg border-0"
-            }
-            disabled={""}
+            disabled={loading}
+            className="bg-indigo-600 text-white"
           />
         </div>
       </form>
+
       <PrintUi
         ref={contentRef}
-        billno={serialNo}
+        billno={billNo}
         name={customerName}
-        date={dayjs(changeDate).format("DD-MM-YYYY")}
-        amount={amount}
-        advance={Advance}
-        balance={balance}
-        sizedata={formData}
+        date={dayjs(date).format("DD-MM-YYYY")}
+        amount={totalAmount}
+        advance={receivedAmount}
+        balance={balanceAmount}
+        sizedata={flexData}
       />
-      <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
+
+      <div className="hidden">
         <PrintUipdf
-          ref={pdfref}
-          billno={serialNo}
+          ref={pdfRef}
+          billno={billNo}
           name={customerName}
-          date={dayjs(changeDate).format("DD-MM-YYYY")}
-          amount={amount}
-          advance={Advance}
-          balance={balance}
-          sizedata={formData}
+          date={dayjs(date).format("DD-MM-YYYY")}
+          amount={totalAmount}
+          advance={receivedAmount}
+          balance={balanceAmount}
+          sizedata={flexData}
         />
       </div>
     </MainLayout>
   );
 };
 
-export default LocalEntryPage;
+export default LocalEntry;

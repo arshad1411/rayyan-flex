@@ -6,7 +6,7 @@ import Button from "../Button/Button";
 import { AddIcon, DeleteIcon } from "../icons";
 import InputField from "../InputField/InputField";
 
-const FormDataInput = ({ formData, setFormData, calculateTotalAmount }) => {
+const FormDataInput = ({ formData, setFormData }) => {
   const [AddErrMsg, setAddErrMsg] = useState("");
 
   const addNewRow = (type) => {
@@ -51,7 +51,6 @@ const FormDataInput = ({ formData, setFormData, calculateTotalAmount }) => {
     if (!currentRow) {
       const newRow = generateNewRow(type);
       setFormData([...formData, newRow]);
-      calculateTotalAmount([...formData, newRow]);
       return;
     }
 
@@ -71,14 +70,12 @@ const FormDataInput = ({ formData, setFormData, calculateTotalAmount }) => {
     const newRow = generateNewRow(type);
     const newFormData = [...formData, newRow];
     setFormData(newFormData);
-    calculateTotalAmount(newFormData);
   };
 
   const removeRow = (index) => {
     const newFormData = [...formData];
     newFormData.splice(index, 1);
     setFormData(newFormData);
-    calculateTotalAmount(newFormData);
   };
 
   const handleChange = (index, e, name) => {
@@ -125,7 +122,6 @@ const FormDataInput = ({ formData, setFormData, calculateTotalAmount }) => {
     }
 
     setFormData(newFormData);
-    calculateTotalAmount(newFormData);
   };
 
   return (

@@ -78,22 +78,27 @@ export const DateUiPicker = ({
   className,
 }) => {
   return (
-    <DatePicker
-      showIcon
-      toggleCalendarOnIconClick
-      isClearable={isClearable}
-      selected={value}
-      onChange={onChange}
-      dropdownMode="select"
-      dateFormat="dd-MM-yyyy"
-      placeholderText={label}
-      popperPlacement="auto"
-      minDate={minDate}
-      disabled={disabled}
-      icon={
-        <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 text-black cursor-pointer !p-0 !w-5 !h-5" />
-      }
-      className={`w-full text-sm  border border-gray-400 focus:outline-none cursor-pointer rounded-md h-9 ${className}`}
-    />
+    <div className="flex flex-col" style={{ lineHeight: "10px" }}>
+      <label className="text-base font-semibold">{label}</label>
+      <div className="relative">
+        <DatePicker
+          showIcon
+          toggleCalendarOnIconClick
+          isClearable={isClearable}
+          selected={value}
+          onChange={onChange}
+          dropdownMode="select"
+          dateFormat="dd-MM-yyyy"
+          placeholderText={label}
+          popperPlacement="auto"
+          minDate={minDate}
+          disabled={disabled}
+          icon={
+            <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 text-black cursor-pointer !p-0 !w-5 !h-5" />
+          }
+          className={`w-full text-sm  border border-gray-400 focus:outline-none cursor-pointer rounded-md h-9 ${className}`}
+        />
+      </div>
+    </div>
   );
 };
