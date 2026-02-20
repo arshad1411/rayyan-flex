@@ -73,16 +73,16 @@ const PrintUipdf = forwardRef((props, ref) => {
           >
             <thead>
               <tr>
-                <th className="!bg-[#2A3042] !text-white !w-[48%] ">
+                <th className="bg-[#2A3042]! text-white! w-[48%]! ">
                   Particular
                 </th>
-                <th className="!bg-[#2A3042] !text-white !w-[12%]  text-center">
+                <th className="bg-[#2A3042]! text-white! w-[12%]!  text-center">
                   Pcs
                 </th>
-                <th className="!bg-[#2A3042] !text-white !w-[14%]  text-center">
+                <th className="bg-[#2A3042]! text-white! w-[14%]!  text-center">
                   Sq.Ft
                 </th>
-                <th className="!bg-[#2A3042] !text-white !w-[22%]  text-center">
+                <th className="bg-[#2A3042]! text-white! w-[22%]!  text-center">
                   Amount
                 </th>
               </tr>

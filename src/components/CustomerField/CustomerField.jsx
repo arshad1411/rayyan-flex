@@ -27,10 +27,6 @@ const CustomerField = ({
 }) => {
   const [open, setOpen] = useState(false);
 
-  /* -------------------------------------------
-     Reset + Apply Helpers
-  --------------------------------------------*/
-
   const resetFields = useCallback(() => {
     setCustomerName("");
     setSelectedCustomerID("");
@@ -69,10 +65,6 @@ const CustomerField = ({
     ],
   );
 
-  /* -------------------------------------------
-     Autocomplete Logic
-  --------------------------------------------*/
-
   const handleCustomerChange = useCallback(
     (value, field) => {
       if (!value) return resetFields();
@@ -97,10 +89,6 @@ const CustomerField = ({
     },
     [customerData, isGstCustomer, applyCustomer, resetFields],
   );
-
-  /* -------------------------------------------
-     Update
-  --------------------------------------------*/
 
   const handleUpdate = async () => {
     if (!SelectCustomerID) {
@@ -130,10 +118,6 @@ const CustomerField = ({
     }
   };
 
-  /* -------------------------------------------
-     Memoized Options
-  --------------------------------------------*/
-
   const nameOptions = useMemo(
     () => [...new Set(customerData.map((c) => c.name).filter(Boolean))],
     [customerData],
@@ -154,13 +138,9 @@ const CustomerField = ({
     [customerData],
   );
 
-  /* -------------------------------------------
-     Render
-  --------------------------------------------*/
-
   return (
     <div
-      className={`grid grid-cols-${isGstCustomer ? "3" : "2"} gap-4 mt-4 mb-8`}
+      className={`grid ${isGstCustomer ? "grid-cols-3" : "grid-cols-2"} gap-4 mt-4 mb-8`}
     >
       <AutocompleteField
         label="Customer Name"

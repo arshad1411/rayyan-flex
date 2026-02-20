@@ -12,6 +12,7 @@ import FormDataInput from "../../components/FormDataInput/FormDataInput";
 import InputField from "../../components/InputField/InputField";
 import PrintUi from "../../components/PrintUi/PrintUi";
 import PrintUipdf from "../../components/PrintUipdf/PrintUipdf";
+import CurrencyConverter from "../../components/CurrencyConverter/CurrencyConverter";
 import MainLayout from "../../layouts/MainLayout";
 
 import {
@@ -19,6 +20,9 @@ import {
   PrinterIcon,
   SaveIcon,
   SavePdfIcon,
+  DeleteIcon,
+  CashIcon,
+  GpayIcon,
 } from "../../components/icons";
 
 import { createCustomer, getCustomers } from "../../api/customer";
@@ -27,10 +31,12 @@ import {
   getLocalEntryById,
   updateLocalEntry,
 } from "../../api/localEntry";
-import CurrencyConverter from "../../components/CurrencyConverter/CurrencyConverter";
+
 import { useAuth } from "../../context/auth-context";
 import { LOCALENTRY } from "../../router/paths";
 import { setCurrentTime } from "../../utils/DatewithTime";
+
+const num = (v) => Number(v) || 0;
 
 const LocalEntry = () => {
   const [searchParams] = useSearchParams();
@@ -41,8 +47,6 @@ const LocalEntry = () => {
 
   const contentRef = useRef(null);
   const pdfRef = useRef(null);
-
-  /* ---------------- STATE ---------------- */
 
   const [loading, setLoading] = useState(false);
   const [documentId, setDocumentId] = useState(null);
@@ -57,35 +61,33 @@ const LocalEntry = () => {
   const [customerList, setCustomerList] = useState([]);
 
   const [flexData, setFlexData] = useState([]);
-  const [cashData, setCashData] = useState([
-    { cash_date: null, cash_amount: 0 },
-  ]);
-  const [gpayData, setGpayData] = useState([
-    { gpay_date: null, gpay_amount: 0 },
-  ]);
+  const [instructionData, setInstructionData] = useState([]);
+
+  const [cashData, setCashData] = useState([{ date: null, amount: 0 }]);
+  const [gpayData, setGpayData] = useState([{ date: null, amount: 0 }]);
+
+  const [cashErrorMsg, setCashErrorMsg] = useState("");
+  const [gpayErrorMsg, setGpayErrorMsg] = useState("");
 
   const [error, setError] = useState("");
 
-  /* ---------------- CALCULATIONS ---------------- */
-
   const totalAmount = useMemo(() => {
-    return flexData.reduce(
-      (sum, item) => sum + (Number.parseFloat(item.per_piece_total || 0) || 0),
+    const flexTotal = flexData.reduce(
+      (sum, item) => sum + num(item.per_piece_total),
       0,
     );
-  }, [flexData]);
 
-  console.log(totalAmount);
+    const instructionTotal = instructionData.reduce(
+      (sum, item) => sum + num(item.per_piece_total),
+      0,
+    );
+
+    return flexTotal + instructionTotal;
+  }, [flexData, instructionData]);
 
   const receivedAmount = useMemo(() => {
-    const cashTotal = cashData.reduce(
-      (sum, item) => sum + (Number.parseFloat(item.cash_amount || 0) || 0),
-      0,
-    );
-    const gpayTotal = gpayData.reduce(
-      (sum, item) => sum + (Number.parseFloat(item.gpay_amount || 0) || 0),
-      0,
-    );
+    const cashTotal = cashData.reduce((sum, item) => sum + num(item.amount), 0);
+    const gpayTotal = gpayData.reduce((sum, item) => sum + num(item.amount), 0);
     return cashTotal + gpayTotal;
   }, [cashData, gpayData]);
 
@@ -101,22 +103,20 @@ const LocalEntry = () => {
     }
   }, [balanceAmount]);
 
-  /* ---------------- LOAD CUSTOMERS ---------------- */
-
   const loadCustomers = useCallback(async () => {
     try {
       const data = await getCustomers();
-      setCustomerList(data);
+      setCustomerList(data?.data || data || []);
     } catch {
       setCustomerList([]);
     }
   }, []);
 
-  /* ---------------- LOAD EDIT ---------------- */
-
   const loadEditData = useCallback(async (id) => {
     try {
-      const data = await getLocalEntryById(id);
+      const res = await getLocalEntryById(id);
+      const data = res?.data?.[0] || res?.data || res;
+
       if (!data) return;
 
       setDocumentId(data.documentId);
@@ -129,8 +129,21 @@ const LocalEntry = () => {
       setPhone(data.customer?.phonenumber);
 
       setFlexData(data.flex || []);
-      setCashData(data.cash || []);
-      setGpayData(data.gpay || []);
+      setInstructionData(data.size_instruction || []);
+
+      setCashData(
+        data.cash?.map((c) => ({
+          date: c.date,
+          amount: c.amount,
+        })) || [{ date: null, amount: 0 }],
+      );
+
+      setGpayData(
+        data.gpay?.map((g) => ({
+          date: g.date,
+          amount: g.amount,
+        })) || [{ date: null, amount: 0 }],
+      );
     } catch {
       toast.error("Failed to load entry");
     }
@@ -141,12 +154,10 @@ const LocalEntry = () => {
     if (editId) loadEditData(editId);
   }, [editId, loadCustomers, loadEditData]);
 
-  /* ---------------- SUBMIT ---------------- */
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (flexData.length === 0) {
+    if (flexData.length === 0 && instructionData.length === 0) {
       toast.error("Please add at least one size");
       return;
     }
@@ -168,69 +179,143 @@ const LocalEntry = () => {
         }
 
         const createdCustomer = await createCustomer({
-          name: customerName,
-          phonenumber: phone,
+          data: {
+            name: customerName,
+            phonenumber: phone,
+          },
         });
 
-        finalCustomerId = createdCustomer.documentId;
+        finalCustomerId = createdCustomer?.data?.documentId;
         setCustomerId(finalCustomerId);
+
         await loadCustomers();
       }
 
       const payload = {
+        data: {
+          bill_no: billNo,
+          date,
+          note,
+          customer: finalCustomerId,
+          flex: flexData,
+          size_instruction: instructionData,
+          cash: cashData,
+          gpay: gpayData,
+          recieved_amount: receivedAmount,
+          balance_amount: balanceAmount,
+          total_amount: totalAmount,
+        },
+      };
+
+      console.log({
         bill_no: billNo,
         date,
         note,
         customer: finalCustomerId,
         flex: flexData,
+        size_instruction: instructionData,
         cash: cashData,
         gpay: gpayData,
         recieved_amount: receivedAmount,
         balance_amount: balanceAmount,
         total_amount: totalAmount,
-        current_state: balanceAmount === 0 ? "paid" : "pending",
-      };
+      });
 
       if (!documentId) {
         const created = await createLocalEntry(payload);
-        setDocumentId(created.documentId);
+        setDocumentId(created?.data?.documentId);
         toast.success("Local entry created successfully");
       } else {
         await updateLocalEntry(documentId, payload);
         toast.success("Local entry updated successfully");
       }
-    } catch {
+    } catch (error) {
+      console.log(error);
       toast.error("Failed to save entry");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ---------------- PRINT ---------------- */
-
   const handlePrint = useReactToPrint({
     contentRef,
     documentTitle: `Bill-${billNo}`,
-    onAfterPrint: () => toast.success("Print successful"),
   });
-
-  /* ---------------- CLEAR ---------------- */
 
   const clearForm = () => {
     setDocumentId(null);
     setBillNo("");
     setDate(setCurrentTime(new Date()));
     setNote("");
+
     setCustomerId("");
     setCustomerName("");
     setPhone("");
+
     setFlexData([]);
-    setCashData([{ cash_date: null, cash_amount: 0 }]);
-    setGpayData([{ gpay_date: null, gpay_amount: 0 }]);
+    setInstructionData([]);
+
+    setCashData([{ date: null, amount: 0 }]);
+    setGpayData([{ date: null, amount: 0 }]);
+
     navigate(LOCALENTRY);
   };
 
-  /* ---------------- UI ---------------- */
+  const handleAddCashRow = () => {
+    setCashErrorMsg("");
+    const last = cashData[cashData.length - 1];
+
+    if (!last.date || !last.amount) {
+      setCashErrorMsg("Please enter date and amount");
+      return;
+    }
+
+    setCashData((prev) => [...prev, { date: null, amount: 0 }]);
+  };
+
+  const handleAddGpayRow = () => {
+    setGpayErrorMsg("");
+    const last = gpayData[gpayData.length - 1];
+
+    if (!last.date || !last.amount) {
+      setGpayErrorMsg("Please enter date and amount");
+      return;
+    }
+
+    setGpayData((prev) => [...prev, { date: null, amount: 0 }]);
+  };
+
+  const handleCashChange = (index, e, field) => {
+    const value = field ? e : e.target.value;
+    const name = field || e.target.name;
+
+    setCashData((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [name]: value } : item)),
+    );
+  };
+
+  const handleGpayChange = (index, e, field) => {
+    const value = field ? e : e.target.value;
+    const name = field || e.target.name;
+
+    setGpayData((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, [name]: value } : item)),
+    );
+  };
+
+  const handleRemoveCashRow = (index) => {
+    setCashData((prev) => {
+      if (prev.length === 1) return prev;
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  const handleRemoveGpayRow = (index) => {
+    setGpayData((prev) => {
+      if (prev.length === 1) return prev;
+      return prev.filter((_, i) => i !== index);
+    });
+  };
 
   return (
     <MainLayout>
@@ -238,6 +323,7 @@ const LocalEntry = () => {
 
       <div className="flex justify-end">
         <Button
+          type="button"
           onClick={clearForm}
           label="Add New"
           icon1={<AddIcon color="#fff" />}
@@ -254,6 +340,7 @@ const LocalEntry = () => {
                 label="Date"
                 onChange={(d) => setDate(setCurrentTime(d))}
               />
+
               <InputField
                 placeholder="Bill No"
                 value={billNo}
@@ -281,7 +368,12 @@ const LocalEntry = () => {
           setPhoneno={setPhone}
         />
 
-        <FormDataInput formData={flexData} setFormData={setFlexData} />
+        <FormDataInput
+          flexData={flexData}
+          setFlexData={setFlexData}
+          instructionData={instructionData}
+          setInstructionData={setInstructionData}
+        />
 
         <div className="grid grid-cols-4 gap-4 mt-4 mb-12">
           <CurrencyConverter amount={totalAmount} label="Total Amount" />
@@ -293,16 +385,131 @@ const LocalEntry = () => {
           />
         </div>
 
+        <div className="grid grid-cols-2 gap-4">
+          <div className="border-r-2 border-gray-300">
+            <div>
+              {cashData.map((row, index) => (
+                <div className="grid grid-cols-3 gap-3 mb-2" key={index}>
+                  <div className="flex flex-col col-span-1 relative">
+                    <DateUiPicker
+                      value={row.date ? dayjs(row.date) : null}
+                      onChange={(val) =>
+                        handleCashChange(
+                          index,
+                          val ? setCurrentTime(val) : null,
+                          "date",
+                        )
+                      }
+                      label="Cash Date"
+                      minDate={role === "superadmin" ? false : new Date()}
+                      // disabled={Status?.cash[index]}
+                      isClearable={true}
+                      className={`disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-400`}
+                    />
+                  </div>
+                  <div className="flex gap-2 col-span-2 mr-3">
+                    <InputField
+                      name={"amount"}
+                      type={"number"}
+                      placeholder={"Cash Amount"}
+                      value={row.amount}
+                      onChange={(e) => handleCashChange(index, e)}
+                      // disabled={Status?.cash[index]}
+                      className={`disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-400`}
+                    />
+
+                    <Button
+                      onClick={() => handleRemoveCashRow(index)}
+                      icon1={<DeleteIcon color="#fff" />}
+                      icon2={<DeleteIcon color="#000" />}
+                      // disabled={Status?.cash[index]}
+                      className={
+                        "h-[38px] mt-5.5 border-gray-400 disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-400  disabled:bg-gray-300"
+                      }
+                    />
+                  </div>
+                </div>
+              ))}
+              <div className="flex justify-end items-center mt-4 mr-3 gap-4">
+                <p className="text-red-500">{cashErrorMsg}</p>
+
+                <Button
+                  onClick={handleAddCashRow}
+                  label={"Add Cash"}
+                  icon1={<CashIcon />}
+                  icon2={<CashIcon color="#292D32" />}
+                />
+              </div>
+            </div>
+          </div>
+          <div>
+            <div>
+              {gpayData.map((row, index) => (
+                <div className="grid grid-cols-3 gap-3 mb-2" key={index}>
+                  <div className="flex flex-col col-span-1 relative">
+                    <DateUiPicker
+                      value={row.date ? dayjs(row.date) : null}
+                      onChange={(val) =>
+                        handleGpayChange(
+                          index,
+                          val ? setCurrentTime(val) : null,
+                          "date",
+                        )
+                      }
+                      label="Gpay Date"
+                      isClearable={true}
+                      // disabled={Status?.gpay[index]}
+                      className={`disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-400`}
+                    />
+                  </div>
+                  <div className="flex gap-2 col-span-2 mr-3">
+                    <InputField
+                      name={"amount"}
+                      placeholder={"Gpay Amount"}
+                      value={row.amount}
+                      onChange={(e) => handleGpayChange(index, e)}
+                      // disabled={Status?.gpay[index]}
+                      className={`disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-400`}
+                    />
+                    <Button
+                      onClick={() => handleRemoveGpayRow(index)}
+                      icon1={<DeleteIcon color="#fff" />}
+                      icon2={<DeleteIcon color="#000" />}
+                      className={
+                        "h-[38px] mt-5.5 border-gray-400 disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-400 disabled:bg-gray-300"
+                      }
+                      // disabled={Status?.gpay[index]}
+                    />
+                  </div>
+                </div>
+              ))}
+              <div className="flex justify-end items-center mt-4 gap-4">
+                <p className="text-red-500">{gpayErrorMsg}</p>
+
+                <Button
+                  onClick={handleAddGpayRow}
+                  label={"Add Gpay"}
+                  icon1={<GpayIcon />}
+                  icon2={<GpayIcon color="#292D32" />}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="flex justify-end gap-4">
           {documentId && (
             <>
               <Button
+                type="button"
                 label="Save as PDF"
                 onClick={() => generatePDF(pdfRef, { filename: "bill.pdf" })}
                 icon1={<SavePdfIcon color="#fff" />}
                 className="bg-green-600 text-white"
               />
+
               <Button
+                type="button"
                 label="Print"
                 onClick={handlePrint}
                 icon1={<PrinterIcon color="#fff" />}
