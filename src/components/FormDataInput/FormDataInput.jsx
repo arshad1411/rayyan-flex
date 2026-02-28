@@ -196,12 +196,9 @@ const FormDataInput = ({
     setInstructionData(updated);
   };
 
-  /* ---------------- RENDER ---------------- */
-
   return (
     <div>
       {rowsOrder.map((row, orderIndex) => {
-        /* ---------- FLEX ---------- */
         if (row.type === "flex") {
           const data = flexData[row.index];
           if (!data) return null;
