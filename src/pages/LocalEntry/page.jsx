@@ -140,7 +140,9 @@ const LocalEntry = () => {
       setCustomerName(data.customer?.name);
       setPhone(data.customer?.phonenumber);
 
-      setSizeData(data.size_data);
+      // eslint-disable-next-line no-unused-vars
+      const cleanedSizeData = data.size_data.map(({ id, ...rest }) => rest);
+      setSizeData(cleanedSizeData);
 
       setCashData(
         data.cash?.map((c) => ({
