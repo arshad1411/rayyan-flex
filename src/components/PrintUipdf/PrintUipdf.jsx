@@ -1,15 +1,15 @@
 import { Table } from "@mui/joy";
+import { forwardRef } from "react";
 import Logo from "../../assets/logo2.jpg";
 import { MailIcon, PhoneIcon } from "../icons";
-import { forwardRef } from "react";
 
 const PrintUipdf = forwardRef((props, ref) => {
-  let filledSizedata = [];
+  let filledSizeData = [];
 
-  if (props?.sizedata) {
-    const totalRows = props.sizedata.length;
-    filledSizedata = [
-      ...props.sizedata,
+  if (props?.sizeData) {
+    const totalRows = props.sizeData.length;
+    filledSizeData = [
+      ...props.sizeData,
       ...Array(Math.max(0, 12 - totalRows)).fill({
         type: "",
         width: "",
@@ -24,146 +24,145 @@ const PrintUipdf = forwardRef((props, ref) => {
   }
 
   return (
-    <div className=" mt-[5px]" ref={ref}>
-      <div className="relative">
-        <div className="w-[210mm] h-[1040px] my-0 mx-auto pt-[2px] pb-[10px] px-[10px]">
-          <div className="flex justify-between items-center border-b pb-[2px]">
-            <img src={Logo} width={100} height={100} alt="" />
+    <div className="w-[390px] pt-[2px] pb-[10px] px-[10px] bg-white" ref={ref}>
+      <div className="flex justify-between items-center border-b pb-[2px]">
+        <img src={Logo} width={100} height={100} alt="" />
 
-            <p className="absolute right-[45%] top-[18px] text-center leading-[14px]">
-              {props.billno}
-              <br />
-              <span className="text-[12px]">Memo/Quotation</span>
-            </p>
+        <p className="absolute right-[45%] top-[18px] text-center leading-[14px]">
+          {props.billNo}
+          <br />
+          <span className="text-[12px]">Memo/Quotation</span>
+        </p>
 
-            <div>
-              <div className="flex items-center justify-end">
-                <PhoneIcon />
-                <div className="pl-2">
-                  <p className="text-[12px] font-medium">+91 63823 81389</p>
-                  <p className="text-[12px] font-medium">+91 63809 74082</p>
-                </div>
-              </div>
-              <div className="flex items-center">
-                <MailIcon />
-                <p className="text-[12px] font-medium pl-2">
-                  rayyanflex@gmail.com
-                </p>
-              </div>
+        <div className="bg-white">
+          <div className="flex items-center justify-end">
+            <PhoneIcon />
+            <div className="pl-2">
+              <p className="text-[12px] font-medium">+91 63823 81389</p>
+              <p className="text-[12px] font-medium">+91 63809 74082</p>
             </div>
           </div>
-
-          <div className="flex justify-between mt-[5px]">
-            <div className="flex text-[12px] w-[70%] gap-1 overflow-hidden">
-              <span>Name: </span>
-              <p className="truncate text-ellipsis overflow-hidden whitespace-nowrap">
-                {props.name}
-              </p>
-            </div>
-
-            <div className="flex text-[12px] gap-1">
-              <span>Date: </span> <p>{props.date}</p>
-            </div>
+          <div className="flex items-center">
+            <MailIcon />
+            <p className="text-[12px] font-medium pl-2">rayyanflex@gmail.com</p>
           </div>
+        </div>
+      </div>
 
-          <Table
-            borderAxis="y"
-            className="border border-[#E0E1E3]"
-            sx={{ height: "900px" }}
-          >
-            <thead>
-              <tr>
-                <th className="!bg-[#2A3042] !text-white !w-[48%] ">
-                  Particular
-                </th>
-                <th className="!bg-[#2A3042] !text-white !w-[12%]  text-center">
-                  Pcs
-                </th>
-                <th className="!bg-[#2A3042] !text-white !w-[14%]  text-center">
-                  Sq.Ft
-                </th>
-                <th className="!bg-[#2A3042] !text-white !w-[22%]  text-center">
-                  Amount
-                </th>
+      <div className="flex justify-between mt-[5px] bg-white">
+        <div className="flex text-[12px] w-[70%] gap-1 overflow-hidden">
+          <span>Name: </span>
+          <p className="truncate text-ellipsis overflow-hidden whitespace-nowrap">
+            {props.name}
+          </p>
+        </div>
+
+        <div className="flex text-[12px] gap-1">
+          <span>Date: </span> <p>{props.date}</p>
+        </div>
+      </div>
+
+      <div className="mt-[5x] bg-white">
+        <Table
+          borderAxis="y"
+          className="border border-[#E0E1E3]"
+          style={{ background: "#fff" }}
+        >
+          <thead style={{ background: "#fff" }}>
+            <tr>
+              <th className="!bg-[#2A3042] !text-white !w-[48%] !h-[20px]">
+                Particular
+              </th>
+              <th className="!bg-[#2A3042] !text-white !w-[12%] !h-[20px] text-center">
+                Qty
+              </th>
+              <th className="!bg-[#2A3042] !text-white !w-[14%] !h-[20px] text-center">
+                Sq.Ft
+              </th>
+              <th className="!bg-[#2A3042] !text-white !w-[22%] !h-[20px] text-center">
+                Amount
+              </th>
+            </tr>
+          </thead>
+          <tbody style={{ background: "#fff" }}>
+            {filledSizeData?.map((data, index) => (
+              <tr key={index} style={{ height: "24px" }}>
+                {data.type === "flex" ? (
+                  <td className="w-[48%] !h-[24px] !p-[0px] !pr-[5px] !pl-[px] capitalize">
+                    {data.width} X {data.height} {data.instruction}{" "}
+                    {data.material}
+                  </td>
+                ) : (
+                  <>
+                    {data.type === "instruction" && (
+                      <td className="w-[48%] !h-[24px] !p-[0px] !pr-[5px] !pl-[3px] capitalize">
+                        {data.instruction}
+                      </td>
+                    )}
+                  </>
+                )}
+                <td className="w-[12%] !h-[24px] !p-[0px] text-center">
+                  {data.piece_count}
+                </td>
+                <td className="w-[14%] !h-[24px] !p-[0px] text-center">
+                  {data.type === "flex"
+                    ? data.sq_ft_price
+                    : data.type === "instruction" && "-"}
+                </td>
+                <td className="w-[22%] !h-[24px] !p-[0px] !pr-[4px] text-right">
+                  {data.per_piece_total && (
+                    <span>₹ {data.per_piece_total}</span>
+                  )}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {filledSizedata?.map((data, index) => (
-                <tr key={index}>
-                  {data.type === "Flex" ? (
-                    <td className="w-[48%]  !p-[0px] !pr-[5px] capitalize">
-                      {data.width} X {data.height} {data.material}
-                      {data.instruction}
-                    </td>
-                  ) : (
+            ))}
+          </tbody>
+          <tfoot style={{ background: "#fff" }}>
+            <tr>
+              <td colSpan="3" style={{ height: "25px", padding: "0" }}>
+                <div className="flex flex-col items-end mr-2">
+                  <p className="text-[12px] font-medium">Total </p>
+                  {props.advance !== 0 && props.balance > 0 && (
                     <>
-                      {data.type === "instruction" && (
-                        <td className="w-[48%]  !p-[0px] !pr-[5px] capitalize">
-                          {data.instruction}
-                        </td>
-                      )}
+                      <p className="text-[12px] font-medium">Advance </p>
+                      <p className="text-[12px] font-medium">Blance </p>
                     </>
                   )}
-                  <td className="w-[12%]  !p-[0px] text-center">
-                    {data.type === "Flex"
-                      ? data.piece_count
-                      : data.type === "instruction" && "-"}
-                  </td>
-                  <td className="w-[14%]  !p-[0px] text-center">
-                    {data.type === "Flex"
-                      ? data.sq_ft_price
-                      : data.type === "instruction" && "-"}
-                  </td>
-                  <td className="w-[22%]  !p-[0px] text-right">
-                    {data.total && <span>₹ {data.total}</span>}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colSpan="3" style={{ height: "25px", padding: "0" }}>
-                  <div className="flex flex-col items-end mr-2">
-                    <p className="text-[12px] font-medium">Total </p>
-                    {props.advance !== 0 && props.balance > 0 && (
-                      <>
-                        <p className="text-[12px] font-medium">Advance </p>
-                        <p className="text-[12px] font-medium">Blance </p>
-                      </>
-                    )}
-                  </div>
-                </td>
-                <td style={{ paddingRight: "0" }}>
-                  <div className="flex flex-col items-end ">
-                    <p className="text-[12px] font-medium"> ₹ {props.amount}</p>
-                    {props.advance !== 0 && props.balance > 0 && (
-                      <>
-                        <p className="text-[12px] font-medium">
-                          {" "}
-                          ₹ {props.advance}
-                        </p>
-                        <p className="text-[12px] font-semibold border-t">
-                          {" "}
-                          ₹ {props.balance}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td colSpan="4" style={{ background: "#fff", padding: "0px" }}>
-                  <div className="flex flex-col items-end gap-3 border-b-5 border-[#2A3042] pt-[1px] pr-2">
-                    <p className="font-semibold text-[12px]">
-                      For Rayyan Graphics
-                    </p>
-                    <span className="text-[12px]">Authorised Signatory</span>
-                  </div>
-                </td>
-              </tr>
-            </tfoot>
-          </Table>
-        </div>
+                </div>
+              </td>
+              <td style={{ paddingRight: "0" }}>
+                <div className="flex flex-col items-end ">
+                  <p className="text-[12px] font-medium !pr-[4px]">
+                    {" "}
+                    ₹ {props.amount}
+                  </p>
+                  {props.advance !== 0 && props.balance > 0 && (
+                    <>
+                      <p className="text-[12px] font-medium !pr-[4px]">
+                        {" "}
+                        ₹ {props.advance}
+                      </p>
+                      <p className="text-[12px] font-semibold border-t !pr-[4px]">
+                        {" "}
+                        ₹ {props.balance}
+                      </p>
+                    </>
+                  )}
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td colSpan="4" style={{ background: "#fff", padding: "0px" }}>
+                <div className="flex flex-col items-end gap-3 border-b-5 border-[#2A3042] pt-[1px] pr-2">
+                  <p className="font-semibold text-[12px]">
+                    For Rayyan Graphics
+                  </p>
+                  <span className="text-[12px]">Authorised Signatory</span>
+                </div>
+              </td>
+            </tr>
+          </tfoot>
+        </Table>
       </div>
     </div>
   );

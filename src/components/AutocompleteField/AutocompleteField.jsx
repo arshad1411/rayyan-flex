@@ -8,6 +8,7 @@ const AutocompleteField = ({
   onInputChange,
   onBlur,
   required,
+  disabled,
 }) => {
   return (
     <div className="w-full">
@@ -34,6 +35,7 @@ const AutocompleteField = ({
           },
         }}
         required={required}
+        disabled={disabled}
       />
     </div>
   );

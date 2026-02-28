@@ -1,15 +1,15 @@
 import { Table } from "@mui/joy";
+import { forwardRef } from "react";
 import Logo from "../../assets/logo2.jpg";
 import { MailIcon, PhoneIcon } from "../icons";
-import { forwardRef } from "react";
 
 const PrintUi = forwardRef((props, ref) => {
-  let filledSizedata = [];
+  let filledSizeData = [];
 
-  if (props?.sizedata) {
-    const totalRows = props.sizedata.length;
-    filledSizedata = [
-      ...props.sizedata,
+  if (props?.sizeData) {
+    const totalRows = props.sizeData.length;
+    filledSizeData = [
+      ...props.sizeData,
       ...Array(Math.max(0, 12 - totalRows)).fill({
         type: "",
         width: "",
@@ -31,7 +31,7 @@ const PrintUi = forwardRef((props, ref) => {
             <img src={Logo} width={100} height={100} alt="" />
 
             <p className="absolute right-[45%] top-[18px] text-center leading-[14px]">
-              {props.billno}
+              {props.billNo}
               <br />
               <span className="text-[12px]">Memo/Quotation</span>
             </p>
@@ -74,7 +74,7 @@ const PrintUi = forwardRef((props, ref) => {
                     Particular
                   </th>
                   <th className="!bg-[#2A3042] !text-white !w-[12%] !h-[20px] text-center">
-                    Pcs
+                    Qty
                   </th>
                   <th className="!bg-[#2A3042] !text-white !w-[14%] !h-[20px] text-center">
                     Sq.Ft
@@ -85,34 +85,34 @@ const PrintUi = forwardRef((props, ref) => {
                 </tr>
               </thead>
               <tbody>
-                {filledSizedata?.map((data, index) => (
+                {filledSizeData?.map((data, index) => (
                   <tr key={index} style={{ height: "24px" }}>
-                    {data.type === "Flex" ? (
-                      <td className="w-[48%] !h-[24px] !p-[0px] !pr-[5px] capitalize">
-                        {data.width} X {data.height} {data.material}
-                        {data.instruction}
+                    {data.type === "flex" ? (
+                      <td className="w-[48%] !h-[24px] !p-[0px] !pr-[5px] !pl-[3px] capitalize">
+                        {data.width} X {data.height} {data.instruction}{" "}
+                        {data.material}
                       </td>
                     ) : (
                       <>
                         {data.type === "instruction" && (
-                          <td className="w-[48%] !h-[24px] !p-[0px] !pr-[5px] capitalize">
+                          <td className="w-[48%] !h-[24px] !p-[0px] !pr-[5px] !pl-[3px] capitalize">
                             {data.instruction}
                           </td>
                         )}
                       </>
                     )}
                     <td className="w-[12%] !h-[24px] !p-[0px] text-center">
-                      {data.type === "Flex"
-                        ? data.piece_count
-                        : data.type === "instruction" && "-"}
+                      {data.piece_count}
                     </td>
                     <td className="w-[14%] !h-[24px] !p-[0px] text-center">
-                      {data.type === "Flex"
+                      {data.type === "flex"
                         ? data.sq_ft_price
                         : data.type === "instruction" && "-"}
                     </td>
-                    <td className="w-[22%] !h-[24px] !p-[0px] text-right">
-                      {data.total && <span>₹ {data.total}</span>}
+                    <td className="w-[22%] !h-[24px] !p-[0px] !pr-[4px] text-right">
+                      {data.per_piece_total && (
+                        <span>₹ {data.per_piece_total}</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -132,17 +132,17 @@ const PrintUi = forwardRef((props, ref) => {
                   </td>
                   <td style={{ paddingRight: "0" }}>
                     <div className="flex flex-col items-end ">
-                      <p className="text-[12px] font-medium">
+                      <p className="text-[12px] font-medium !pr-[4px]">
                         {" "}
                         ₹ {props.amount}
                       </p>
                       {props.advance !== 0 && props.balance > 0 && (
                         <>
-                          <p className="text-[12px] font-medium">
+                          <p className="text-[12px] font-medium !pr-[4px]">
                             {" "}
                             ₹ {props.advance}
                           </p>
-                          <p className="text-[12px] font-semibold border-t">
+                          <p className="text-[12px] font-semibold border-t !pr-[4px]">
                             {" "}
                             ₹ {props.balance}
                           </p>
