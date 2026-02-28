@@ -61,8 +61,7 @@ const LocalEntry = () => {
   const [phone, setPhone] = useState("");
   const [customerList, setCustomerList] = useState([]);
 
-  const [flexData, setFlexData] = useState([]);
-  const [instructionData, setInstructionData] = useState([]);
+  const [sizeData, setSizeData] = useState([]);
 
   const [cashData, setCashData] = useState([{ date: null, amount: 0 }]);
   const [gpayData, setGpayData] = useState([{ date: null, amount: 0 }]);
@@ -90,19 +89,13 @@ const LocalEntry = () => {
   }, []);
 
   const totalAmount = useMemo(() => {
-    const flexTotal = flexData.reduce(
+    const sizeTotal = sizeData.reduce(
       (sum, item) => sum + num(item.per_piece_total),
       0,
     );
 
-    const instructionTotal = instructionData.reduce(
-      (sum, item) =>
-        sum + num(item.per_piece_total) * num(item.piece_count || 1),
-      0,
-    );
-
-    return flexTotal + instructionTotal;
-  }, [flexData, instructionData]);
+    return sizeTotal;
+  }, [sizeData]);
 
   const receivedAmount = useMemo(() => {
     const cashTotal = cashData.reduce((sum, item) => sum + num(item.amount), 0);
@@ -147,8 +140,7 @@ const LocalEntry = () => {
       setCustomerName(data.customer?.name);
       setPhone(data.customer?.phonenumber);
 
-      setFlexData(data.flex || []);
-      setInstructionData(data.size_instruction || []);
+      setSizeData(data.size_data);
 
       setCashData(
         data.cash?.map((c) => ({
@@ -181,7 +173,7 @@ const LocalEntry = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (flexData.length === 0 && instructionData.length === 0) {
+    if (sizeData.length === 0) {
       toast.error("Please add at least one size");
       return;
     }
@@ -218,8 +210,7 @@ const LocalEntry = () => {
         date,
         note,
         customer: finalCustomerId,
-        flex: flexData,
-        size_instruction: instructionData,
+        size_data: sizeData,
         cash: cashData,
         gpay: gpayData,
         recieved_amount: receivedAmount,
@@ -257,8 +248,7 @@ const LocalEntry = () => {
     setCustomerName("");
     setPhone("");
 
-    setFlexData([]);
-    setInstructionData([]);
+    setSizeData([]);
 
     setCashData([{ date: null, amount: 0 }]);
     setGpayData([{ date: null, amount: 0 }]);
@@ -373,12 +363,7 @@ const LocalEntry = () => {
           setPhoneno={setPhone}
         />
 
-        <FormDataInput
-          flexData={flexData}
-          setFlexData={setFlexData}
-          instructionData={instructionData}
-          setInstructionData={setInstructionData}
-        />
+        <FormDataInput sizeData={sizeData} setSizeData={setSizeData} />
 
         <div className="grid grid-cols-4 gap-4 mt-4 mb-12">
           <CurrencyConverter amount={totalAmount} label="Total Amount" />
@@ -541,7 +526,7 @@ const LocalEntry = () => {
         amount={totalAmount}
         advance={receivedAmount}
         balance={balanceAmount}
-        sizedata={flexData}
+        sizedata={sizeData}
       />
 
       <div className="hidden">
@@ -553,7 +538,7 @@ const LocalEntry = () => {
           amount={totalAmount}
           advance={receivedAmount}
           balance={balanceAmount}
-          sizedata={flexData}
+          sizedata={sizeData}
         />
       </div>
     </MainLayout>
