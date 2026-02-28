@@ -531,16 +531,16 @@ const LocalEntry = () => {
         sizeData={sizeData}
       />
 
-      <div className="hidden">
+      <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
         <PrintUipdf
-          ref={pdfRef}
-          billno={billNo}
+          ref={contentRef}
+          billNo={billNo}
           name={customerName}
           date={dayjs(date).format("DD-MM-YYYY")}
           amount={totalAmount}
           advance={receivedAmount}
           balance={balanceAmount}
-          sizedata={sizeData}
+          sizeData={sizeData}
         />
       </div>
     </MainLayout>

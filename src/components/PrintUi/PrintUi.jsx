@@ -31,7 +31,7 @@ const PrintUi = forwardRef((props, ref) => {
             <img src={Logo} width={100} height={100} alt="" />
 
             <p className="absolute right-[45%] top-[18px] text-center leading-[14px]">
-              {props.billno}
+              {props.billNo}
               <br />
               <span className="text-[12px]">Memo/Quotation</span>
             </p>
