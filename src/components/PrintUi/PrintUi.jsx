@@ -1,7 +1,7 @@
 import { Table } from "@mui/joy";
+import { forwardRef } from "react";
 import Logo from "../../assets/logo2.jpg";
 import { MailIcon, PhoneIcon } from "../icons";
-import { forwardRef } from "react";
 
 const PrintUi = forwardRef((props, ref) => {
   let filledSizedata = [];
@@ -74,7 +74,7 @@ const PrintUi = forwardRef((props, ref) => {
                     Particular
                   </th>
                   <th className="!bg-[#2A3042] !text-white !w-[12%] !h-[20px] text-center">
-                    Pcs
+                    Qty
                   </th>
                   <th className="!bg-[#2A3042] !text-white !w-[14%] !h-[20px] text-center">
                     Sq.Ft
@@ -87,10 +87,10 @@ const PrintUi = forwardRef((props, ref) => {
               <tbody>
                 {filledSizedata?.map((data, index) => (
                   <tr key={index} style={{ height: "24px" }}>
-                    {data.type === "Flex" ? (
+                    {data.type === "flex" ? (
                       <td className="w-[48%] !h-[24px] !p-[0px] !pr-[5px] capitalize">
-                        {data.width} X {data.height} {data.material}
-                        {data.instruction}
+                        {data.width} X {data.height} {data.instruction}{" "}
+                        {data.material}
                       </td>
                     ) : (
                       <>
@@ -102,17 +102,17 @@ const PrintUi = forwardRef((props, ref) => {
                       </>
                     )}
                     <td className="w-[12%] !h-[24px] !p-[0px] text-center">
-                      {data.type === "Flex"
-                        ? data.piece_count
-                        : data.type === "instruction" && "-"}
+                      {data.piece_count}
                     </td>
                     <td className="w-[14%] !h-[24px] !p-[0px] text-center">
-                      {data.type === "Flex"
+                      {data.type === "flex"
                         ? data.sq_ft_price
                         : data.type === "instruction" && "-"}
                     </td>
                     <td className="w-[22%] !h-[24px] !p-[0px] text-right">
-                      {data.total && <span>₹ {data.total}</span>}
+                      {data.per_piece_total && (
+                        <span>₹ {data.per_piece_total}</span>
+                      )}
                     </td>
                   </tr>
                 ))}
