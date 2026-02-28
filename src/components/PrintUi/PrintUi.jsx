@@ -4,12 +4,12 @@ import Logo from "../../assets/logo2.jpg";
 import { MailIcon, PhoneIcon } from "../icons";
 
 const PrintUi = forwardRef((props, ref) => {
-  let filledSizedata = [];
+  let filledSizeData = [];
 
-  if (props?.sizedata) {
-    const totalRows = props.sizedata.length;
-    filledSizedata = [
-      ...props.sizedata,
+  if (props?.sizeData) {
+    const totalRows = props.sizeData.length;
+    filledSizeData = [
+      ...props.sizeData,
       ...Array(Math.max(0, 12 - totalRows)).fill({
         type: "",
         width: "",
@@ -85,7 +85,7 @@ const PrintUi = forwardRef((props, ref) => {
                 </tr>
               </thead>
               <tbody>
-                {filledSizedata?.map((data, index) => (
+                {filledSizeData?.map((data, index) => (
                   <tr key={index} style={{ height: "24px" }}>
                     {data.type === "flex" ? (
                       <td className="w-[48%] !h-[24px] !p-[0px] !pr-[5px] capitalize">

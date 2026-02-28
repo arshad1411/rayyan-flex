@@ -41,7 +41,7 @@ const num = (v) => Number(v) || 0;
 
 const LocalEntry = () => {
   const [searchParams] = useSearchParams();
-  const editId = searchParams.get("editid");
+  const editId = searchParams.get("editId");
 
   const navigate = useNavigate();
   const { role } = useAuth();
@@ -522,13 +522,13 @@ const LocalEntry = () => {
 
       <PrintUi
         ref={contentRef}
-        billno={billNo}
+        billNo={billNo}
         name={customerName}
         date={dayjs(date).format("DD-MM-YYYY")}
         amount={totalAmount}
         advance={receivedAmount}
         balance={balanceAmount}
-        sizedata={sizeData}
+        sizeData={sizeData}
       />
 
       <div className="hidden">
