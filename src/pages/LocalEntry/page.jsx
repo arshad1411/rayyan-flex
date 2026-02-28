@@ -6,28 +6,29 @@ import { useReactToPrint } from "react-to-print";
 import { toast } from "react-toastify";
 
 import Button from "../../components/Button/Button";
+import CurrencyConverter from "../../components/CurrencyConverter/CurrencyConverter";
 import CustomerField from "../../components/CustomerField/CustomerField";
 import { DateUiPicker } from "../../components/Datepicker/Datepicker";
 import FormDataInput from "../../components/FormDataInput/FormDataInput";
 import InputField from "../../components/InputField/InputField";
 import PrintUi from "../../components/PrintUi/PrintUi";
 import PrintUipdf from "../../components/PrintUipdf/PrintUipdf";
-import CurrencyConverter from "../../components/CurrencyConverter/CurrencyConverter";
 import MainLayout from "../../layouts/MainLayout";
 
 import {
   AddIcon,
+  CashIcon,
+  DeleteIcon,
+  GpayIcon,
   PrinterIcon,
   SaveIcon,
   SavePdfIcon,
-  DeleteIcon,
-  CashIcon,
-  GpayIcon,
 } from "../../components/icons";
 
 import { createCustomer, getCustomers } from "../../api/customer";
 import {
   createLocalEntry,
+  getLastLocalEntry,
   getLocalEntryById,
   updateLocalEntry,
 } from "../../api/localEntry";
@@ -71,6 +72,23 @@ const LocalEntry = () => {
 
   const [error, setError] = useState("");
 
+  const loadLastBillNo = useCallback(async () => {
+    try {
+      const res = await getLastLocalEntry();
+      const lastEntry = res?.[0];
+
+      if (lastEntry?.bill_no) {
+        const lastBill = Number(lastEntry.bill_no) || 0;
+        setBillNo(String(lastBill + 1));
+      } else {
+        setBillNo("1");
+      }
+    } catch (err) {
+      console.log(err);
+      setBillNo("1");
+    }
+  }, []);
+
   const totalAmount = useMemo(() => {
     const flexTotal = flexData.reduce(
       (sum, item) => sum + num(item.per_piece_total),
@@ -78,7 +96,8 @@ const LocalEntry = () => {
     );
 
     const instructionTotal = instructionData.reduce(
-      (sum, item) => sum + num(item.per_piece_total),
+      (sum, item) =>
+        sum + num(item.per_piece_total) * num(item.piece_count || 1),
       0,
     );
 
@@ -151,8 +170,13 @@ const LocalEntry = () => {
 
   useEffect(() => {
     loadCustomers();
-    if (editId) loadEditData(editId);
-  }, [editId, loadCustomers, loadEditData]);
+
+    if (editId) {
+      loadEditData(editId);
+    } else {
+      loadLastBillNo();
+    }
+  }, [editId, loadCustomers, loadEditData, loadLastBillNo]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -179,10 +203,8 @@ const LocalEntry = () => {
         }
 
         const createdCustomer = await createCustomer({
-          data: {
-            name: customerName,
-            phonenumber: phone,
-          },
+          name: customerName,
+          phonenumber: phone,
         });
 
         finalCustomerId = createdCustomer?.data?.documentId;
@@ -192,22 +214,6 @@ const LocalEntry = () => {
       }
 
       const payload = {
-        data: {
-          bill_no: billNo,
-          date,
-          note,
-          customer: finalCustomerId,
-          flex: flexData,
-          size_instruction: instructionData,
-          cash: cashData,
-          gpay: gpayData,
-          recieved_amount: receivedAmount,
-          balance_amount: balanceAmount,
-          total_amount: totalAmount,
-        },
-      };
-
-      console.log({
         bill_no: billNo,
         date,
         note,
@@ -219,11 +225,11 @@ const LocalEntry = () => {
         recieved_amount: receivedAmount,
         balance_amount: balanceAmount,
         total_amount: totalAmount,
-      });
+      };
 
       if (!documentId) {
         const created = await createLocalEntry(payload);
-        setDocumentId(created?.data?.documentId);
+        setDocumentId(created?.documentId);
         toast.success("Local entry created successfully");
       } else {
         await updateLocalEntry(documentId, payload);
@@ -242,9 +248,8 @@ const LocalEntry = () => {
     documentTitle: `Bill-${billNo}`,
   });
 
-  const clearForm = () => {
+  const clearForm = async () => {
     setDocumentId(null);
-    setBillNo("");
     setDate(setCurrentTime(new Date()));
     setNote("");
 
@@ -257,6 +262,8 @@ const LocalEntry = () => {
 
     setCashData([{ date: null, amount: 0 }]);
     setGpayData([{ date: null, amount: 0 }]);
+
+    await loadLastBillNo();
 
     navigate(LOCALENTRY);
   };
@@ -333,21 +340,19 @@ const LocalEntry = () => {
 
       <form onSubmit={handleSubmit} className="space-y-6 mt-4">
         <div className="grid grid-cols-4 gap-4 my-2">
-          {role === "superadmin" && (
-            <>
-              <DateUiPicker
-                value={date}
-                label="Date"
-                onChange={(d) => setDate(setCurrentTime(d))}
-              />
+          <DateUiPicker
+            value={date}
+            label="Date"
+            disabled={role !== "superadmin"}
+            onChange={(d) => setDate(setCurrentTime(d))}
+          />
 
-              <InputField
-                placeholder="Bill No"
-                value={billNo}
-                onChange={(e) => setBillNo(e.target.value)}
-              />
-            </>
-          )}
+          <InputField
+            placeholder="Bill No"
+            value={billNo}
+            disabled={role !== "superadmin"}
+            onChange={(e) => setBillNo(e.target.value)}
+          />
 
           <InputField
             placeholder="Note"

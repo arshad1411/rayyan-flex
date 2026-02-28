@@ -8,6 +8,8 @@ import InputField from "../InputField/InputField";
 
 const num = (v) => Number(v) || 0;
 
+/* ---------------- ROW CREATORS ---------------- */
+
 const createFlexRow = () => ({
   width: "",
   height: "",
@@ -20,7 +22,7 @@ const createFlexRow = () => ({
 
 const createInstructionRow = () => ({
   instruction: "",
-  design_charge: "",
+  piece_count: 1,
   per_piece_total: 0,
 });
 
@@ -32,28 +34,72 @@ const FormDataInput = ({
 }) => {
   const [errorMsg, setErrorMsg] = useState("");
 
+  const [rowsOrder, setRowsOrder] = useState(() => {
+    const flexRows = flexData.map((_, i) => ({
+      type: "flex",
+      index: i,
+    }));
+
+    const instructionRows = instructionData.map((_, i) => ({
+      type: "instruction",
+      index: i,
+    }));
+
+    return [...flexRows, ...instructionRows];
+  });
+
   /* ---------------- FLEX ---------------- */
 
   const addFlexRow = () => {
     setErrorMsg("");
 
-    const last = flexData[flexData.length - 1];
+    const lastRow = rowsOrder[rowsOrder.length - 1];
 
-    if (
-      last &&
-      (!last.width || !last.height || !last.material || !last.sq_ft_price)
-    ) {
-      setErrorMsg("Please complete the current flex row first.");
-      return;
+    if (lastRow) {
+      if (lastRow.type === "flex") {
+        const lastFlex = flexData[lastRow.index];
+        if (
+          !lastFlex.width ||
+          !lastFlex.height ||
+          !lastFlex.material ||
+          !lastFlex.sq_ft_price
+        ) {
+          setErrorMsg("Please complete the current flex row first.");
+          return;
+        }
+      }
+
+      if (lastRow.type === "instruction") {
+        const lastInstruction = instructionData[lastRow.index];
+        if (
+          !lastInstruction.instruction ||
+          !lastInstruction.per_piece_total ||
+          !lastInstruction.piece_count
+        ) {
+          setErrorMsg("Please complete the current instruction row first.");
+          return;
+        }
+      }
     }
 
     setFlexData([...flexData, createFlexRow()]);
+    setRowsOrder([...rowsOrder, { type: "flex", index: flexData.length }]);
   };
 
   const removeFlexRow = (index) => {
     const updated = [...flexData];
     updated.splice(index, 1);
     setFlexData(updated);
+
+    setRowsOrder(
+      rowsOrder
+        .filter((r) => !(r.type === "flex" && r.index === index))
+        .map((r) =>
+          r.type === "flex" && r.index > index
+            ? { ...r, index: r.index - 1 }
+            : r,
+        ),
+    );
   };
 
   const updateFlex = (index, name, value) => {
@@ -91,125 +137,195 @@ const FormDataInput = ({
   const addInstructionRow = () => {
     setErrorMsg("");
 
-    const last = instructionData[instructionData.length - 1];
+    const lastRow = rowsOrder[rowsOrder.length - 1];
 
-    if (last && (!last.instruction || !last.design_charge)) {
-      setErrorMsg("Please complete the current instruction row first.");
-      return;
+    if (lastRow) {
+      if (lastRow.type === "flex") {
+        const lastFlex = flexData[lastRow.index];
+        if (
+          !lastFlex.width ||
+          !lastFlex.height ||
+          !lastFlex.material ||
+          !lastFlex.sq_ft_price
+        ) {
+          setErrorMsg("Please complete the current flex row first.");
+          return;
+        }
+      }
+
+      if (lastRow.type === "instruction") {
+        const lastInstruction = instructionData[lastRow.index];
+        if (
+          !lastInstruction.instruction ||
+          !lastInstruction.per_piece_total ||
+          !lastInstruction.piece_count
+        ) {
+          setErrorMsg("Please complete the current instruction row first.");
+          return;
+        }
+      }
     }
 
     setInstructionData([...instructionData, createInstructionRow()]);
+    setRowsOrder([
+      ...rowsOrder,
+      { type: "instruction", index: instructionData.length },
+    ]);
   };
 
   const removeInstructionRow = (index) => {
     const updated = [...instructionData];
     updated.splice(index, 1);
     setInstructionData(updated);
+
+    setRowsOrder(
+      rowsOrder
+        .filter((r) => !(r.type === "instruction" && r.index === index))
+        .map((r) =>
+          r.type === "instruction" && r.index > index
+            ? { ...r, index: r.index - 1 }
+            : r,
+        ),
+    );
   };
 
   const updateInstruction = (index, name, value) => {
     const updated = [...instructionData];
     updated[index][name] = value;
 
-    updated[index].per_piece_total = num(updated[index].design_charge);
-
     setInstructionData(updated);
   };
 
+  /* ---------------- RENDER ---------------- */
+
   return (
     <div>
-      {flexData.map((row, index) => (
-        <div key={index} className="flex gap-4 my-4">
-          <InputField
-            name="width"
-            placeholder="Width"
-            value={row.width}
-            onChange={(e) => updateFlex(index, "width", e.target.value)}
-            required
-          />
+      {rowsOrder.map((row, orderIndex) => {
+        /* ---------- FLEX ---------- */
+        if (row.type === "flex") {
+          const data = flexData[row.index];
+          if (!data) return null;
 
-          <InputField
-            name="height"
-            placeholder="Height"
-            value={row.height}
-            onChange={(e) => updateFlex(index, "height", e.target.value)}
-            required
-          />
+          return (
+            <div key={`flex-${orderIndex}`} className="flex gap-4 my-4">
+              <InputField
+                placeholder="Width"
+                value={data.width}
+                onChange={(e) => updateFlex(row.index, "width", e.target.value)}
+                required
+              />
 
-          <AutocompleteField
-            label="Material"
-            value={row.material}
-            options={materialdata}
-            onChange={(e, value) => updateFlex(index, "material", value)}
-            onInputChange={(e, value) => updateFlex(index, "material", value)}
-          />
+              <InputField
+                placeholder="Height"
+                value={data.height}
+                onChange={(e) =>
+                  updateFlex(row.index, "height", e.target.value)
+                }
+                required
+              />
 
-          <InputField
-            name="sq_ft_price"
-            placeholder="Sq.ft Rate"
-            value={row.sq_ft_price}
-            onChange={(e) => updateFlex(index, "sq_ft_price", e.target.value)}
-            required
-          />
+              <AutocompleteField
+                label="Material"
+                value={data.material}
+                options={materialdata}
+                onChange={(e, value) =>
+                  updateFlex(row.index, "material", value)
+                }
+                onInputChange={(e, value) =>
+                  updateFlex(row.index, "material", value)
+                }
+              />
 
-          <InputField
-            name="piece_count"
-            placeholder="Piece Count"
-            value={row.piece_count}
-            type="number"
-            dontallowDecimal
-            onChange={(e) => updateFlex(index, "piece_count", e.target.value)}
-          />
+              <InputField
+                placeholder="Sq.ft Rate"
+                value={data.sq_ft_price}
+                onChange={(e) =>
+                  updateFlex(row.index, "sq_ft_price", e.target.value)
+                }
+                required
+              />
 
-          <InputField
-            name="instruction"
-            placeholder="Instruction"
-            value={row.instruction}
-            onChange={(e) => updateFlex(index, "instruction", e.target.value)}
-          />
+              <InputField
+                placeholder="Piece Count"
+                type="number"
+                dontallowDecimal
+                value={data.piece_count}
+                onChange={(e) =>
+                  updateFlex(row.index, "piece_count", e.target.value)
+                }
+              />
 
-          <Button
-            onClick={() => removeFlexRow(index)}
-            icon1={<DeleteIcon color="#fff" />}
-            icon2={<DeleteIcon />}
-            className="h-[38px] mt-5.5 border-gray-400"
-          />
-        </div>
-      ))}
+              <InputField
+                placeholder="Instruction"
+                value={data.instruction}
+                onChange={(e) =>
+                  updateFlex(row.index, "instruction", e.target.value)
+                }
+              />
 
-      {/* INSTRUCTION */}
-      {instructionData.map((row, index) => (
-        <div key={index} className="flex gap-4 my-4">
-          <InputField
-            name="instruction"
-            placeholder="Instruction"
-            value={row.instruction}
-            onChange={(e) =>
-              updateInstruction(index, "instruction", e.target.value)
-            }
-            required
-          />
+              <Button
+                onClick={() => removeFlexRow(row.index)}
+                icon1={<DeleteIcon color="#fff" />}
+                icon2={<DeleteIcon />}
+                className="h-[38px] mt-5.5 border-gray-400"
+              />
+            </div>
+          );
+        }
 
-          <InputField
-            name="design_charge"
-            placeholder="Amount"
-            value={row.design_charge}
-            onChange={(e) =>
-              updateInstruction(index, "design_charge", e.target.value)
-            }
-            required
-          />
+        /* ---------- INSTRUCTION ---------- */
+        if (row.type === "instruction") {
+          const data = instructionData[row.index];
+          if (!data) return null;
 
-          <Button
-            onClick={() => removeInstructionRow(index)}
-            icon1={<DeleteIcon color="#fff" />}
-            icon2={<DeleteIcon />}
-            className="h-[38px] mt-5.5 border-gray-400"
-          />
-        </div>
-      ))}
+          return (
+            <div key={`instruction-${orderIndex}`} className="flex gap-4 my-4">
+              <InputField
+                placeholder="Instruction"
+                value={data.instruction}
+                onChange={(e) =>
+                  updateInstruction(row.index, "instruction", e.target.value)
+                }
+                required
+              />
 
-      {/* ACTIONS */}
+              <InputField
+                placeholder="Piece Count"
+                type="number"
+                dontallowDecimal
+                value={data.piece_count}
+                onChange={(e) =>
+                  updateInstruction(row.index, "piece_count", e.target.value)
+                }
+              />
+
+              <InputField
+                placeholder="Amount"
+                value={data.per_piece_total}
+                onChange={(e) =>
+                  updateInstruction(
+                    row.index,
+                    "per_piece_total",
+                    e.target.value,
+                  )
+                }
+                required
+              />
+
+              <Button
+                onClick={() => removeInstructionRow(row.index)}
+                icon1={<DeleteIcon color="#fff" />}
+                icon2={<DeleteIcon />}
+                className="h-[38px] mt-5.5 border-gray-400"
+              />
+            </div>
+          );
+        }
+
+        return null;
+      })}
+
+      {/* ACTION BUTTONS */}
       <div className="flex gap-4 items-center justify-end mt-4">
         <p className="text-red-500 mr-4">{errorMsg}</p>
 
