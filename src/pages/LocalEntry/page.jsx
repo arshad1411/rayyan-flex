@@ -1,7 +1,6 @@
 import dayjs from "dayjs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import generatePDF from "react-to-pdf";
 import { useReactToPrint } from "react-to-print";
 import { toast } from "react-toastify";
 
@@ -33,6 +32,7 @@ import {
   updateLocalEntry,
 } from "../../api/localEntry";
 
+import { toPng } from "html-to-image";
 import { useAuth } from "../../context/auth-context";
 import { LOCALENTRY } from "../../router/paths";
 import { setCurrentTime } from "../../utils/DatewithTime";
@@ -47,7 +47,7 @@ const LocalEntry = () => {
   const { role } = useAuth();
 
   const contentRef = useRef(null);
-  const pdfRef = useRef(null);
+  const printRef = useRef(null);
 
   const [loading, setLoading] = useState(false);
   const [documentId, setDocumentId] = useState(null);
@@ -241,6 +241,28 @@ const LocalEntry = () => {
     documentTitle: `Bill-${billNo}`,
   });
 
+  const downloadImage = async () => {
+    if (printRef.current === null) return;
+
+    try {
+      const dataUrl = await toPng(printRef.current, {
+        pixelRatio: 3,
+        backgroundColor: "#ffffff",
+        style: {
+          transform: "scale(1)",
+          transformOrigin: "top left",
+        },
+        cacheBust: true,
+      });
+
+      const link = document.createElement("a");
+      link.download = `Invoice-${billNo}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error("Export failed", err);
+    }
+  };
   const clearForm = async () => {
     setDocumentId(null);
     setDate(setCurrentTime(new Date()));
@@ -495,7 +517,7 @@ const LocalEntry = () => {
               <Button
                 type="button"
                 label="Save as PDF"
-                onClick={() => generatePDF(pdfRef, { filename: "bill.pdf" })}
+                onClick={downloadImage}
                 icon1={<SavePdfIcon color="#fff" />}
                 className="bg-green-600 text-white"
               />
@@ -533,7 +555,7 @@ const LocalEntry = () => {
 
       <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
         <PrintUipdf
-          ref={contentRef}
+          ref={printRef}
           billNo={billNo}
           name={customerName}
           date={dayjs(date).format("DD-MM-YYYY")}

@@ -24,7 +24,7 @@ const PrintUipdf = forwardRef((props, ref) => {
   }
 
   return (
-    <div className="w-[210mm]  pt-[2px] pb-[10px] px-[10px]" ref={ref}>
+    <div className="w-[390px] pt-[2px] pb-[10px] px-[10px] bg-white" ref={ref}>
       <div className="flex justify-between items-center border-b pb-[2px]">
         <img src={Logo} width={100} height={100} alt="" />
 
@@ -34,7 +34,7 @@ const PrintUipdf = forwardRef((props, ref) => {
           <span className="text-[12px]">Memo/Quotation</span>
         </p>
 
-        <div>
+        <div className="bg-white">
           <div className="flex items-center justify-end">
             <PhoneIcon />
             <div className="pl-2">
@@ -49,7 +49,7 @@ const PrintUipdf = forwardRef((props, ref) => {
         </div>
       </div>
 
-      <div className="flex justify-between mt-[5px]">
+      <div className="flex justify-between mt-[5px] bg-white">
         <div className="flex text-[12px] w-[70%] gap-1 overflow-hidden">
           <span>Name: </span>
           <p className="truncate text-ellipsis overflow-hidden whitespace-nowrap">
@@ -62,9 +62,13 @@ const PrintUipdf = forwardRef((props, ref) => {
         </div>
       </div>
 
-      <div className="mt-[5x]">
-        <Table borderAxis="y" className="border border-[#E0E1E3]">
-          <thead>
+      <div className="mt-[5x] bg-white">
+        <Table
+          borderAxis="y"
+          className="border border-[#E0E1E3]"
+          style={{ background: "#fff" }}
+        >
+          <thead style={{ background: "#fff" }}>
             <tr>
               <th className="!bg-[#2A3042] !text-white !w-[48%] !h-[20px]">
                 Particular
@@ -80,18 +84,18 @@ const PrintUipdf = forwardRef((props, ref) => {
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody style={{ background: "#fff" }}>
             {filledSizeData?.map((data, index) => (
               <tr key={index} style={{ height: "24px" }}>
                 {data.type === "flex" ? (
-                  <td className="w-[48%] !h-[24px] !p-[0px] !pr-[5px] capitalize">
+                  <td className="w-[48%] !h-[24px] !p-[0px] !pr-[5px] !pl-[px] capitalize">
                     {data.width} X {data.height} {data.instruction}{" "}
                     {data.material}
                   </td>
                 ) : (
                   <>
                     {data.type === "instruction" && (
-                      <td className="w-[48%] !h-[24px] !p-[0px] !pr-[5px] capitalize">
+                      <td className="w-[48%] !h-[24px] !p-[0px] !pr-[5px] !pl-[3px] capitalize">
                         {data.instruction}
                       </td>
                     )}
@@ -105,7 +109,7 @@ const PrintUipdf = forwardRef((props, ref) => {
                     ? data.sq_ft_price
                     : data.type === "instruction" && "-"}
                 </td>
-                <td className="w-[22%] !h-[24px] !p-[0px] text-right">
+                <td className="w-[22%] !h-[24px] !p-[0px] !pr-[4px] text-right">
                   {data.per_piece_total && (
                     <span>₹ {data.per_piece_total}</span>
                   )}
@@ -113,7 +117,7 @@ const PrintUipdf = forwardRef((props, ref) => {
               </tr>
             ))}
           </tbody>
-          <tfoot>
+          <tfoot style={{ background: "#fff" }}>
             <tr>
               <td colSpan="3" style={{ height: "25px", padding: "0" }}>
                 <div className="flex flex-col items-end mr-2">
@@ -128,14 +132,17 @@ const PrintUipdf = forwardRef((props, ref) => {
               </td>
               <td style={{ paddingRight: "0" }}>
                 <div className="flex flex-col items-end ">
-                  <p className="text-[12px] font-medium"> ₹ {props.amount}</p>
+                  <p className="text-[12px] font-medium !pr-[4px]">
+                    {" "}
+                    ₹ {props.amount}
+                  </p>
                   {props.advance !== 0 && props.balance > 0 && (
                     <>
-                      <p className="text-[12px] font-medium">
+                      <p className="text-[12px] font-medium !pr-[4px]">
                         {" "}
                         ₹ {props.advance}
                       </p>
-                      <p className="text-[12px] font-semibold border-t">
+                      <p className="text-[12px] font-semibold border-t !pr-[4px]">
                         {" "}
                         ₹ {props.balance}
                       </p>
