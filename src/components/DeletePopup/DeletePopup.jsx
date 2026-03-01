@@ -1,7 +1,7 @@
-import Button from "../Button/Button";
-import { ClearIcon, WarningIcon } from "../icons";
 import { useState } from "react";
+import Button from "../Button/Button";
 import DeleteButton from "../DeleteButton/DeleteButton";
+import { ClearIcon, WarningIcon } from "../icons";
 
 const DeletePopup = ({ handleDelete, onClick, disabled }) => {
   const [PopupOpen, setPopupOpen] = useState(false);

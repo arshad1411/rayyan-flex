@@ -118,8 +118,9 @@ const LocalEntry = () => {
   const loadCustomers = useCallback(async () => {
     try {
       const data = await getCustomers();
-      setCustomerList(data?.data || data || []);
-    } catch {
+      setCustomerList(data || []);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
       setCustomerList([]);
     }
   }, []);
