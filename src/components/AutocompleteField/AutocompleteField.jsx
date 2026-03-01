@@ -5,6 +5,7 @@ const AutocompleteField = ({
   value = "",
   onChange,
   options = [],
+  getOptionLabel,
   onInputChange,
   onBlur,
   required,
@@ -21,7 +22,7 @@ const AutocompleteField = ({
         onInputChange={onInputChange}
         onBlur={onBlur}
         placeholder={label}
-        getOptionLabel={(option) => (option ? String(option) : "")}
+        getOptionLabel={getOptionLabel}
         sx={{
           border: "1px solid #9ea5b2",
           borderRadius: "6px",

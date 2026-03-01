@@ -219,6 +219,7 @@ const LocalEntry = () => {
         recieved_amount: receivedAmount,
         balance_amount: balanceAmount,
         total_amount: totalAmount,
+        current_state: "status",
       };
 
       if (!documentId) {

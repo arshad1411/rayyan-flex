@@ -5,7 +5,6 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Button from "../Button/Button";
 import { CalendarIcon, ClearIcon } from "../icons";
-
 import "./datepicker.css";
 
 dayjs.extend(utc);
@@ -58,7 +57,7 @@ const Datepicker = ({
             icon1={<ClearIcon color="#ffffff" />}
             icon2={<ClearIcon />}
             label="Clear"
-            classvalues={"!py-1.5 !px-2"}
+            className={"!py-1.5 !px-2"}
           />
         </div>
       )}
