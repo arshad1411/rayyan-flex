@@ -3,14 +3,13 @@ import Button from "../Button/Button";
 import DeleteButton from "../DeleteButton/DeleteButton";
 import { ClearIcon, WarningIcon } from "../icons";
 
-const DeletePopup = ({ handleDelete, onClick, disabled }) => {
+const DeletePopup = ({ handleDelete, disabled }) => {
   const [PopupOpen, setPopupOpen] = useState(false);
 
   return (
     <div>
       <DeleteButton
         onClick={() => {
-          onClick();
           setPopupOpen(true);
         }}
         disabled={disabled}
@@ -41,7 +40,7 @@ const DeletePopup = ({ handleDelete, onClick, disabled }) => {
             <div className="flex gap-2 mt-4 justify-center">
               <Button
                 label="Delete"
-                classvalues="w-full hover:bg-rose-600 border-rose-600 text-rose-600"
+                className="w-full hover:bg-rose-600 border-rose-600 text-rose-600"
                 onClick={() => {
                   handleDelete();
                   setPopupOpen(false);
@@ -50,7 +49,7 @@ const DeletePopup = ({ handleDelete, onClick, disabled }) => {
               <Button
                 label="Cancel"
                 onClick={() => setPopupOpen(false)}
-                classvalues="w-full"
+                className="w-full"
               />
             </div>
           </div>

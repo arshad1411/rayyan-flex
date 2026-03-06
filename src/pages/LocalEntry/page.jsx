@@ -26,16 +26,17 @@ import {
 
 import { createCustomer, getCustomers } from "../../api/customer";
 import {
-  createLocalEntry,
-  getLastLocalEntry,
-  getLocalEntryById,
-  updateLocalEntry,
-} from "../../api/localEntry";
+  createLocalList,
+  getLastLocalList,
+  getLocalListById,
+  updateLocalList,
+} from "../../api/localList";
 
 import { toPng } from "html-to-image";
 import { useAuth } from "../../context/auth-context";
 import { LOCALENTRY } from "../../router/paths";
 import { setCurrentTime } from "../../utils/DatewithTime";
+import { transformBillingData } from "../../utils/transformBillingData";
 
 const num = (v) => Number(v) || 0;
 
@@ -69,11 +70,13 @@ const LocalEntry = () => {
   const [cashErrorMsg, setCashErrorMsg] = useState("");
   const [gpayErrorMsg, setGpayErrorMsg] = useState("");
 
+  const [status, setStatus] = useState("status");
+
   const [error, setError] = useState("");
 
   const loadLastBillNo = useCallback(async () => {
     try {
-      const res = await getLastLocalEntry();
+      const res = await getLastLocalList();
       const lastEntry = res?.[0];
 
       if (lastEntry?.bill_no) {
@@ -127,7 +130,7 @@ const LocalEntry = () => {
 
   const loadEditData = useCallback(async (id) => {
     try {
-      const res = await getLocalEntryById(id);
+      const res = await getLocalListById(id);
       const data = res?.data?.[0] || res?.data || res;
 
       if (!data) return;
@@ -137,27 +140,28 @@ const LocalEntry = () => {
       setDate(data.date);
       setNote(data.note);
 
-      setCustomerId(data.customer?.documentId);
       setCustomerName(data.customer?.name);
       setPhone(data.customer?.phonenumber);
 
-      // eslint-disable-next-line no-unused-vars
-      const cleanedSizeData = data.size_data.map(({ id, ...rest }) => rest);
-      setSizeData(cleanedSizeData);
+      const cleanedData = transformBillingData(data);
+
+      setCustomerId(cleanedData.customer || "");
+
+      setSizeData(cleanedData.size_data || []);
 
       setCashData(
-        data.cash?.map((c) => ({
-          date: c.date,
-          amount: c.amount,
-        })) || [{ date: null, amount: 0 }],
+        cleanedData.cash.length > 0
+          ? cleanedData.cash
+          : [{ date: null, amount: 0 }],
       );
 
       setGpayData(
-        data.gpay?.map((g) => ({
-          date: g.date,
-          amount: g.amount,
-        })) || [{ date: null, amount: 0 }],
+        cleanedData.gpay.length > 0
+          ? cleanedData.gpay
+          : [{ date: null, amount: 0 }],
       );
+
+      setStatus(data.current_state || "status");
     } catch {
       toast.error("Failed to load entry");
     }
@@ -185,6 +189,37 @@ const LocalEntry = () => {
       toast.error(error);
       return;
     }
+
+    const validatePaymentData = (data, type) => {
+      const cleaned = [];
+
+      for (const item of data) {
+        const amount = Number(item.amount || 0);
+        const date = item.date;
+
+        if (!date && amount === 0) continue;
+
+        if (date && amount === 0) {
+          toast.error(`Please fill ${type} amount properly`);
+          return null;
+        }
+
+        if (amount > 0 && !date) {
+          toast.error(`Please select ${type} date`);
+          return null;
+        }
+
+        cleaned.push(item);
+      }
+
+      return cleaned;
+    };
+
+    const validCash = validatePaymentData(cashData, "cash");
+    if (!validCash) return;
+
+    const validGpay = validatePaymentData(gpayData, "gpay");
+    if (!validGpay) return;
 
     try {
       setLoading(true);
@@ -214,21 +249,21 @@ const LocalEntry = () => {
         note,
         customer: finalCustomerId,
         size_data: sizeData,
-        cash: cashData,
-        gpay: gpayData,
+        cash: validCash,
+        gpay: validGpay,
         recieved_amount: receivedAmount,
         balance_amount: balanceAmount,
         total_amount: totalAmount,
-        current_state: "status",
+        current_state: status,
       };
 
       if (!documentId) {
-        const created = await createLocalEntry(payload);
+        const created = await createLocalList(payload);
         setDocumentId(created?.documentId);
-        toast.success("Local entry created successfully");
+        toast.success("Local list created successfully");
       } else {
-        await updateLocalEntry(documentId, payload);
-        toast.success("Local entry updated successfully");
+        await updateLocalList(documentId, payload);
+        toast.success("Local list updated successfully");
       }
     } catch (error) {
       console.log(error);
@@ -350,6 +385,7 @@ const LocalEntry = () => {
           onClick={clearForm}
           label="Add New"
           icon1={<AddIcon color="#fff" />}
+          icon2={<AddIcon color="#fff" />}
           className="bg-[#0b6bcb] text-white border-0"
         />
       </div>
@@ -430,7 +466,7 @@ const LocalEntry = () => {
                       placeholder={"Cash Amount"}
                       value={row.amount}
                       onChange={(e) => handleCashChange(index, e)}
-                      // disabled={Status?.cash[index]}
+                      disableFuture
                       className={`disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-400`}
                     />
 
@@ -474,7 +510,7 @@ const LocalEntry = () => {
                       }
                       label="Gpay Date"
                       isClearable={true}
-                      // disabled={Status?.gpay[index]}
+                      disableFuture
                       className={`disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-400`}
                     />
                   </div>
@@ -521,6 +557,7 @@ const LocalEntry = () => {
                 label="Save as PDF"
                 onClick={downloadImage}
                 icon1={<SavePdfIcon color="#fff" />}
+                icon2={<SavePdfIcon color="#fff" />}
                 className="bg-green-600 text-white"
               />
 
@@ -529,7 +566,8 @@ const LocalEntry = () => {
                 label="Print"
                 onClick={handlePrint}
                 icon1={<PrinterIcon color="#fff" />}
-                className="bg-blue-600 text-white"
+                icon2={<PrinterIcon color="#fff" />}
+                className="bg-[#14B8A6] text-white"
               />
             </>
           )}
@@ -538,6 +576,7 @@ const LocalEntry = () => {
             type="submit"
             label={documentId ? "Update" : "Save"}
             icon1={<SaveIcon color="#fff" />}
+            icon2={<SaveIcon color="#fff" />}
             disabled={loading}
             className="bg-indigo-600 text-white"
           />
