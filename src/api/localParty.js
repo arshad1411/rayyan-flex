@@ -4,7 +4,7 @@ export const getLocalParty = async (params = "") => {
   const response = await axiosInstance.get(
     `/local-parties?populate=*&${params}`,
   );
-  return response.data.data;
+  return response.data;
 };
 
 export const getLastLocalParty = async () => {

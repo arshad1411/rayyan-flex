@@ -2,7 +2,7 @@ import axiosInstance from "./axiosInstance";
 
 export const getLocalPaid = async (params = "") => {
   const response = await axiosInstance.get(`/local-paids?populate=*&${params}`);
-  return response.data.data;
+  return response.data;
 };
 
 export const getLastLocalPaid = async () => {

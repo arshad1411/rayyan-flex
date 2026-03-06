@@ -183,8 +183,6 @@ const LocalList = () => {
       payload: transformBillingData(item),
     }));
 
-    console.log(group);
-
     setLoading(true);
 
     try {

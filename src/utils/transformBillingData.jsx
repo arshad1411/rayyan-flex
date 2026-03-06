@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 export const transformBillingData = (data) => {
   if (!data) return data;
-  const { id, documentId, createdAt, updatedAt, ...rest } = data;
+  const { id, documentId, createdAt, updatedAt, pending, ...rest } = data;
 
   return {
     ...rest,

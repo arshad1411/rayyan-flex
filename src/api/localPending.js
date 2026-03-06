@@ -4,7 +4,7 @@ export const getLocalPending = async (params = "") => {
   const response = await axiosInstance.get(
     `/local-pendings?populate=*&${params}`,
   );
-  return response.data.data;
+  return response.data;
 };
 
 export const getLastLocalPending = async () => {
