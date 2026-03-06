@@ -16,6 +16,8 @@ const Datepicker = ({
   setFromDate,
   setToDate,
   className,
+  disableFuture = false,
+  disablePast = false,
 }) => {
   const clean = () => {
     setFromDate(null);
@@ -24,9 +26,9 @@ const Datepicker = ({
 
   return (
     <div>
-      {type === "multipledatepicker" && (
+      {type === "multipleDatePicker" && (
         <div className="flex items-center gap-4">
-          <div className={`flex items-center gap-4 ${className}`}>
+          <div className={`flex items-end gap-4 ${className} `}>
             <div className="relative w-full">
               <DateUiPicker
                 onChange={(newValue) =>
@@ -34,6 +36,8 @@ const Datepicker = ({
                 }
                 label="From Date"
                 value={FromDate}
+                disableFuture={disableFuture}
+                disablePast={disablePast}
               />
             </div>
             <div className="relative w-full">
@@ -48,17 +52,18 @@ const Datepicker = ({
                 }
                 label="To Date"
                 value={ToDate}
+                disableFuture={disableFuture}
+                disablePast={disablePast}
               />
             </div>
+            <Button
+              onClick={clean}
+              icon1={<ClearIcon color="#ffffff" />}
+              icon2={<ClearIcon />}
+              label="Clear"
+              className={"py-1.5! px-2!"}
+            />
           </div>
-
-          <Button
-            onClick={clean}
-            icon1={<ClearIcon color="#ffffff" />}
-            icon2={<ClearIcon />}
-            label="Clear"
-            className={"!py-1.5 !px-2"}
-          />
         </div>
       )}
     </div>
@@ -75,27 +80,33 @@ export const DateUiPicker = ({
   disabled = false,
   isClearable = false,
   className,
+  disableFuture = false,
+  disablePast = false,
 }) => {
+  const today = new Date();
+
   return (
     <div className="flex flex-col" style={{ lineHeight: "10px" }}>
       <label className="text-base font-semibold">{label}</label>
+
       <div className="relative">
         <DatePicker
           showIcon
           toggleCalendarOnIconClick
           isClearable={isClearable}
-          selected={value}
+          selected={value ? new Date(value) : null}
           onChange={onChange}
           dropdownMode="select"
           dateFormat="dd-MM-yyyy"
           placeholderText={label}
           popperPlacement="auto"
-          minDate={minDate}
           disabled={disabled}
+          minDate={disablePast ? today : minDate || undefined}
+          maxDate={disableFuture ? today : undefined}
           icon={
             <CalendarIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 text-black cursor-pointer !p-0 !w-5 !h-5" />
           }
-          className={`w-full text-sm  border border-gray-400 focus:outline-none cursor-pointer rounded-md h-9 ${className}`}
+          className={`w-full text-sm border border-gray-400 focus:outline-none cursor-pointer rounded-md h-9 ${className}`}
         />
       </div>
     </div>

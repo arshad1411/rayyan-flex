@@ -7,7 +7,7 @@ export const getCustomers = async () => {
 
   while (true) {
     const response = await axiosInstance.get(
-      `/customers?pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+      `/customers?pagination[page]=${page}&pagination[pageSize]=${pageSize}&sort[0]=createdAt:desc`,
     );
     const data = response.data.data;
     allCustomers = allCustomers.concat(data);
