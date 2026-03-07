@@ -239,7 +239,9 @@ const LocalPartyList = () => {
                   <div className="flex gap-2">
                     <EditButton
                       onClick={() =>
-                        navigate(`${LOCALENTRY}?editId=${item.documentId}`)
+                        navigate(
+                          `${LOCALENTRY}?editId=${item.documentId}&screenFrom=party`,
+                        )
                       }
                     />
 

@@ -1,10 +1,10 @@
 import { Checkbox, Table } from "@mui/joy";
-
+import { motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import { toast } from "react-toastify";
 import { getCustomers } from "../../api/customer";
+import { getLocalAmounts } from "../../api/localAmount";
 import {
   deleteLocalList,
   getLocalList,
@@ -15,9 +15,11 @@ import { createLocalParty } from "../../api/localParty";
 import { createLocalPending } from "../../api/localPending";
 import AutocompleteField from "../../components/AutocompleteField/AutocompleteField";
 import Button from "../../components/Button/Button";
+import CardUI from "../../components/CardUI/CardUI";
 import Datepicker from "../../components/Datepicker/Datepicker";
 import DeletePopup from "../../components/DeletePopup/DeletePopup";
 import EditButton from "../../components/EditButton/EditButton";
+import { CheckBoxIcon, CheckIcon, WalletIcon } from "../../components/icons";
 import SelectField from "../../components/SelectField/SelectField";
 import { useAuth } from "../../context/auth-context";
 import MainLayout from "../../layouts/MainLayout";
@@ -27,7 +29,7 @@ import { formattedAmount } from "../../utils/FormatAmount";
 import { transformBillingData } from "../../utils/transformBillingData";
 
 const LocalList = () => {
-  const { role } = useAuth();
+  const { role, showOverview, toggleOverview } = useAuth();
   const navigate = useNavigate();
 
   /* ================= STATE ================= */
@@ -37,6 +39,7 @@ const LocalList = () => {
 
   const [customers, setCustomers] = useState([]);
   const [localData, setLocalData] = useState([]);
+  const [localAmount, setLocalAmount] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [approveDate, setApproveDate] = useState(null);
@@ -67,11 +70,49 @@ const LocalList = () => {
     }
   }, []);
 
+  /* ================= LOAD LOCAL Amounts ================= */
+  const loadLocalTotalAmount = useCallback(async () => {
+    setLoading(true);
+
+    try {
+      let query = [];
+
+      if (searchCustomer) {
+        query.push(
+          `filters[customer][documentId][$eq]=${searchCustomer.value}`,
+        );
+      }
+
+      if (fromDate && toDate) {
+        const from = dayjs(fromDate).format("YYYY-MM-DD");
+        const to = dayjs(toDate).format("YYYY-MM-DD");
+
+        query.push(`fromDate=${from}`);
+        query.push(`toDate=${to}`);
+      }
+
+      const queryString = query.length ? `?${query.join("&")}` : "";
+
+      const res = await getLocalAmounts(queryString);
+
+      setLocalAmount(res);
+    } catch (error) {
+      console.error("Local amounts fetch failed:", error);
+      setLocalAmount([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchCustomer, fromDate, toDate]);
+
   /* ================= INITIAL LOAD ================= */
   useEffect(() => {
     loadCustomers();
     loadLocalEntriesData();
   }, [loadCustomers, loadLocalEntriesData]);
+
+  useEffect(() => {
+    loadLocalTotalAmount();
+  }, [loadLocalTotalAmount]);
 
   /* ================= FILTER + GROUP ================= */
 
@@ -101,34 +142,7 @@ const LocalList = () => {
 
       if (!acc[key]) acc[key] = [];
 
-      const sizeData = item.size_data || [];
-
-      const particulars = sizeData
-        .map((s) => {
-          if (s.type === "instruction") {
-            return {
-              text: `${s.instruction} - ${s.piece_count} pcs - ${formattedAmount(
-                s.per_piece_total,
-              )}`,
-            };
-          }
-
-          if (s.type === "flex") {
-            return {
-              text: `${s.width} x ${s.height} ${s.material} - ${s.sq_ft_price} sqft - ${s.piece_count} pcs - ${formattedAmount(
-                s.per_piece_total,
-              )}`,
-            };
-          }
-
-          return null;
-        })
-        .filter(Boolean);
-
-      acc[key].push({
-        ...item,
-        particulars,
-      });
+      acc[key].push(item);
 
       return acc;
     }, {});
@@ -214,7 +228,46 @@ const LocalList = () => {
   /* ================= RENDER ================= */
   return (
     <MainLayout>
-      <h1 className="text-2xl font-semibold mb-4">Local List</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-semibold">Local List</h1>
+        <Checkbox
+          icon={<CheckBoxIcon />}
+          checkedIcon={<CheckIcon color="#fff" />}
+          checked={showOverview}
+          style={{ marginRight: 8 }}
+          label={"Show Overview"}
+          onChange={() => toggleOverview()}
+        />
+      </div>
+
+      {showOverview && (
+        <motion.div
+          className="flex gap-4 items-center justify-start mt-6 mb-6"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+        >
+          <CardUI
+            title="Total Cash"
+            amount={localAmount?.local_list?.total_cash}
+            icon={<WalletIcon />}
+            titleColor="text-green-800"
+          />
+          <CardUI
+            title="Total Gpay"
+            amount={localAmount?.local_list?.total_gpay}
+            icon={<WalletIcon />}
+            titleColor="text-green-800"
+          />
+          <CardUI
+            title="Total Balance"
+            amount={localAmount?.local_list?.total_balance}
+            icon={<WalletIcon />}
+            titleColor="text-green-800"
+          />
+        </motion.div>
+      )}
 
       {/* Filters */}
       <div className="flex gap-4 items-center">
@@ -302,7 +355,9 @@ const LocalList = () => {
                     <div className="flex gap-2">
                       <EditButton
                         onClick={() =>
-                          navigate(`${LOCALENTRY}?editId=${item.documentId}`)
+                          navigate(
+                            `${LOCALENTRY}?editId=${item.documentId}&screenFrom=localList`,
+                          )
                         }
                       />
                       <DeletePopup

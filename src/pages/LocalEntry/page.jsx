@@ -33,9 +33,16 @@ import {
 } from "../../api/localList";
 
 import { toPng } from "html-to-image";
+import { getLocalPaidById, updateLocalPaid } from "../../api/localPaid";
+import { getLocalPartyById, updateLocalParty } from "../../api/localParty";
+import {
+  getLocalPendingById,
+  updateLocalPending,
+} from "../../api/localPending";
 import { useAuth } from "../../context/auth-context";
 import { LOCALENTRY } from "../../router/paths";
 import { setCurrentTime } from "../../utils/DatewithTime";
+import { formattedAmount } from "../../utils/FormatAmount";
 import { transformBillingData } from "../../utils/transformBillingData";
 
 const num = (v) => Number(v) || 0;
@@ -43,6 +50,7 @@ const num = (v) => Number(v) || 0;
 const LocalEntry = () => {
   const [searchParams] = useSearchParams();
   const editId = searchParams.get("editId");
+  const screenFrom = searchParams.get("screenFrom");
 
   const navigate = useNavigate();
   const { role } = useAuth();
@@ -130,7 +138,17 @@ const LocalEntry = () => {
 
   const loadEditData = useCallback(async (id) => {
     try {
-      const res = await getLocalListById(id);
+      let res;
+      if (screenFrom === "paid") {
+        res = await getLocalPaidById(id);
+      } else if (screenFrom === "party") {
+        res = await getLocalPartyById(id);
+      } else if (screenFrom === "pending") {
+        res = await getLocalPendingById(id);
+      } else {
+        res = await getLocalListById(id);
+      }
+
       const data = res?.data?.[0] || res?.data || res;
 
       if (!data) return;
@@ -243,6 +261,28 @@ const LocalEntry = () => {
         await loadCustomers();
       }
 
+      const particulars = sizeData
+        .map((s) => {
+          if (s.type === "instruction") {
+            return {
+              text: `${s.instruction} - ${s.piece_count} pcs - ${formattedAmount(
+                s.per_piece_total,
+              )}`,
+            };
+          }
+
+          if (s.type === "flex") {
+            return {
+              text: `${s.width} x ${s.height} ${s.material} - ${s.sq_ft_price} sqft - ${s.piece_count} pcs - ${formattedAmount(
+                s.per_piece_total,
+              )}`,
+            };
+          }
+
+          return null;
+        })
+        .filter(Boolean);
+
       const payload = {
         bill_no: billNo,
         date,
@@ -254,6 +294,7 @@ const LocalEntry = () => {
         recieved_amount: receivedAmount,
         balance_amount: balanceAmount,
         total_amount: totalAmount,
+        particulars,
         current_state: status,
       };
 
@@ -262,7 +303,16 @@ const LocalEntry = () => {
         setDocumentId(created?.documentId);
         toast.success("Local list created successfully");
       } else {
-        await updateLocalList(documentId, payload);
+        if (screenFrom === "paid") {
+          await updateLocalPaid(documentId, payload);
+        } else if (screenFrom === "pending") {
+          await updateLocalPending(documentId, payload);
+        } else if (status === "party") {
+          await updateLocalParty(documentId, payload);
+        } else {
+          await updateLocalList(documentId, payload);
+        }
+
         toast.success("Local list updated successfully");
       }
     } catch (error) {

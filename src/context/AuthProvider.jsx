@@ -11,6 +11,10 @@ const AuthProvider = ({ children }) => {
     return localStorage.getItem("role") || null;
   });
 
+  const [showOverview, setShowOverview] = useState(() => {
+    return localStorage.getItem("showOverview") || false;
+  });
+
   const login = (data) => {
     localStorage.setItem("jwt", data.jwt);
     localStorage.setItem("user", JSON.stringify(data));
@@ -29,8 +33,16 @@ const AuthProvider = ({ children }) => {
     setRole(null);
   };
 
+  const toggleOverview = () => {
+    const newValue = !showOverview;
+    localStorage.setItem("showOverview", newValue);
+    setShowOverview(newValue);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, role, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, role, showOverview, login, logout, toggleOverview }}
+    >
       {children}
     </AuthContext.Provider>
   );
