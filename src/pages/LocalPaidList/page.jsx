@@ -1,5 +1,6 @@
 import {
   Box,
+  Checkbox,
   FormControl,
   FormLabel,
   IconButton,
@@ -8,17 +9,19 @@ import {
   Table,
   Typography,
 } from "@mui/joy";
+import { motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { toast } from "react-toastify";
 import { getCustomers } from "../../api/customer";
-import { deleteLocalPaid, getLocalPaid } from "../../api/localPaid";
 
 import AutocompleteField from "../../components/AutocompleteField/AutocompleteField";
+import CardUI from "../../components/CardUI/CardUI";
 import Datepicker from "../../components/Datepicker/Datepicker";
 import DeletePopup from "../../components/DeletePopup/DeletePopup";
 import EditButton from "../../components/EditButton/EditButton";
+import { CheckBoxIcon, CheckIcon, WalletIcon } from "../../components/icons";
 
 import MainLayout from "../../layouts/MainLayout";
 
@@ -26,15 +29,19 @@ import { LOCALENTRY } from "../../router/paths";
 import dayjs from "../../utils/dayjs";
 import { formattedAmount } from "../../utils/FormatAmount";
 
+import { getLocalAmounts } from "../../api/localAmount";
+import { deleteLocalList, getLocalList } from "../../api/localList";
 import LeftArrowIcon from "../../components/icons/LeftArrowIcon";
 import RightIcon from "../../components/icons/RightIcon";
 import PreLoader from "../../components/Preloader/Preloader";
+import { useAuth } from "../../context/auth-context";
 
 function labelDisplayedRows({ from, to, count }) {
   return `${from}–${to} of ${count}`;
 }
 
 const LocalPaidList = () => {
+  const { showOverview, toggleOverview } = useAuth();
   const navigate = useNavigate();
 
   /* ================= STATE ================= */
@@ -45,7 +52,7 @@ const LocalPaidList = () => {
 
   const [customers, setCustomers] = useState([]);
   const [localData, setLocalData] = useState([]);
-
+  const [localAmount, setLocalAmount] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [page, setPage] = useState(0);
@@ -72,6 +79,8 @@ const LocalPaidList = () => {
     query.push(`pagination[page]=${page + 1}`);
     query.push(`pagination[pageSize]=${rowsPerPage}`);
     query.push(`sort[0]=date:desc`);
+    query.push(`filters[current_status][$eq]=paid`);
+    query.push(`filters[approved][$eq]=true`);
 
     if (searchCustomer?.value) {
       query.push(`filters[customer][documentId][$eq]=${searchCustomer.value}`);
@@ -91,7 +100,7 @@ const LocalPaidList = () => {
     setLoading(true);
 
     try {
-      const res = await getLocalPaid(buildQuery());
+      const res = await getLocalList(buildQuery());
 
       setLocalData(res?.data || []);
       setTotalCount(res?.meta?.pagination?.total || 0);
@@ -104,6 +113,39 @@ const LocalPaidList = () => {
     }
   }, [page, rowsPerPage, searchCustomer, fromDate, toDate]);
 
+  const loadLocalTotalAmount = useCallback(async () => {
+    setLoading(true);
+
+    try {
+      let query = [];
+
+      if (searchCustomer) {
+        query.push(
+          `filters[customer][documentId][$eq]=${searchCustomer.value}`,
+        );
+      }
+
+      if (fromDate && toDate) {
+        const from = dayjs(fromDate).format("YYYY-MM-DD");
+        const to = dayjs(toDate).format("YYYY-MM-DD");
+
+        query.push(`fromDate=${from}`);
+        query.push(`toDate=${to}`);
+      }
+
+      const queryString = query.length ? `?${query.join("&")}` : "";
+
+      const res = await getLocalAmounts(queryString);
+
+      setLocalAmount(res);
+    } catch (error) {
+      console.error("Local amounts fetch failed:", error);
+      setLocalAmount([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchCustomer, fromDate, toDate]);
+
   /* ================= INITIAL LOAD ================= */
 
   useEffect(() => {
@@ -114,11 +156,15 @@ const LocalPaidList = () => {
     loadLocalPaidData();
   }, [loadLocalPaidData]);
 
+  useEffect(() => {
+    loadLocalTotalAmount();
+  }, [loadLocalTotalAmount]);
+
   /* ================= DELETE ================= */
 
   const handleDelete = async (id) => {
     try {
-      await deleteLocalPaid(id);
+      await deleteLocalList(id);
       toast.success("Deleted successfully");
       loadLocalPaidData();
     } catch (error) {
@@ -148,7 +194,46 @@ const LocalPaidList = () => {
 
   return (
     <MainLayout>
-      <h1 className="text-2xl font-semibold mb-4">Local Paid List</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-semibold">Local Paid List</h1>
+        <Checkbox
+          icon={<CheckBoxIcon />}
+          checkedIcon={<CheckIcon color="#fff" />}
+          checked={showOverview}
+          style={{ marginRight: 8 }}
+          label={"Show Overview"}
+          onChange={() => toggleOverview()}
+        />
+      </div>
+
+      {showOverview && (
+        <motion.div
+          className="flex gap-4 items-center justify-start mt-6 mb-6"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+        >
+          <CardUI
+            title="Total Cash"
+            amount={localAmount?.local_paid?.total_cash}
+            icon={<WalletIcon />}
+            titleColor="text-green-800"
+          />
+          <CardUI
+            title="Total Gpay"
+            amount={localAmount?.local_paid?.total_gpay}
+            icon={<WalletIcon />}
+            titleColor="text-green-800"
+          />
+          <CardUI
+            title="Total Balance"
+            amount={localAmount?.local_paid?.total_balance}
+            icon={<WalletIcon />}
+            titleColor="text-green-800"
+          />
+        </motion.div>
+      )}
 
       {/* Filters */}
 

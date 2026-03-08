@@ -10,9 +10,6 @@ import {
   getLocalList,
   updateLocalList,
 } from "../../api/localList";
-import { createLocalPaid } from "../../api/localPaid";
-import { createLocalParty } from "../../api/localParty";
-import { createLocalPending } from "../../api/localPending";
 import AutocompleteField from "../../components/AutocompleteField/AutocompleteField";
 import Button from "../../components/Button/Button";
 import CardUI from "../../components/CardUI/CardUI";
@@ -26,7 +23,6 @@ import MainLayout from "../../layouts/MainLayout";
 import { LOCALENTRY } from "../../router/paths";
 import dayjs from "../../utils/dayjs";
 import { formattedAmount } from "../../utils/FormatAmount";
-import { transformBillingData } from "../../utils/transformBillingData";
 
 const LocalList = () => {
   const { role, showOverview, toggleOverview } = useAuth();
@@ -60,8 +56,10 @@ const LocalList = () => {
   const loadLocalEntriesData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getLocalList("sort[0]=date:desc");
-      setLocalData(res || []);
+      const res = await getLocalList(
+        "sort[0]=date:desc&filters[approved][$eq]=false",
+      );
+      setLocalData(res.data || []);
     } catch (error) {
       console.error("Local list fetch failed:", error);
       setLocalData([]);
@@ -165,7 +163,7 @@ const LocalList = () => {
   /* ================= STATUS CHANGE ================= */
   const handleStatusChange = async (id, value) => {
     try {
-      await updateLocalList(id, { current_state: value });
+      await updateLocalList(id, { current_status: value });
 
       await loadLocalEntriesData();
     } catch (error) {
@@ -179,7 +177,7 @@ const LocalList = () => {
     const group = groupedData[date];
 
     const invalid = group.some(
-      (item) => !item.current_state || item.current_state === "status",
+      (item) => !item.current_status || item.current_status === "status",
     );
 
     if (invalid) {
@@ -192,21 +190,14 @@ const LocalList = () => {
   };
 
   const handleApproveConfirm = async () => {
-    const group = groupedData[approveDate].map((item) => ({
-      documentId: item.documentId,
-      payload: transformBillingData(item),
-    }));
-
     setLoading(true);
 
     try {
-      for (const { documentId, payload } of group) {
-        if (payload.current_state === "paid") await createLocalPaid(payload);
-        if (payload.current_state === "pending")
-          await createLocalPending(payload);
-        if (payload.current_state === "party") await createLocalParty(payload);
-
-        await deleteLocalList(documentId);
+      for (const item of groupedData[approveDate]) {
+        await updateLocalList(item.documentId, {
+          current_status: item.current_status,
+          approved: true,
+        });
       }
 
       await loadLocalEntriesData();
@@ -368,7 +359,7 @@ const LocalList = () => {
                   {role === "superadmin" && (
                     <td>
                       <SelectField
-                        value={item.current_state || "status"}
+                        value={item.current_status || "status"}
                         options={[
                           { value: "status", label: "Status" },
                           { value: "paid", label: "Paid" },

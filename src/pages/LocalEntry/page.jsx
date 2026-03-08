@@ -33,12 +33,7 @@ import {
 } from "../../api/localList";
 
 import { toPng } from "html-to-image";
-import { getLocalPaidById, updateLocalPaid } from "../../api/localPaid";
-import { getLocalPartyById, updateLocalParty } from "../../api/localParty";
-import {
-  getLocalPendingById,
-  updateLocalPending,
-} from "../../api/localPending";
+
 import { useAuth } from "../../context/auth-context";
 import { LOCALENTRY } from "../../router/paths";
 import { setCurrentTime } from "../../utils/DatewithTime";
@@ -50,7 +45,6 @@ const num = (v) => Number(v) || 0;
 const LocalEntry = () => {
   const [searchParams] = useSearchParams();
   const editId = searchParams.get("editId");
-  const screenFrom = searchParams.get("screenFrom");
 
   const navigate = useNavigate();
   const { role } = useAuth();
@@ -138,16 +132,7 @@ const LocalEntry = () => {
 
   const loadEditData = useCallback(async (id) => {
     try {
-      let res;
-      if (screenFrom === "paid") {
-        res = await getLocalPaidById(id);
-      } else if (screenFrom === "party") {
-        res = await getLocalPartyById(id);
-      } else if (screenFrom === "pending") {
-        res = await getLocalPendingById(id);
-      } else {
-        res = await getLocalListById(id);
-      }
+      const res = await getLocalListById(id);
 
       const data = res?.data?.[0] || res?.data || res;
 
@@ -179,7 +164,7 @@ const LocalEntry = () => {
           : [{ date: null, amount: 0 }],
       );
 
-      setStatus(data.current_state || "status");
+      setStatus(data.current_status || "status");
     } catch {
       toast.error("Failed to load entry");
     }
@@ -295,7 +280,7 @@ const LocalEntry = () => {
         balance_amount: balanceAmount,
         total_amount: totalAmount,
         particulars,
-        current_state: status,
+        current_status: status,
       };
 
       if (!documentId) {
@@ -303,15 +288,7 @@ const LocalEntry = () => {
         setDocumentId(created?.documentId);
         toast.success("Local list created successfully");
       } else {
-        if (screenFrom === "paid") {
-          await updateLocalPaid(documentId, payload);
-        } else if (screenFrom === "pending") {
-          await updateLocalPending(documentId, payload);
-        } else if (status === "party") {
-          await updateLocalParty(documentId, payload);
-        } else {
-          await updateLocalList(documentId, payload);
-        }
+        await updateLocalList(documentId, payload);
 
         toast.success("Local list updated successfully");
       }

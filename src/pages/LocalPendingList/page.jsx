@@ -13,7 +13,6 @@ import { useNavigate } from "react-router-dom";
 
 import { toast } from "react-toastify";
 import { getCustomers } from "../../api/customer";
-import { deleteLocalPending, getLocalPending } from "../../api/localPending";
 
 import AutocompleteField from "../../components/AutocompleteField/AutocompleteField";
 import Datepicker from "../../components/Datepicker/Datepicker";
@@ -26,14 +25,16 @@ import { LOCALENTRY } from "../../router/paths";
 import dayjs from "../../utils/dayjs";
 import { formattedAmount } from "../../utils/FormatAmount";
 
-import { createLocalPaid } from "../../api/localPaid";
-import { createLocalParty } from "../../api/localParty";
+import {
+  deleteLocalList,
+  getLocalList,
+  updateLocalList,
+} from "../../api/localList";
 import LeftArrowIcon from "../../components/icons/LeftArrowIcon";
 import RightIcon from "../../components/icons/RightIcon";
 import PreLoader from "../../components/Preloader/Preloader";
 import SelectField from "../../components/SelectField/SelectField";
 import { useAuth } from "../../context/auth-context";
-import { transformBillingData } from "../../utils/transformBillingData";
 
 function labelDisplayedRows({ from, to, count }) {
   return `${from}–${to} of ${count}`;
@@ -82,6 +83,8 @@ const LocalPendingList = () => {
     query.push(`pagination[page]=${page + 1}`);
     query.push(`pagination[pageSize]=${rowsPerPage}`);
     query.push(`sort[0]=date:desc`);
+    query.push(`filters[current_status][$eq]=pending`);
+    query.push(`filters[approved][$eq]=true`);
 
     if (searchCustomer?.value) {
       query.push(`filters[customer][documentId][$eq]=${searchCustomer.value}`);
@@ -101,7 +104,7 @@ const LocalPendingList = () => {
     setLoading(true);
 
     try {
-      const res = await getLocalPending(buildQuery());
+      const res = await getLocalList(buildQuery());
 
       setLocalData(res?.data || []);
       setTotalCount(res?.meta?.pagination?.total || 0);
@@ -126,7 +129,7 @@ const LocalPendingList = () => {
 
   const handleDelete = async (id) => {
     try {
-      await deleteLocalPending(id);
+      await deleteLocalList(id);
       toast.success("Deleted successfully");
       loadLocalPendingData();
     } catch (error) {
@@ -154,15 +157,10 @@ const LocalPendingList = () => {
   const handleStatusChange = async () => {
     if (!selectedItem || !selectedStatus) return;
 
-    const documentId = selectedItem.documentId;
-    const data = transformBillingData(selectedItem);
-
     try {
-      if (selectedStatus === "paid") await createLocalPaid(data);
-
-      if (selectedStatus === "party") await createLocalParty(data);
-
-      await deleteLocalPending(documentId);
+      await updateLocalList(selectedItem.documentId, {
+        current_status: selectedStatus,
+      });
 
       toast.success("Status updated successfully");
 
@@ -286,7 +284,7 @@ const LocalPendingList = () => {
                 {role === "superadmin" && (
                   <td>
                     <SelectField
-                      value={item.current_state || "Pending"}
+                      value={item.current_status || "Pending"}
                       options={[
                         { value: "pending", label: "Pending" },
                         { value: "paid", label: "Paid" },

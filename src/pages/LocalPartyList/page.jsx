@@ -13,7 +13,6 @@ import { useNavigate } from "react-router-dom";
 
 import { toast } from "react-toastify";
 import { getCustomers } from "../../api/customer";
-import { deleteLocalParty, getLocalParty } from "../../api/localParty";
 
 import AutocompleteField from "../../components/AutocompleteField/AutocompleteField";
 import Datepicker from "../../components/Datepicker/Datepicker";
@@ -26,6 +25,7 @@ import { LOCALENTRY } from "../../router/paths";
 import dayjs from "../../utils/dayjs";
 import { formattedAmount } from "../../utils/FormatAmount";
 
+import { deleteLocalList, getLocalList } from "../../api/localList";
 import LeftArrowIcon from "../../components/icons/LeftArrowIcon";
 import RightIcon from "../../components/icons/RightIcon";
 import PreLoader from "../../components/Preloader/Preloader";
@@ -72,6 +72,8 @@ const LocalPartyList = () => {
     query.push(`pagination[page]=${page + 1}`);
     query.push(`pagination[pageSize]=${rowsPerPage}`);
     query.push(`sort[0]=date:desc`);
+    query.push(`filters[current_status][$eq]=party`);
+    query.push(`filters[approved][$eq]=true`);
 
     if (searchCustomer?.value) {
       query.push(`filters[customer][documentId][$eq]=${searchCustomer.value}`);
@@ -91,13 +93,13 @@ const LocalPartyList = () => {
     setLoading(true);
 
     try {
-      const res = await getLocalParty(buildQuery());
+      const res = await getLocalList(buildQuery());
 
       setLocalData(res?.data || []);
       setTotalCount(res?.meta?.pagination?.total || 0);
     } catch (error) {
-      console.error("Local paid fetch failed:", error);
-      toast.error("Failed to load local paid list");
+      console.error("Local party fetch failed:", error);
+      toast.error("Failed to load local party list");
       setLocalData([]);
     } finally {
       setLoading(false);
@@ -118,7 +120,7 @@ const LocalPartyList = () => {
 
   const handleDelete = async (id) => {
     try {
-      await deleteLocalParty(id);
+      await deleteLocalList(id);
       toast.success("Deleted successfully");
       loadLocalPartyData();
     } catch (error) {
