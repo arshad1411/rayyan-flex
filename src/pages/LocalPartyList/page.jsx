@@ -12,12 +12,10 @@ import {
 import { motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import CardUI from "../../components/CardUI/CardUI";
-
 import { toast } from "react-toastify";
 import { getCustomers } from "../../api/customer";
-
 import AutocompleteField from "../../components/AutocompleteField/AutocompleteField";
+import CardUI from "../../components/CardUI/CardUI";
 import Datepicker, {
   DateUiPicker,
 } from "../../components/Datepicker/Datepicker";
@@ -336,7 +334,6 @@ const LocalPartyList = () => {
           <DateUiPicker
             value={date}
             label="Date"
-            disabled={role !== "superadmin"}
             onChange={(d) => setDate(setCurrentTime(d))}
             className={"w-full"}
             minDate={role === "superadmin" ? false : new Date()}
@@ -379,7 +376,7 @@ const LocalPartyList = () => {
           />
           <Button
             type={"submit"}
-            label={"Save"}
+            label={editId ? "Save" : "Update"}
             icon1={<SaveIcon color="#fff" />}
             icon2={<SaveIcon color="#fff" />}
             className={"bg-[#4F46E5] hover:bg-[#4338CA] text-white"}

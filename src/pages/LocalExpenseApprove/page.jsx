@@ -9,67 +9,59 @@ import {
   Table,
   Typography,
 } from "@mui/joy";
+import dayjs from "dayjs";
 import { motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { getCustomers } from "../../api/customer";
-import AutocompleteField from "../../components/AutocompleteField/AutocompleteField";
+import {
+  createLocalExpense,
+  deleteLocalExpense,
+  getLocalExpense,
+  getLocalExpenseAmounts,
+  updateLocalExpense,
+} from "../../api/localExpense";
+import Button from "../../components/Button/Button";
 import CardUI from "../../components/CardUI/CardUI";
-import Datepicker from "../../components/Datepicker/Datepicker";
+import Datepicker, {
+  DateUiPicker,
+} from "../../components/Datepicker/Datepicker";
 import DeletePopup from "../../components/DeletePopup/DeletePopup";
 import EditButton from "../../components/EditButton/EditButton";
-import { CheckBoxIcon, CheckIcon, WalletIcon } from "../../components/icons";
-
-import MainLayout from "../../layouts/MainLayout";
-
-import { LOCALENTRY } from "../../router/paths";
-import dayjs from "../../utils/dayjs";
-import { formattedAmount } from "../../utils/FormatAmount";
-
-import { getLocalAmounts } from "../../api/localAmount";
-import { deleteLocalList, getLocalList } from "../../api/localList";
-import LeftArrowIcon from "../../components/icons/LeftArrowIcon";
-import RightIcon from "../../components/icons/RightIcon";
+import {
+  CheckBoxIcon,
+  CheckIcon,
+  LeftArrowIcon,
+  RightIcon,
+  SaveIcon,
+  WalletIcon,
+} from "../../components/icons";
+import InputField from "../../components/InputField/InputField";
 import PreLoader from "../../components/Preloader/Preloader";
+import SelectField from "../../components/SelectField/SelectField";
 import { useAuth } from "../../context/auth-context";
+import MainLayout from "../../layouts/MainLayout";
+import { setCurrentTime } from "../../utils/DatewithTime";
 
 function labelDisplayedRows({ from, to, count }) {
   return `${from}–${to} of ${count}`;
 }
 
-const LocalPaidList = () => {
-  const { showOverview, toggleOverview } = useAuth();
-  const navigate = useNavigate();
-
-  /* ================= STATE ================= */
-
-  const [fromDate, setFromDate] = useState(null);
-  const [toDate, setToDate] = useState(null);
-  const [searchCustomer, setSearchCustomer] = useState(null);
-
-  const [customers, setCustomers] = useState([]);
-  const [localData, setLocalData] = useState([]);
-  const [localAmount, setLocalAmount] = useState([]);
+const LocalExpenseApprove = () => {
+  const { role, showOverview, toggleOverview } = useAuth();
+  const [date, setDate] = useState(new Date());
+  const [instruction, setInstruction] = useState("");
+  const [customType, setCustomType] = useState("cash");
+  const [method, setMethod] = useState("expense");
+  const [amount, setAmount] = useState("");
+  const [expenseData, setExpenseData] = useState([]);
+  const [localExpenseAmount, setLocalExpenseAmount] = useState([]);
   const [loading, setLoading] = useState(false);
-
+  const [editId, setEditId] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [totalCount, setTotalCount] = useState(0);
-
-  /* ================= LOAD CUSTOMERS ================= */
-
-  const loadCustomers = useCallback(async () => {
-    try {
-      const res = await getCustomers();
-      setCustomers(res || []);
-    } catch (error) {
-      console.error("Customer fetch failed:", error);
-      setCustomers([]);
-    }
-  }, []);
-
-  /* ================= API QUERY BUILDER ================= */
+  const [fromDate, setFromDate] = useState(null);
+  const [toDate, setToDate] = useState(null);
 
   const buildQuery = () => {
     const query = [];
@@ -77,12 +69,7 @@ const LocalPaidList = () => {
     query.push(`pagination[page]=${page + 1}`);
     query.push(`pagination[pageSize]=${rowsPerPage}`);
     query.push(`sort[0]=date:desc`);
-    query.push(`filters[current_status][$eq]=paid`);
     query.push(`filters[approved][$eq]=true`);
-
-    if (searchCustomer?.value) {
-      query.push(`filters[customer][documentId][$eq]=${searchCustomer.value}`);
-    }
 
     if (fromDate && toDate) {
       query.push(`filters[date][$gte]=${dayjs(fromDate).format("YYYY-MM-DD")}`);
@@ -92,36 +79,28 @@ const LocalPaidList = () => {
     return query.join("&");
   };
 
-  /* ================= LOAD DATA ================= */
-
-  const loadLocalPaidData = useCallback(async () => {
+  const loadExpenseData = useCallback(async () => {
     setLoading(true);
 
     try {
-      const res = await getLocalList(buildQuery());
+      const res = await getLocalExpense(buildQuery());
 
-      setLocalData(res?.data || []);
+      setExpenseData(res?.data || []);
       setTotalCount(res?.meta?.pagination?.total || 0);
     } catch (error) {
-      console.error("Local paid fetch failed:", error);
-      toast.error("Failed to load local paid list");
-      setLocalData([]);
+      console.error("Local expense fetch failed:", error);
+      toast.error("Failed to load local expense list");
+      setExpenseData([]);
     } finally {
       setLoading(false);
     }
-  }, [page, rowsPerPage, searchCustomer, fromDate, toDate]);
+  }, [page, rowsPerPage, fromDate, toDate]);
 
   const loadLocalTotalAmount = useCallback(async () => {
     setLoading(true);
 
     try {
       let query = [];
-
-      if (searchCustomer) {
-        query.push(
-          `filters[customer][documentId][$eq]=${searchCustomer.value}`,
-        );
-      }
 
       if (fromDate && toDate) {
         const from = dayjs(fromDate).format("YYYY-MM-DD");
@@ -133,44 +112,57 @@ const LocalPaidList = () => {
 
       const queryString = query.length ? `?${query.join("&")}` : "";
 
-      const res = await getLocalAmounts(queryString);
+      const res = await getLocalExpenseAmounts(queryString);
 
-      setLocalAmount(res);
+      setLocalExpenseAmount(res);
     } catch (error) {
       console.error("Local amounts fetch failed:", error);
-      setLocalAmount([]);
+      setLocalExpenseAmount([]);
     } finally {
       setLoading(false);
     }
-  }, [searchCustomer, fromDate, toDate]);
-
-  /* ================= INITIAL LOAD ================= */
+  }, [fromDate, toDate]);
 
   useEffect(() => {
-    loadCustomers();
-  }, [loadCustomers]);
-
-  useEffect(() => {
-    loadLocalPaidData();
-  }, [loadLocalPaidData]);
+    loadExpenseData();
+  }, [loadExpenseData]);
 
   useEffect(() => {
     loadLocalTotalAmount();
   }, [loadLocalTotalAmount]);
 
-  /* ================= DELETE ================= */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  const handleDelete = async (id) => {
+    const payload = {
+      date,
+      instruction,
+      method,
+      custom_type: customType,
+      amount: parseInt(amount),
+      approved: true,
+    };
+
     try {
-      await deleteLocalList(id);
-      toast.success("Deleted successfully");
-      loadLocalPaidData();
+      if (editId) {
+        await updateLocalExpense(editId, payload);
+        toast.success("Local expense updated successfully");
+      } else {
+        await createLocalExpense(payload);
+        toast.success("Local expense created successfully");
+      }
     } catch (error) {
-      console.error("Delete failed:", error);
+      console.error("Local expense save failed:", error);
+      toast.error("Failed to save local expense");
     }
+    loadExpenseData();
+    setEditId("");
+    setDate(new Date());
+    setInstruction("");
+    setMethod("expense");
+    setCustomType("cash");
+    setAmount(0);
   };
-
-  /* ================= PAGINATION ================= */
 
   const handleChangePage = (newPage) => {
     setPage(newPage);
@@ -185,15 +177,33 @@ const LocalPaidList = () => {
     return Math.min((page + 1) * rowsPerPage, totalCount);
   };
 
-  /* ================= RENDER ================= */
+  const handleDelete = async (id) => {
+    try {
+      await deleteLocalExpense(id);
+      toast.success("Deleted successfully");
+      loadExpenseData();
+    } catch (error) {
+      console.error("Delete failed:", error);
+    }
+  };
+
+  const handleEdit = (item) => {
+    setEditId(item.documentId);
+    setDate(new Date(item.date));
+    setInstruction(item.instruction);
+    setMethod(item.method);
+    setCustomType(item.custom_type);
+    setAmount(item.amount);
+  };
+
   if (loading) {
-    return <PreLoader />;
+    <PreLoader />;
   }
 
   return (
     <MainLayout>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-semibold">Local Paid List</h1>
+        <h1 className="text-2xl font-semibold">Local Expense List</h1>
         <Checkbox
           icon={<CheckBoxIcon />}
           checkedIcon={<CheckIcon color="#fff" />}
@@ -214,27 +224,18 @@ const LocalPaidList = () => {
         >
           <CardUI
             title="Total Cash"
-            amount={localAmount?.local_paid?.total_cash}
+            amount={localExpenseAmount?.total_cash}
             icon={<WalletIcon />}
             titleColor="text-green-800"
           />
           <CardUI
             title="Total Gpay"
-            amount={localAmount?.local_paid?.total_gpay}
-            icon={<WalletIcon />}
-            titleColor="text-green-800"
-          />
-          <CardUI
-            title="Total Balance"
-            amount={localAmount?.local_paid?.total_balance}
+            amount={localExpenseAmount?.total_gpay}
             icon={<WalletIcon />}
             titleColor="text-green-800"
           />
         </motion.div>
       )}
-
-      {/* Filters */}
-
       <div className="flex gap-4 items-center">
         <Datepicker
           type="multipleDatePicker"
@@ -244,89 +245,85 @@ const LocalPaidList = () => {
           setToDate={setToDate}
         />
       </div>
+      <form onSubmit={handleSubmit} className="mt-6">
+        <div className="grid grid-cols-6 gap-4 ">
+          <DateUiPicker
+            value={date}
+            label="Date"
+            onChange={(d) => setDate(setCurrentTime(d))}
+            className={"w-full"}
+            minDate={role === "superadmin" ? false : new Date()}
+          />
 
-      <div className="flex justify-end mt-6">
-        <div className="w-80">
-          <AutocompleteField
-            label="Customer Name"
-            value={searchCustomer}
-            options={customers.map((c) => ({
-              label: c.name,
-              value: c.documentId,
-            }))}
-            onChange={(e, val) => {
-              setSearchCustomer(val);
-              setPage(0);
-            }}
+          <InputField
+            placeholder="Instruction"
+            value={instruction}
+            onChange={(e) => setInstruction(e.target.value)}
+          />
+
+          <SelectField
+            label={"Method"}
+            selectName={"method"}
+            options={[
+              { value: "expense", label: "Expense" },
+              { value: "receive", label: "Receive" },
+            ]}
+            value={method}
+            onChange={(e) => setMethod(e.target.value)}
+            placeholder={"Method"}
+            required={true}
+          />
+
+          <SelectField
+            label={"Received In"}
+            selectName={"custom_type"}
+            options={[
+              { value: "cash", label: "Cash" },
+              { value: "gpay", label: "Gpay" },
+            ]}
+            value={customType}
+            onChange={(e) => setCustomType(e.target.value)}
+            placeholder={"Received In"}
+            required={true}
+          />
+          <InputField
+            name={"received amount"}
+            placeholder={"Received Amount"}
+            value={amount}
+            onChange={(e) => setAmount(e.target.value) || 0}
+          />
+          <Button
+            type={"submit"}
+            label={editId ? "Save" : "Update"}
+            icon1={<SaveIcon color="#fff" />}
+            icon2={<SaveIcon color="#fff" />}
+            className={"bg-[#4F46E5] hover:bg-[#4338CA] text-white"}
           />
         </div>
-      </div>
-
-      {/* Table */}
-
+      </form>
       <div className="mt-8">
         <Table borderAxis="both" hoverRow>
           <thead>
             <tr>
               <th className="w-[10%]">Date</th>
-              <th className="w-[10%]">Customer</th>
-              <th className="w-[11%]">Phone</th>
-              <th className="w-[30%]">Particulars</th>
-              <th className="w-[7%]">Total</th>
-              <th className="w-[14%]">Cash</th>
-              <th className="w-[16%]">GPay</th>
-              <th className="w-[10%]">Action</th>
+              <th className="w-[30%]">Instruction</th>
+              <th className="w-[15%]">Method</th>
+              <th className="w-[10%]">Custom Type</th>
+              <th className="w-[17%]">Amount</th>
+              <th className="w-[18%]">Action</th>
             </tr>
           </thead>
 
           <tbody>
-            {localData.map((item) => (
+            {expenseData.map((item) => (
               <tr key={item.documentId}>
-                <td>{dayjs(item.date).format("DD/MM/YYYY")}</td>
-
-                <td>{item.customer?.name || "-"}</td>
-
-                <td>{item.customer?.phonenumber || "-"}</td>
-
-                <td>
-                  {item.particulars?.map((p) => (
-                    <div key={p.id}>{p.text}</div>
-                  ))}
-                </td>
-
-                <td>{formattedAmount(item.total_amount)}</td>
-
-                <td>
-                  {item.cash?.length === 0
-                    ? "-"
-                    : item.cash.map((c) => (
-                        <div key={c.id}>
-                          {dayjs(c.date).format("DD/MM/YY")} -{" "}
-                          {formattedAmount(c.amount)}
-                        </div>
-                      ))}
-                </td>
-
-                <td>
-                  {item.gpay?.length === 0
-                    ? "-"
-                    : item.gpay.map((g) => (
-                        <div key={g.id}>
-                          {dayjs(g.date).format("DD/MM/YY")} -{" "}
-                          {formattedAmount(g.amount)}
-                        </div>
-                      ))}
-                </td>
-
+                <td>{item.instruction}</td>
+                <td>{item.method}</td>
+                <td>{item.custom_type}</td>
+                <td>{item.amount}</td>
                 <td>
                   <div className="flex gap-2">
-                    <EditButton
-                      onClick={() =>
-                        navigate(
-                          `${LOCALENTRY}?editId=${item.documentId}&screenFrom=paid`,
-                        )
-                      }
-                    />
+                    <EditButton onClick={() => handleEdit(item)} />
 
                     <DeletePopup
                       handleDelete={() => handleDelete(item.documentId)}
@@ -336,9 +333,6 @@ const LocalPaidList = () => {
               </tr>
             ))}
           </tbody>
-
-          {/* Pagination Footer */}
-
           <tfoot>
             <tr>
               <td colSpan={8}>
@@ -400,4 +394,4 @@ const LocalPaidList = () => {
   );
 };
 
-export default LocalPaidList;
+export default LocalExpenseApprove;

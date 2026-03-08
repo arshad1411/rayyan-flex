@@ -129,7 +129,7 @@ export const appConfig = [
         label: "Approved List",
         icon: ApproveListIcon,
         path: LOCALEXPENSEAPPROVE,
-        elementKey: "LocalExpenseApprovedList",
+        elementKey: "LocalExpenseApprove",
         roles: [ROLES.SuperAdmin],
       },
     ],

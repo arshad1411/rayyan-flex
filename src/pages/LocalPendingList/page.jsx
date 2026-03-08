@@ -12,17 +12,14 @@ import {
 import { motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import { toast } from "react-toastify";
 import { getCustomers } from "../../api/customer";
-
 import AutocompleteField from "../../components/AutocompleteField/AutocompleteField";
 import CardUI from "../../components/CardUI/CardUI";
 import Datepicker from "../../components/Datepicker/Datepicker";
 import DeletePopup from "../../components/DeletePopup/DeletePopup";
 import EditButton from "../../components/EditButton/EditButton";
 import { CheckBoxIcon, CheckIcon, WalletIcon } from "../../components/icons";
-
 import MainLayout from "../../layouts/MainLayout";
 
 import { useAuth } from "../../context/auth-context";

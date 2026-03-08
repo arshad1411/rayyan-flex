@@ -23,7 +23,6 @@ import MainLayout from "../../layouts/MainLayout";
 import { LOCALENTRY } from "../../router/paths";
 import dayjs from "../../utils/dayjs";
 import { formattedAmount } from "../../utils/FormatAmount";
-
 const LocalList = () => {
   const { role, showOverview, toggleOverview } = useAuth();
   const navigate = useNavigate();
