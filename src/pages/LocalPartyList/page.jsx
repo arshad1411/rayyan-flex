@@ -240,6 +240,20 @@ const LocalPartyList = () => {
     setReceivedAmount(0);
   };
 
+  const handleEdit = (item) => {
+    setEditId(item.documentId);
+    setDate(new Date(item.date));
+    setSearchCustomer({
+      label: item.customer?.name,
+      value: item.customer?.documentId,
+    });
+    setParticulars(item.particulars?.[0]?.text || "");
+    setCustomType(item.custom_type || "gpay");
+    setReceivedAmount(
+      item.custom_type === "cash" ? item.cash_received : item.gpay_received,
+    );
+  };
+
   /* ================= RENDER ================= */
   if (loading) {
     return <PreLoader />;
@@ -386,6 +400,7 @@ const LocalPartyList = () => {
               <th className="w-[7%]">Total</th>
               <th className="w-[14%]">Cash</th>
               <th className="w-[16%]">GPay</th>
+              <th className="w-[7%]">Balance</th>
               <th className="w-[10%]">Action</th>
             </tr>
           </thead>
@@ -432,13 +447,16 @@ const LocalPartyList = () => {
                           </div>
                         ))}
                 </td>
+                <td className={item.balance_amount > 0 ? "text-red-500" : ""}>
+                  {formattedAmount(item.balance_amount)}
+                </td>
 
                 <td>
                   <div className="flex gap-2">
                     <EditButton
                       onClick={() => {
                         if (item.custom_type) {
-                          setEditId(item.documentId);
+                          handleEdit(item);
                         } else {
                           navigate(
                             `${LOCALENTRY}?editId=${item.documentId}&screenFrom=party`,
