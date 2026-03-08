@@ -105,8 +105,11 @@ const LocalList = () => {
   /* ================= INITIAL LOAD ================= */
   useEffect(() => {
     loadCustomers();
+  }, [loadCustomers]);
+
+  useEffect(() => {
     loadLocalEntriesData();
-  }, [loadCustomers, loadLocalEntriesData]);
+  }, [loadLocalEntriesData]);
 
   useEffect(() => {
     loadLocalTotalAmount();

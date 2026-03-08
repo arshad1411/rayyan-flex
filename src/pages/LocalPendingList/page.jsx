@@ -1,5 +1,6 @@
 import {
   Box,
+  Checkbox,
   FormControl,
   FormLabel,
   IconButton,
@@ -8,6 +9,7 @@ import {
   Table,
   Typography,
 } from "@mui/joy";
+import { motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -15,16 +17,20 @@ import { toast } from "react-toastify";
 import { getCustomers } from "../../api/customer";
 
 import AutocompleteField from "../../components/AutocompleteField/AutocompleteField";
+import CardUI from "../../components/CardUI/CardUI";
 import Datepicker from "../../components/Datepicker/Datepicker";
 import DeletePopup from "../../components/DeletePopup/DeletePopup";
 import EditButton from "../../components/EditButton/EditButton";
+import { CheckBoxIcon, CheckIcon, WalletIcon } from "../../components/icons";
 
 import MainLayout from "../../layouts/MainLayout";
 
+import { useAuth } from "../../context/auth-context";
 import { LOCALENTRY } from "../../router/paths";
 import dayjs from "../../utils/dayjs";
 import { formattedAmount } from "../../utils/FormatAmount";
 
+import { getLocalAmounts } from "../../api/localAmount";
 import {
   deleteLocalList,
   getLocalList,
@@ -34,14 +40,13 @@ import LeftArrowIcon from "../../components/icons/LeftArrowIcon";
 import RightIcon from "../../components/icons/RightIcon";
 import PreLoader from "../../components/Preloader/Preloader";
 import SelectField from "../../components/SelectField/SelectField";
-import { useAuth } from "../../context/auth-context";
 
 function labelDisplayedRows({ from, to, count }) {
   return `${from}–${to} of ${count}`;
 }
 
 const LocalPendingList = () => {
-  const { role } = useAuth();
+  const { role, showOverview, toggleOverview } = useAuth();
   const navigate = useNavigate();
 
   const [fromDate, setFromDate] = useState(null);
@@ -50,7 +55,7 @@ const LocalPendingList = () => {
 
   const [customers, setCustomers] = useState([]);
   const [localData, setLocalData] = useState([]);
-
+  const [localAmount, setLocalAmount] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [page, setPage] = useState(0);
@@ -116,6 +121,38 @@ const LocalPendingList = () => {
       setLoading(false);
     }
   }, [page, rowsPerPage, searchCustomer, fromDate, toDate]);
+  const loadLocalTotalAmount = useCallback(async () => {
+    setLoading(true);
+
+    try {
+      let query = [];
+
+      if (searchCustomer) {
+        query.push(
+          `filters[customer][documentId][$eq]=${searchCustomer.value}`,
+        );
+      }
+
+      if (fromDate && toDate) {
+        const from = dayjs(fromDate).format("YYYY-MM-DD");
+        const to = dayjs(toDate).format("YYYY-MM-DD");
+
+        query.push(`fromDate=${from}`);
+        query.push(`toDate=${to}`);
+      }
+
+      const queryString = query.length ? `?${query.join("&")}` : "";
+
+      const res = await getLocalAmounts(queryString);
+
+      setLocalAmount(res);
+    } catch (error) {
+      console.error("Local amounts fetch failed:", error);
+      setLocalAmount([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchCustomer, fromDate, toDate]);
 
   useEffect(() => {
     loadCustomers();
@@ -124,6 +161,9 @@ const LocalPendingList = () => {
   useEffect(() => {
     loadLocalPendingData();
   }, [loadLocalPendingData]);
+  useEffect(() => {
+    loadLocalTotalAmount();
+  }, [loadLocalTotalAmount]);
 
   /* Delete */
 
@@ -181,7 +221,46 @@ const LocalPendingList = () => {
 
   return (
     <MainLayout>
-      <h1 className="text-2xl font-semibold mb-4">Local Pending List</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-semibold">Local pending List</h1>
+        <Checkbox
+          icon={<CheckBoxIcon />}
+          checkedIcon={<CheckIcon color="#fff" />}
+          checked={showOverview}
+          style={{ marginRight: 8 }}
+          label={"Show Overview"}
+          onChange={() => toggleOverview()}
+        />
+      </div>
+
+      {showOverview && (
+        <motion.div
+          className="flex gap-4 items-center justify-start mt-6 mb-6"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+        >
+          <CardUI
+            title="Total Cash"
+            amount={localAmount?.local_pending?.total_cash}
+            icon={<WalletIcon />}
+            titleColor="text-green-800"
+          />
+          <CardUI
+            title="Total Gpay"
+            amount={localAmount?.local_pending?.total_gpay}
+            icon={<WalletIcon />}
+            titleColor="text-green-800"
+          />
+          <CardUI
+            title="Total Balance"
+            amount={localAmount?.local_pending?.total_balance}
+            icon={<WalletIcon />}
+            titleColor="text-green-800"
+          />
+        </motion.div>
+      )}
 
       <div className="flex gap-4 items-center">
         <Datepicker
