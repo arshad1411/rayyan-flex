@@ -18,7 +18,9 @@ import { toast } from "react-toastify";
 import { getCustomers } from "../../api/customer";
 
 import AutocompleteField from "../../components/AutocompleteField/AutocompleteField";
-import Datepicker from "../../components/Datepicker/Datepicker";
+import Datepicker, {
+  DateUiPicker,
+} from "../../components/Datepicker/Datepicker";
 import DeletePopup from "../../components/DeletePopup/DeletePopup";
 import EditButton from "../../components/EditButton/EditButton";
 
@@ -29,12 +31,26 @@ import dayjs from "../../utils/dayjs";
 import { formattedAmount } from "../../utils/FormatAmount";
 
 import { getLocalAmounts } from "../../api/localAmount";
-import { deleteLocalList, getLocalList } from "../../api/localList";
-import { CheckBoxIcon, CheckIcon, WalletIcon } from "../../components/icons";
+import {
+  createLocalList,
+  deleteLocalList,
+  getLocalList,
+  updateLocalList,
+} from "../../api/localList";
+import Button from "../../components/Button/Button";
+import {
+  CheckBoxIcon,
+  CheckIcon,
+  SaveIcon,
+  WalletIcon,
+} from "../../components/icons";
 import LeftArrowIcon from "../../components/icons/LeftArrowIcon";
 import RightIcon from "../../components/icons/RightIcon";
+import InputField from "../../components/InputField/InputField";
 import PreLoader from "../../components/Preloader/Preloader";
+import SelectField from "../../components/SelectField/SelectField";
 import { useAuth } from "../../context/auth-context";
+import { setCurrentTime } from "../../utils/DatewithTime";
 
 function labelDisplayedRows({ from, to, count }) {
   return `${from}–${to} of ${count}`;
@@ -59,6 +75,12 @@ const LocalPartyList = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [totalCount, setTotalCount] = useState(0);
+
+  const [date, setDate] = useState(setCurrentTime(new Date()));
+  const [customType, setCustomType] = useState("gpay");
+  const [receivedAmount, setReceivedAmount] = useState(0);
+  const [editId, setEditId] = useState("");
+  const [particulars, setParticulars] = useState("");
 
   /* ================= LOAD CUSTOMERS ================= */
 
@@ -188,6 +210,36 @@ const LocalPartyList = () => {
     return Math.min((page + 1) * rowsPerPage, totalCount);
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const payload = {
+      date,
+      customer: searchCustomer.value,
+      custom_type: customType,
+      particulars: [{ text: particulars }],
+      cash_received: customType === "cash" ? receivedAmount : 0,
+      gpay_received: customType === "gpay" ? receivedAmount : 0,
+      current_status: "party",
+      approved: true,
+    };
+    if (!editId) {
+      await createLocalList(payload);
+      toast.success("Party Amount added successfully");
+    } else {
+      await updateLocalList(editId, payload);
+      toast.success("Party Amount updated successfully");
+    }
+
+    loadLocalPartyData();
+    setEditId("");
+    setDate(new Date());
+    setSearchCustomer("");
+    setParticulars("");
+    setCustomType("gpay");
+    setReceivedAmount(0);
+  };
+
   /* ================= RENDER ================= */
   if (loading) {
     return <PreLoader />;
@@ -265,6 +317,62 @@ const LocalPartyList = () => {
         </div>
       </div>
 
+      <form onSubmit={handleSubmit} className="mt-6">
+        <div className="grid grid-cols-6 gap-4 ">
+          <DateUiPicker
+            value={date}
+            label="Date"
+            disabled={role !== "superadmin"}
+            onChange={(d) => setDate(setCurrentTime(d))}
+            className={"w-full"}
+            minDate={role === "superadmin" ? false : new Date()}
+          />
+          <AutocompleteField
+            label="Customer Name"
+            value={searchCustomer}
+            options={customers.map((c) => ({
+              label: c.name,
+              value: c.documentId,
+            }))}
+            onChange={(e, val) => {
+              setSearchCustomer(val);
+              setPage(0);
+            }}
+          />
+          <InputField
+            placeholder="Instruction"
+            value={particulars}
+            onChange={(e) => setParticulars(e.target.value)}
+          />
+
+          <SelectField
+            label={"Received In"}
+            selectName={"custom_type"}
+            options={[
+              { value: "cash", label: "Cash" },
+              { value: "gpay", label: "Gpay" },
+            ]}
+            value={customType}
+            onChange={(e) => setCustomType(e.target.value)}
+            placeholder={"Received In"}
+            required={true}
+          />
+          <InputField
+            name={"received amount"}
+            placeholder={"Received Amount"}
+            value={receivedAmount}
+            onChange={(e) => setReceivedAmount(e.target.value) || 0}
+          />
+          <Button
+            type={"submit"}
+            label={"Save"}
+            icon1={<SaveIcon color="#fff" />}
+            icon2={<SaveIcon color="#fff" />}
+            className={"bg-[#4F46E5] hover:bg-[#4338CA] text-white"}
+          />
+        </div>
+      </form>
+
       {/* Table */}
 
       <div className="mt-8">
@@ -300,35 +408,43 @@ const LocalPartyList = () => {
                 <td>{formattedAmount(item.total_amount)}</td>
 
                 <td>
-                  {item.cash?.length === 0
-                    ? "-"
-                    : item.cash.map((c) => (
-                        <div key={c.id}>
-                          {dayjs(c.date).format("DD/MM/YY")} -{" "}
-                          {formattedAmount(c.amount)}
-                        </div>
-                      ))}
+                  {item.custom_type === "cash"
+                    ? formattedAmount(item.cash_received)
+                    : item.cash?.length === 0
+                      ? "-"
+                      : item.cash.map((c) => (
+                          <div key={c.id}>
+                            {dayjs(c.date).format("DD/MM/YY")} -{" "}
+                            {formattedAmount(c.amount)}
+                          </div>
+                        ))}
                 </td>
 
                 <td>
-                  {item.gpay?.length === 0
-                    ? "-"
-                    : item.gpay.map((g) => (
-                        <div key={g.id}>
-                          {dayjs(g.date).format("DD/MM/YY")} -{" "}
-                          {formattedAmount(g.amount)}
-                        </div>
-                      ))}
+                  {item.custom_type === "gpay"
+                    ? formattedAmount(item.gpay_received)
+                    : item.gpay?.length === 0
+                      ? "-"
+                      : item.gpay.map((g) => (
+                          <div key={g.id}>
+                            {dayjs(g.date).format("DD/MM/YY")} -{" "}
+                            {formattedAmount(g.amount)}
+                          </div>
+                        ))}
                 </td>
 
                 <td>
                   <div className="flex gap-2">
                     <EditButton
-                      onClick={() =>
-                        navigate(
-                          `${LOCALENTRY}?editId=${item.documentId}&screenFrom=party`,
-                        )
-                      }
+                      onClick={() => {
+                        if (item.custom_type) {
+                          setEditId(item.documentId);
+                        } else {
+                          navigate(
+                            `${LOCALENTRY}?editId=${item.documentId}&screenFrom=party`,
+                          );
+                        }
+                      }}
                     />
 
                     <DeletePopup

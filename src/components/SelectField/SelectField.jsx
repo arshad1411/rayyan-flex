@@ -3,6 +3,7 @@ const SelectField = ({
   value,
   onChange,
   placeholder,
+  label,
   className,
   required,
   selectName,
@@ -10,7 +11,7 @@ const SelectField = ({
 }) => {
   return (
     <div className="flex flex-col w-full">
-      <label className="text-base">{placeholder}</label>
+      <label className="text-base font-semibold">{label}</label>
       <select
         name={selectName}
         value={value}
@@ -18,6 +19,7 @@ const SelectField = ({
         className={`w-full border border-gray-400 rounded-md mb-2 focus:outline-none pt-[6px] pr-[10px] pb-[5px] pl-[8px] h-9 ${className}`}
         required={required}
         disabled={disabled}
+        placeholder={placeholder}
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

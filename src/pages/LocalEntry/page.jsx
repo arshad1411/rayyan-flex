@@ -276,7 +276,7 @@ const LocalEntry = () => {
         size_data: sizeData,
         cash: validCash,
         gpay: validGpay,
-        recieved_amount: receivedAmount,
+        received_amount: receivedAmount,
         balance_amount: balanceAmount,
         total_amount: totalAmount,
         particulars,
