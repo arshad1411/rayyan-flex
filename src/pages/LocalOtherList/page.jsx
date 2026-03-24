@@ -1,4 +1,15 @@
-import { Checkbox, Table } from "@mui/joy";
+import {
+  Box,
+  Checkbox,
+  FormControl,
+  FormLabel,
+  IconButton,
+  Option,
+  Select,
+  Table,
+  Typography,
+} from "@mui/joy";
+import dayjs from "dayjs";
 import { motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -11,12 +22,16 @@ import {
 } from "../../api/localExpense";
 import Button from "../../components/Button/Button";
 import CardUI from "../../components/CardUI/CardUI";
-import { DateUiPicker } from "../../components/Datepicker/Datepicker";
+import Datepicker, {
+  DateUiPicker,
+} from "../../components/Datepicker/Datepicker";
 import DeletePopup from "../../components/DeletePopup/DeletePopup";
 import EditButton from "../../components/EditButton/EditButton";
 import {
   CheckBoxIcon,
   CheckIcon,
+  LeftArrowIcon,
+  RightIcon,
   SaveIcon,
   WalletIcon,
 } from "../../components/icons";
@@ -26,7 +41,11 @@ import { useAuth } from "../../context/auth-context";
 import MainLayout from "../../layouts/MainLayout";
 import { setCurrentTime } from "../../utils/DatewithTime";
 
-const LocalExpenseEntry = () => {
+function labelDisplayedRows({ from, to, count }) {
+  return `${from}–${to} of ${count}`;
+}
+
+const LocalOtherList = () => {
   const { role, showOverview, toggleOverview } = useAuth();
   const [date, setDate] = useState(new Date());
   const [instruction, setInstruction] = useState("");
@@ -37,19 +56,36 @@ const LocalExpenseEntry = () => {
   const [localExpenseAmount, setLocalExpenseAmount] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editId, setEditId] = useState("");
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [totalCount, setTotalCount] = useState(0);
+  const [fromDate, setFromDate] = useState(null);
+  const [toDate, setToDate] = useState(null);
+
+  const buildQuery = () => {
+    const query = [];
+
+    query.push(`pagination[page]=${page + 1}`);
+    query.push(`pagination[pageSize]=${rowsPerPage}`);
+    query.push(`sort[0]=date:desc`);
+    query.push(`filters[approved][$eq]=true`);
+
+    if (fromDate && toDate) {
+      query.push(`filters[date][$gte]=${dayjs(fromDate).format("YYYY-MM-DD")}`);
+      query.push(`filters[date][$lte]=${dayjs(toDate).format("YYYY-MM-DD")}`);
+    }
+
+    return query.join("&");
+  };
 
   const loadExpenseData = useCallback(async () => {
     setLoading(true);
-    const query = [];
 
-    query.push(`sort[0]=date:desc`);
-    query.push(`filters[approved][$eq]=false`);
-
-    const queryString = query.join("&");
     try {
-      const res = await getLocalExpense(queryString);
-      console.log(res);
+      const res = await getLocalExpense(buildQuery());
+
       setExpenseData(res?.data || []);
+      setTotalCount(res?.meta?.pagination?.total || 0);
     } catch (error) {
       console.error("Local expense fetch failed:", error);
       toast.error("Failed to load local expense list");
@@ -57,13 +93,25 @@ const LocalExpenseEntry = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, rowsPerPage, fromDate, toDate]);
 
   const loadLocalTotalAmount = useCallback(async () => {
     setLoading(true);
 
     try {
-      const res = await getLocalExpenseAmounts();
+      let query = [];
+
+      if (fromDate && toDate) {
+        const from = dayjs(fromDate).format("YYYY-MM-DD");
+        const to = dayjs(toDate).format("YYYY-MM-DD");
+
+        query.push(`fromDate=${from}`);
+        query.push(`toDate=${to}`);
+      }
+
+      const queryString = query.length ? `?${query.join("&")}` : "";
+
+      const res = await getLocalExpenseAmounts(queryString);
 
       setLocalExpenseAmount(res);
     } catch (error) {
@@ -72,7 +120,7 @@ const LocalExpenseEntry = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fromDate, toDate]);
 
   useEffect(() => {
     loadExpenseData();
@@ -91,7 +139,8 @@ const LocalExpenseEntry = () => {
       method,
       custom_type: customType,
       amount: parseInt(amount),
-      role,
+      approved: true,
+      role: role,
     };
 
     try {
@@ -115,6 +164,19 @@ const LocalExpenseEntry = () => {
     setAmount(0);
   };
 
+  const handleChangePage = (newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (_, value) => {
+    setRowsPerPage(value);
+    setPage(0);
+  };
+
+  const getLabelDisplayedRowsTo = () => {
+    return Math.min((page + 1) * rowsPerPage, totalCount);
+  };
+
   const handleDelete = async (id) => {
     try {
       await deleteLocalExpense(id);
@@ -132,17 +194,6 @@ const LocalExpenseEntry = () => {
     setMethod(item.method);
     setCustomType(item.custom_type);
     setAmount(item.amount);
-  };
-
-  const handleStatusChange = async (id, value) => {
-    try {
-      await updateLocalExpense(id, { current_status: value });
-
-      await loadExpenseData();
-    } catch (error) {
-      console.error("Status update failed:", error);
-      toast.error("Failed to update status. Please try again.");
-    }
   };
 
   return (
@@ -179,21 +230,17 @@ const LocalExpenseEntry = () => {
             icon={<WalletIcon />}
             titleColor="text-green-800"
           />
-          <CardUI
-            title="Total Cash"
-            amount={localExpenseAmount?.total_cash}
-            icon={<WalletIcon />}
-            titleColor="text-green-800"
-          />
-          <CardUI
-            title="Total Gpay"
-            amount={localExpenseAmount?.total_gpay}
-            icon={<WalletIcon />}
-            titleColor="text-green-800"
-          />
         </motion.div>
       )}
-
+      <div className="flex gap-4 items-center">
+        <Datepicker
+          type="multipleDatePicker"
+          FromDate={fromDate}
+          ToDate={toDate}
+          setFromDate={setFromDate}
+          setToDate={setToDate}
+        />
+      </div>
       <form onSubmit={handleSubmit} className="mt-6">
         <div className="grid grid-cols-6 gap-4 ">
           <DateUiPicker
@@ -254,18 +301,21 @@ const LocalExpenseEntry = () => {
         <Table borderAxis="both" hoverRow>
           <thead>
             <tr>
-              <th className="w-[20%]">Instruction</th>
+              <th className="w-[10%]">Date</th>
+              <th className="w-[10%]">Role</th>
+              <th className="w-[30%]">Instruction</th>
               <th className="w-[15%]">Method</th>
               <th className="w-[10%]">Custom Type</th>
               <th className="w-[17%]">Amount</th>
               <th className="w-[18%]">Action</th>
-              {role === "superadmin" && <th className="w-[10%]">Status</th>}
             </tr>
           </thead>
 
           <tbody>
             {expenseData.map((item) => (
               <tr key={item.documentId}>
+                <td>{dayjs(item.date).format("DD-MM-YYYY")}</td>
+                <th className="w-[10%]">{item.role}</th>
                 <td>{item.instruction}</td>
                 <td>{item.method}</td>
                 <td>{item.custom_type}</td>
@@ -279,29 +329,68 @@ const LocalExpenseEntry = () => {
                     />
                   </div>
                 </td>
-                {role === "superadmin" && (
-                  <td>
-                    <SelectField
-                      value={item.current_status || "status"}
-                      options={[
-                        { value: "status", label: "Status" },
-                        { value: "paid", label: "Approve" },
-                        { value: "debt", label: "Debt" },
-                        { value: "admin", label: "admin" },
-                      ]}
-                      onChange={(e) =>
-                        handleStatusChange(item.documentId, e.target.value)
-                      }
-                    />
-                  </td>
-                )}
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            <tr>
+              <td colSpan={8}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "flex-end",
+                    gap: 2,
+                  }}
+                >
+                  <FormControl orientation="horizontal" size="sm">
+                    <FormLabel>Rows per page:</FormLabel>
+                    <Select
+                      value={rowsPerPage}
+                      onChange={handleChangeRowsPerPage}
+                    >
+                      <Option value={5}>5</Option>
+                      <Option value={10}>10</Option>
+                      <Option value={25}>25</Option>
+                      <Option value={100}>100</Option>
+                    </Select>
+                  </FormControl>
+
+                  <Typography textAlign="center" sx={{ minWidth: 80 }}>
+                    {labelDisplayedRows({
+                      from: totalCount === 0 ? 0 : page * rowsPerPage + 1,
+                      to: getLabelDisplayedRowsTo(),
+                      count: totalCount,
+                    })}
+                  </Typography>
+
+                  <Box sx={{ display: "flex", gap: 1 }}>
+                    <IconButton
+                      size="sm"
+                      variant="outlined"
+                      disabled={page === 0}
+                      onClick={() => handleChangePage(page - 1)}
+                    >
+                      <LeftArrowIcon />
+                    </IconButton>
+
+                    <IconButton
+                      size="sm"
+                      variant="outlined"
+                      disabled={getLabelDisplayedRowsTo() >= totalCount}
+                      onClick={() => handleChangePage(page + 1)}
+                    >
+                      <RightIcon />
+                    </IconButton>
+                  </Box>
+                </Box>
+              </td>
+            </tr>
+          </tfoot>
         </Table>
       </div>
     </MainLayout>
   );
 };
 
-export default LocalExpenseEntry;
+export default LocalOtherList;

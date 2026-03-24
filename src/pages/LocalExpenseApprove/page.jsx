@@ -36,7 +36,6 @@ import {
   WalletIcon,
 } from "../../components/icons";
 import InputField from "../../components/InputField/InputField";
-import PreLoader from "../../components/Preloader/Preloader";
 import SelectField from "../../components/SelectField/SelectField";
 import { useAuth } from "../../context/auth-context";
 import MainLayout from "../../layouts/MainLayout";
@@ -70,6 +69,7 @@ const LocalExpenseApprove = () => {
     query.push(`pagination[pageSize]=${rowsPerPage}`);
     query.push(`sort[0]=date:desc`);
     query.push(`filters[approved][$eq]=true`);
+    query.push(`filters[status][$eq]=approved`);
 
     if (fromDate && toDate) {
       query.push(`filters[date][$gte]=${dayjs(fromDate).format("YYYY-MM-DD")}`);
@@ -141,6 +141,7 @@ const LocalExpenseApprove = () => {
       custom_type: customType,
       amount: parseInt(amount),
       approved: true,
+      role: role,
     };
 
     try {
@@ -195,10 +196,6 @@ const LocalExpenseApprove = () => {
     setCustomType(item.custom_type);
     setAmount(item.amount);
   };
-
-  if (loading) {
-    <PreLoader />;
-  }
 
   return (
     <MainLayout>
@@ -306,6 +303,7 @@ const LocalExpenseApprove = () => {
           <thead>
             <tr>
               <th className="w-[10%]">Date</th>
+              <th className="w-[10%]">Role</th>
               <th className="w-[30%]">Instruction</th>
               <th className="w-[15%]">Method</th>
               <th className="w-[10%]">Custom Type</th>
@@ -317,6 +315,8 @@ const LocalExpenseApprove = () => {
           <tbody>
             {expenseData.map((item) => (
               <tr key={item.documentId}>
+                <td>{dayjs(item.date).format("DD-MM-YYYY")}</td>
+                <th className="w-[10%]">{item.role}</th>
                 <td>{item.instruction}</td>
                 <td>{item.method}</td>
                 <td>{item.custom_type}</td>

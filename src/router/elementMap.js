@@ -5,6 +5,7 @@ import LocalEntry from "../pages/LocalEntry";
 import LocalExpenseApprove from "../pages/LocalExpenseApprove";
 import LocalExpenseEntry from "../pages/LocalExpenseEntry";
 import LocalList from "../pages/LocalList";
+import LocalOtherList from "../pages/LocalOtherList/page";
 import LocalPaidList from "../pages/LocalPaidList";
 import LocalPartyList from "../pages/LocalPartyList";
 import LocalPendingList from "../pages/LocalPendingList";
@@ -22,6 +23,7 @@ export const elementMap = {
   LocalPartyList,
   LocalExpenseEntry,
   LocalExpenseApprove,
+  LocalOtherList,
   AdminList,
   DebtList,
   QuotationEntry,

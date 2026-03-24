@@ -31,7 +31,6 @@ import { getLocalAmounts } from "../../api/localAmount";
 import { deleteLocalList, getLocalList } from "../../api/localList";
 import LeftArrowIcon from "../../components/icons/LeftArrowIcon";
 import RightIcon from "../../components/icons/RightIcon";
-import PreLoader from "../../components/Preloader/Preloader";
 import { useAuth } from "../../context/auth-context";
 
 function labelDisplayedRows({ from, to, count }) {
@@ -185,11 +184,6 @@ const LocalPaidList = () => {
     return Math.min((page + 1) * rowsPerPage, totalCount);
   };
 
-  /* ================= RENDER ================= */
-  if (loading) {
-    return <PreLoader />;
-  }
-
   return (
     <MainLayout>
       <div className="flex justify-between items-center mb-8">
@@ -221,12 +215,6 @@ const LocalPaidList = () => {
           <CardUI
             title="Total Gpay"
             amount={localAmount?.local_paid?.total_gpay}
-            icon={<WalletIcon />}
-            titleColor="text-green-800"
-          />
-          <CardUI
-            title="Total Balance"
-            amount={localAmount?.local_paid?.total_balance}
             icon={<WalletIcon />}
             titleColor="text-green-800"
           />
@@ -280,61 +268,67 @@ const LocalPaidList = () => {
           </thead>
 
           <tbody>
-            {localData.map((item) => (
-              <tr key={item.documentId}>
-                <td>{dayjs(item.date).format("DD/MM/YYYY")}</td>
-
-                <td>{item.customer?.name || "-"}</td>
-
-                <td>{item.customer?.phonenumber || "-"}</td>
-
-                <td>
-                  {item.particulars?.map((p) => (
-                    <div key={p.id}>{p.text}</div>
-                  ))}
-                </td>
-
-                <td>{formattedAmount(item.total_amount)}</td>
-
-                <td>
-                  {item.cash?.length === 0
-                    ? "-"
-                    : item.cash.map((c) => (
-                        <div key={c.id}>
-                          {dayjs(c.date).format("DD/MM/YY")} -{" "}
-                          {formattedAmount(c.amount)}
-                        </div>
-                      ))}
-                </td>
-
-                <td>
-                  {item.gpay?.length === 0
-                    ? "-"
-                    : item.gpay.map((g) => (
-                        <div key={g.id}>
-                          {dayjs(g.date).format("DD/MM/YY")} -{" "}
-                          {formattedAmount(g.amount)}
-                        </div>
-                      ))}
-                </td>
-
-                <td>
-                  <div className="flex gap-2">
-                    <EditButton
-                      onClick={() =>
-                        navigate(
-                          `${LOCALENTRY}?editId=${item.documentId}&screenFrom=paid`,
-                        )
-                      }
-                    />
-
-                    <DeletePopup
-                      handleDelete={() => handleDelete(item.documentId)}
-                    />
-                  </div>
-                </td>
+            {loading ? (
+              <tr colSpan={8}>
+                <td>Loading</td>
               </tr>
-            ))}
+            ) : (
+              localData.map((item) => (
+                <tr key={item.documentId}>
+                  <td>{dayjs(item.date).format("DD/MM/YYYY")}</td>
+
+                  <td>{item.customer?.name || "-"}</td>
+
+                  <td>{item.customer?.phonenumber || "-"}</td>
+
+                  <td>
+                    {item.particulars?.map((p) => (
+                      <div key={p.id}>{p.text}</div>
+                    ))}
+                  </td>
+
+                  <td>{formattedAmount(item.total_amount)}</td>
+
+                  <td>
+                    {item.cash?.length === 0
+                      ? "-"
+                      : item.cash.map((c) => (
+                          <div key={c.id}>
+                            {dayjs(c.date).format("DD/MM/YY")} -{" "}
+                            {formattedAmount(c.amount)}
+                          </div>
+                        ))}
+                  </td>
+
+                  <td>
+                    {item.gpay?.length === 0
+                      ? "-"
+                      : item.gpay.map((g) => (
+                          <div key={g.id}>
+                            {dayjs(g.date).format("DD/MM/YY")} -{" "}
+                            {formattedAmount(g.amount)}
+                          </div>
+                        ))}
+                  </td>
+
+                  <td>
+                    <div className="flex gap-2">
+                      <EditButton
+                        onClick={() =>
+                          navigate(
+                            `${LOCALENTRY}?editId=${item.documentId}&screenFrom=paid`,
+                          )
+                        }
+                      />
+
+                      <DeletePopup
+                        handleDelete={() => handleDelete(item.documentId)}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
 
           {/* Pagination Footer */}

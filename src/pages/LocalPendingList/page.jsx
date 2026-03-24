@@ -35,7 +35,6 @@ import {
 } from "../../api/localList";
 import LeftArrowIcon from "../../components/icons/LeftArrowIcon";
 import RightIcon from "../../components/icons/RightIcon";
-import PreLoader from "../../components/Preloader/Preloader";
 import SelectField from "../../components/SelectField/SelectField";
 
 function labelDisplayedRows({ from, to, count }) {
@@ -212,10 +211,6 @@ const LocalPendingList = () => {
     }
   };
 
-  if (loading) {
-    return <PreLoader />;
-  }
-
   return (
     <MainLayout>
       <div className="flex justify-between items-center mb-8">
@@ -303,80 +298,86 @@ const LocalPendingList = () => {
           </thead>
 
           <tbody>
-            {localData.map((item) => (
-              <tr key={item.documentId}>
-                <td>{dayjs(item.date).format("DD/MM/YYYY")}</td>
-
-                <td>{item.customer?.name || "-"}</td>
-
-                <td>{item.customer?.phonenumber || "-"}</td>
-
-                <td>
-                  {item.particulars?.map((p) => (
-                    <div key={p.id}>{p.text}</div>
-                  ))}
-                </td>
-
-                <td>{formattedAmount(item.total_amount)}</td>
-
-                <td>
-                  {item.cash?.length === 0
-                    ? "-"
-                    : item.cash.map((c) => (
-                        <div key={c.id}>
-                          {dayjs(c.date).format("DD/MM/YY")} -{" "}
-                          {formattedAmount(c.amount)}
-                        </div>
-                      ))}
-                </td>
-
-                <td>
-                  {item.gpay?.length === 0
-                    ? "-"
-                    : item.gpay.map((g) => (
-                        <div key={g.id}>
-                          {dayjs(g.date).format("DD/MM/YY")} -{" "}
-                          {formattedAmount(g.amount)}
-                        </div>
-                      ))}
-                </td>
-
-                <td>
-                  <div className="flex gap-2">
-                    <EditButton
-                      onClick={() =>
-                        navigate(
-                          `${LOCALENTRY}?editId=${item.documentId}&screenFrom=pending`,
-                        )
-                      }
-                    />
-
-                    <DeletePopup
-                      handleDelete={() => handleDelete(item.documentId)}
-                    />
-                  </div>
-                </td>
-
-                {role === "superadmin" && (
-                  <td>
-                    <SelectField
-                      value={item.current_status || "Pending"}
-                      options={[
-                        { value: "pending", label: "Pending" },
-                        { value: "paid", label: "Paid" },
-                        { value: "party", label: "Party" },
-                      ]}
-                      onChange={(e) => {
-                        if (e.target.value === "Pending") return;
-                        setSelectedItem(item);
-                        setSelectedStatus(e.target.value);
-                        setConfirmOpen(true);
-                      }}
-                    />
-                  </td>
-                )}
+            {loading ? (
+              <tr colSpan={9}>
+                <td>Loading</td>
               </tr>
-            ))}
+            ) : (
+              localData.map((item) => (
+                <tr key={item.documentId}>
+                  <td>{dayjs(item.date).format("DD/MM/YYYY")}</td>
+
+                  <td>{item.customer?.name || "-"}</td>
+
+                  <td>{item.customer?.phonenumber || "-"}</td>
+
+                  <td>
+                    {item.particulars?.map((p) => (
+                      <div key={p.id}>{p.text}</div>
+                    ))}
+                  </td>
+
+                  <td>{formattedAmount(item.total_amount)}</td>
+
+                  <td>
+                    {item.cash?.length === 0
+                      ? "-"
+                      : item.cash.map((c) => (
+                          <div key={c.id}>
+                            {dayjs(c.date).format("DD/MM/YY")} -{" "}
+                            {formattedAmount(c.amount)}
+                          </div>
+                        ))}
+                  </td>
+
+                  <td>
+                    {item.gpay?.length === 0
+                      ? "-"
+                      : item.gpay.map((g) => (
+                          <div key={g.id}>
+                            {dayjs(g.date).format("DD/MM/YY")} -{" "}
+                            {formattedAmount(g.amount)}
+                          </div>
+                        ))}
+                  </td>
+
+                  <td>
+                    <div className="flex gap-2">
+                      <EditButton
+                        onClick={() =>
+                          navigate(
+                            `${LOCALENTRY}?editId=${item.documentId}&screenFrom=pending`,
+                          )
+                        }
+                      />
+
+                      <DeletePopup
+                        handleDelete={() => handleDelete(item.documentId)}
+                      />
+                    </div>
+                  </td>
+
+                  {role === "superadmin" && (
+                    <td>
+                      <SelectField
+                        value={item.current_status || "Pending"}
+                        options={[
+                          { value: "pending", label: "Pending" },
+                          { value: "paid", label: "Paid" },
+                          { value: "party", label: "Party" },
+                        ]}
+                        onChange={(e) => {
+                          if (e.target.value === "Pending") return;
+                          setSelectedItem(item);
+                          setSelectedStatus(e.target.value);
+                          setConfirmOpen(true);
+                        }}
+                      />
+                    </td>
+                  )}
+                </tr>
+              ))
+            )}
           </tbody>
 
           <tfoot>
