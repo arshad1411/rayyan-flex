@@ -1,14 +1,14 @@
 import { lazy, Suspense } from "react";
 import PreLoader from "../../components/Preloader/Preloader";
 
-const LocalOtherList = lazy(() => import("./page"));
+const LocalProductionList = lazy(() => import("./page"));
 
-const LocalOtherListPage = () => {
+const LocalProductionListPage = () => {
   return (
     <Suspense fallback={<PreLoader />}>
-      <LocalOtherList />
+      <LocalProductionList />
     </Suspense>
   );
 };
 
-export default LocalOtherListPage;
+export default LocalProductionListPage;

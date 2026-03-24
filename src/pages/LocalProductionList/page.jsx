@@ -45,7 +45,7 @@ function labelDisplayedRows({ from, to, count }) {
   return `${from}–${to} of ${count}`;
 }
 
-const LocalExpenseApprove = () => {
+const LocalProductionList = () => {
   const { role, showOverview, toggleOverview } = useAuth();
   const [date, setDate] = useState(new Date());
   const [instruction, setInstruction] = useState("");
@@ -69,7 +69,7 @@ const LocalExpenseApprove = () => {
     query.push(`pagination[pageSize]=${rowsPerPage}`);
     query.push(`sort[0]=date:desc`);
     query.push(`filters[approved][$eq]=true`);
-    query.push(`filters[current_status][$eq]=approved`);
+    query.push(`filters[current_status][$eq]=production`);
 
     if (fromDate && toDate) {
       query.push(
@@ -145,7 +145,7 @@ const LocalExpenseApprove = () => {
       custom_type: customType,
       amount: parseInt(amount),
       approved: true,
-      current_status: "approved",
+      current_status: "production",
     };
 
     try {
@@ -209,7 +209,7 @@ const LocalExpenseApprove = () => {
   return (
     <MainLayout>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-semibold">Local Expense List</h1>
+        <h1 className="text-2xl font-semibold">Local Production List</h1>
         <Checkbox
           icon={<CheckBoxIcon />}
           checkedIcon={<CheckIcon color="#fff" />}
@@ -423,4 +423,4 @@ const LocalExpenseApprove = () => {
   );
 };
 
-export default LocalExpenseApprove;
+export default LocalProductionList;

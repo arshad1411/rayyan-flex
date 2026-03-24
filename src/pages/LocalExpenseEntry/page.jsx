@@ -1,7 +1,9 @@
 import { Checkbox, Table } from "@mui/joy";
+import dayjs from "dayjs";
 import { motion } from "framer-motion";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
+
 import {
   createLocalExpense,
   deleteLocalExpense,
@@ -9,9 +11,13 @@ import {
   getLocalExpenseAmounts,
   updateLocalExpense,
 } from "../../api/localExpense";
+
+import { createAdminExpense } from "../../api/adminExpense";
 import Button from "../../components/Button/Button";
 import CardUI from "../../components/CardUI/CardUI";
-import { DateUiPicker } from "../../components/Datepicker/Datepicker";
+import Datepicker, {
+  DateUiPicker,
+} from "../../components/Datepicker/Datepicker";
 import DeletePopup from "../../components/DeletePopup/DeletePopup";
 import EditButton from "../../components/EditButton/EditButton";
 import {
@@ -28,27 +34,46 @@ import { setCurrentTime } from "../../utils/DatewithTime";
 
 const LocalExpenseEntry = () => {
   const { role, showOverview, toggleOverview } = useAuth();
+
   const [date, setDate] = useState(new Date());
   const [instruction, setInstruction] = useState("");
   const [customType, setCustomType] = useState("cash");
   const [method, setMethod] = useState("expense");
   const [amount, setAmount] = useState("");
+
+  const [fromDate, setFromDate] = useState(null);
+  const [toDate, setToDate] = useState(null);
+
   const [expenseData, setExpenseData] = useState([]);
   const [localExpenseAmount, setLocalExpenseAmount] = useState([]);
+
   const [loading, setLoading] = useState(false);
   const [editId, setEditId] = useState("");
 
+  // ✅ APPROVE STATES
+  const [approveDate, setApproveDate] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  /* ================= LOAD DATA ================= */
+
   const loadExpenseData = useCallback(async () => {
     setLoading(true);
-    const query = [];
 
+    const query = [];
     query.push(`sort[0]=date:desc`);
     query.push(`filters[approved][$eq]=false`);
 
-    const queryString = query.join("&");
+    if (fromDate && toDate) {
+      query.push(
+        `filters[date][$gte]=${dayjs(fromDate).startOf("day").toISOString()}`,
+      );
+      query.push(
+        `filters[date][$lte]=${dayjs(toDate).endOf("day").toISOString()}`,
+      );
+    }
+
     try {
-      const res = await getLocalExpense(queryString);
-      console.log(res);
+      const res = await getLocalExpense(query.join("&"));
       setExpenseData(res?.data || []);
     } catch (error) {
       console.error("Local expense fetch failed:", error);
@@ -57,14 +82,23 @@ const LocalExpenseEntry = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fromDate, toDate]);
 
   const loadLocalTotalAmount = useCallback(async () => {
     setLoading(true);
-
     try {
-      const res = await getLocalExpenseAmounts();
+      const query = [];
 
+      if (fromDate && toDate) {
+        query.push(
+          `filters[date][$gte]=${dayjs(fromDate).startOf("day").toISOString()}`,
+        );
+        query.push(
+          `filters[date][$lte]=${dayjs(toDate).endOf("day").toISOString()}`,
+        );
+      }
+
+      const res = await getLocalExpenseAmounts(query.join("&"));
       setLocalExpenseAmount(res);
     } catch (error) {
       console.error("Local amounts fetch failed:", error);
@@ -72,7 +106,7 @@ const LocalExpenseEntry = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fromDate, toDate]);
 
   useEffect(() => {
     loadExpenseData();
@@ -82,31 +116,52 @@ const LocalExpenseEntry = () => {
     loadLocalTotalAmount();
   }, [loadLocalTotalAmount]);
 
+  /* ================= GROUP BY DATE ================= */
+
+  const groupedData = useMemo(() => {
+    if (!expenseData?.length) return {};
+
+    return expenseData.reduce((acc, item) => {
+      const key = dayjs(item.date).format("YYYY-MM-DD");
+
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(item);
+
+      return acc;
+    }, {});
+  }, [expenseData]);
+
+  /* ================= FORM SUBMIT ================= */
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const payload = {
+    const basePayload = {
       date,
       instruction,
       method,
       custom_type: customType,
       amount: parseInt(amount),
-      role,
     };
 
     try {
       if (editId) {
-        await updateLocalExpense(editId, payload);
+        await updateLocalExpense(editId, basePayload);
         toast.success("Local expense updated successfully");
       } else {
-        await createLocalExpense(payload);
+        await createLocalExpense({
+          ...basePayload,
+          role,
+        });
         toast.success("Local expense created successfully");
       }
     } catch (error) {
-      console.error("Local expense save failed:", error);
-      toast.error("Failed to save local expense");
+      console.error("Save failed:", error);
+      toast.error("Failed to save");
     }
+
     loadExpenseData();
+
     setEditId("");
     setDate(new Date());
     setInstruction("");
@@ -114,6 +169,8 @@ const LocalExpenseEntry = () => {
     setCustomType("cash");
     setAmount(0);
   };
+
+  /* ================= DELETE ================= */
 
   const handleDelete = async (id) => {
     try {
@@ -125,6 +182,8 @@ const LocalExpenseEntry = () => {
     }
   };
 
+  /* ================= EDIT ================= */
+
   const handleEdit = (item) => {
     setEditId(item.documentId);
     setDate(new Date(item.date));
@@ -134,16 +193,66 @@ const LocalExpenseEntry = () => {
     setAmount(item.amount);
   };
 
+  /* ================= STATUS ================= */
+
   const handleStatusChange = async (id, value) => {
     try {
       await updateLocalExpense(id, { current_status: value });
-
       await loadExpenseData();
     } catch (error) {
-      console.error("Status update failed:", error);
-      toast.error("Failed to update status. Please try again.");
+      toast.error("Failed to update status");
     }
   };
+
+  /* ================= APPROVE ================= */
+
+  const handleApproveClick = (date) => {
+    const group = groupedData[date];
+
+    const invalid = group.some(
+      (item) => !item.current_status || item.current_status === "status",
+    );
+
+    if (invalid) {
+      toast.error("All status must be selected before approval.");
+      return;
+    }
+
+    setApproveDate(date);
+    setConfirmOpen(true);
+  };
+
+  const handleApproveConfirm = async () => {
+    setLoading(true);
+
+    try {
+      for (const item of groupedData[approveDate]) {
+        if (item.current_status === "admin") {
+          // eslint-disable-next-line no-unused-vars
+          const { id, documentId, publishedAt, updatedAt, createdAt, ...rest } =
+            item;
+          await createAdminExpense(rest);
+          await deleteLocalExpense(item.documentId);
+        } else {
+          await updateLocalExpense(item.documentId, {
+            current_status: item.current_status,
+            approved: true,
+          });
+        }
+      }
+
+      await loadExpenseData();
+      toast.success("Approved successfully!");
+      setConfirmOpen(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Approval failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ================= UI ================= */
 
   return (
     <MainLayout>
@@ -183,18 +292,25 @@ const LocalExpenseEntry = () => {
             title="Total Cash"
             amount={localExpenseAmount?.total_cash}
             icon={<WalletIcon />}
-            titleColor="text-green-800"
           />
           <CardUI
             title="Total Gpay"
             amount={localExpenseAmount?.total_gpay}
             icon={<WalletIcon />}
-            titleColor="text-green-800"
           />
         </motion.div>
       )}
-
-      <form onSubmit={handleSubmit} className="mt-6">
+      <div className="flex gap-4 items-center">
+        <Datepicker
+          type="multipleDatePicker"
+          FromDate={fromDate}
+          ToDate={toDate}
+          setFromDate={setFromDate}
+          setToDate={setToDate}
+        />
+      </div>
+      {/* FORM */}
+      <form onSubmit={handleSubmit} className="mt-10">
         <div className="grid grid-cols-6 gap-4 ">
           <DateUiPicker
             value={date}
@@ -235,71 +351,125 @@ const LocalExpenseEntry = () => {
             placeholder={"Received In"}
             required={true}
           />
+
           <InputField
             name={"received amount"}
             placeholder={"Received Amount"}
             value={amount}
             onChange={(e) => setAmount(e.target.value) || 0}
           />
+
           <Button
             type={"submit"}
-            label={editId ? "Save" : "Update"}
+            label={editId ? "Update" : "Save"}
             icon1={<SaveIcon color="#fff" />}
             icon2={<SaveIcon color="#fff" />}
             className={"bg-[#4F46E5] hover:bg-[#4338CA] text-white"}
           />
         </div>
       </form>
-      <div className="mt-8">
-        <Table borderAxis="both" hoverRow>
-          <thead>
-            <tr>
-              <th className="w-[20%]">Instruction</th>
-              <th className="w-[15%]">Method</th>
-              <th className="w-[10%]">Custom Type</th>
-              <th className="w-[17%]">Amount</th>
-              <th className="w-[18%]">Action</th>
-              {role === "superadmin" && <th className="w-[10%]">Status</th>}
-            </tr>
-          </thead>
 
-          <tbody>
-            {expenseData.map((item) => (
-              <tr key={item.documentId}>
-                <td>{item.instruction}</td>
-                <td>{item.method}</td>
-                <td>{item.custom_type}</td>
-                <td>{item.amount}</td>
-                <td>
-                  <div className="flex gap-2">
-                    <EditButton onClick={() => handleEdit(item)} />
+      {/* TABLES */}
+      {Object.keys(groupedData).map((date) => (
+        <div key={date} className="mt-8">
+          <h2 className="text-lg font-semibold mb-2">
+            Date: {dayjs(date).format("DD/MM/YYYY")}
+          </h2>
 
-                    <DeletePopup
-                      handleDelete={() => handleDelete(item.documentId)}
-                    />
-                  </div>
-                </td>
-                {role === "superadmin" && (
-                  <td>
-                    <SelectField
-                      value={item.current_status || "status"}
-                      options={[
-                        { value: "status", label: "Status" },
-                        { value: "paid", label: "Approve" },
-                        { value: "debt", label: "Debt" },
-                        { value: "admin", label: "admin" },
-                      ]}
-                      onChange={(e) =>
-                        handleStatusChange(item.documentId, e.target.value)
-                      }
-                    />
-                  </td>
-                )}
+          <Table borderAxis="both" hoverRow>
+            <thead>
+              <tr>
+                <th className="w-[20%]">Instruction</th>
+                <th className="w-[15%]">Method</th>
+                <th className="w-[10%]">Custom Type</th>
+                <th className="w-[17%]">Amount</th>
+                <th className="w-[15%]">Action</th>
+                {role === "superadmin" && <th className="w-[15%]">Status</th>}
               </tr>
-            ))}
-          </tbody>
-        </Table>
-      </div>
+            </thead>
+
+            <tbody>
+              {groupedData[date].map((item) => (
+                <tr key={item.documentId}>
+                  <td>{item.instruction}</td>
+                  <td>
+                    <span
+                      className={`p-1 rounded-md flex justify-center capitalize  ${
+                        item.method === "expense"
+                          ? "bg-rose-200 text-rose-800"
+                          : "bg-[#DAF4F0] text-[#0AB39C]"
+                      }`}
+                    >
+                      {item.method}
+                    </span>
+                  </td>
+                  <td>
+                    <span
+                      className={`p-1 rounded-md flex justify-center capitalize  ${
+                        item.custom_type === "cash"
+                          ? "bg-[#E2E5ED] text-[#405189]"
+                          : "bg-stone-200 text-stone-800"
+                      }`}
+                    >
+                      {item.custom_type}
+                    </span>
+                  </td>
+                  <td>{item.amount}</td>
+                  <td>
+                    <div className="flex gap-2">
+                      <EditButton onClick={() => handleEdit(item)} />
+
+                      <DeletePopup
+                        handleDelete={() => handleDelete(item.documentId)}
+                      />
+                    </div>
+                  </td>
+                  {role === "superadmin" && (
+                    <td>
+                      <SelectField
+                        value={item.current_status || "status"}
+                        options={[
+                          { value: "status", label: "Status" },
+                          { value: "approved", label: "Approve" },
+                          { value: "admin", label: "Admin" },
+                          { value: "production", label: "Production" },
+                          { value: "hub", label: "Hub" },
+                        ]}
+                        onChange={(e) =>
+                          handleStatusChange(item.documentId, e.target.value)
+                        }
+                      />
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+
+          {role === "superadmin" && (
+            <div className="flex justify-end mt-4">
+              <Button
+                label="Approve"
+                onClick={() => handleApproveClick(date)}
+              />
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* CONFIRM POPUP */}
+      {confirmOpen && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center">
+          <div className="bg-white p-6 rounded-lg w-96">
+            <h3 className="text-lg font-semibold mb-3">Confirm Approval</h3>
+
+            <div className="flex gap-3 mt-4">
+              <Button label="Confirm" onClick={handleApproveConfirm} />
+              <Button label="Cancel" onClick={() => setConfirmOpen(false)} />
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 };

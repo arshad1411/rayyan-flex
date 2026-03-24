@@ -45,7 +45,7 @@ function labelDisplayedRows({ from, to, count }) {
   return `${from}–${to} of ${count}`;
 }
 
-const LocalOtherList = () => {
+const LocalHubList = () => {
   const { role, showOverview, toggleOverview } = useAuth();
   const [date, setDate] = useState(new Date());
   const [instruction, setInstruction] = useState("");
@@ -69,10 +69,15 @@ const LocalOtherList = () => {
     query.push(`pagination[pageSize]=${rowsPerPage}`);
     query.push(`sort[0]=date:desc`);
     query.push(`filters[approved][$eq]=true`);
+    query.push(`filters[current_status][$eq]=hub`);
 
     if (fromDate && toDate) {
-      query.push(`filters[date][$gte]=${dayjs(fromDate).format("YYYY-MM-DD")}`);
-      query.push(`filters[date][$lte]=${dayjs(toDate).format("YYYY-MM-DD")}`);
+      query.push(
+        `filters[date][$gte]=${dayjs(fromDate).startOf("day").toISOString()}`,
+      );
+      query.push(
+        `filters[date][$lte]=${dayjs(toDate).endOf("day").toISOString()}`,
+      );
     }
 
     return query.join("&");
@@ -102,13 +107,13 @@ const LocalOtherList = () => {
       let query = [];
 
       if (fromDate && toDate) {
-        const from = dayjs(fromDate).format("YYYY-MM-DD");
-        const to = dayjs(toDate).format("YYYY-MM-DD");
-
-        query.push(`fromDate=${from}`);
-        query.push(`toDate=${to}`);
+        query.push(
+          `filters[date][$gte]=${dayjs(fromDate).startOf("day").toISOString()}`,
+        );
+        query.push(
+          `filters[date][$lte]=${dayjs(toDate).endOf("day").toISOString()}`,
+        );
       }
-
       const queryString = query.length ? `?${query.join("&")}` : "";
 
       const res = await getLocalExpenseAmounts(queryString);
@@ -133,29 +138,34 @@ const LocalOtherList = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const payload = {
+    const basePayload = {
       date,
       instruction,
       method,
       custom_type: customType,
       amount: parseInt(amount),
       approved: true,
-      role: role,
+      current_status: "hub",
     };
 
     try {
       if (editId) {
-        await updateLocalExpense(editId, payload);
+        await updateLocalExpense(editId, basePayload);
         toast.success("Local expense updated successfully");
       } else {
-        await createLocalExpense(payload);
+        await createLocalExpense({
+          ...basePayload,
+          role,
+        });
         toast.success("Local expense created successfully");
       }
     } catch (error) {
-      console.error("Local expense save failed:", error);
-      toast.error("Failed to save local expense");
+      console.error("Save failed:", error);
+      toast.error("Failed to save");
     }
+
     loadExpenseData();
+
     setEditId("");
     setDate(new Date());
     setInstruction("");
@@ -199,7 +209,7 @@ const LocalOtherList = () => {
   return (
     <MainLayout>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-semibold">Local Expense List</h1>
+        <h1 className="text-2xl font-semibold">Local Hub List</h1>
         <Checkbox
           icon={<CheckBoxIcon />}
           checkedIcon={<CheckIcon color="#fff" />}
@@ -317,8 +327,28 @@ const LocalOtherList = () => {
                 <td>{dayjs(item.date).format("DD-MM-YYYY")}</td>
                 <th className="w-[10%]">{item.role}</th>
                 <td>{item.instruction}</td>
-                <td>{item.method}</td>
-                <td>{item.custom_type}</td>
+                <td>
+                  <span
+                    className={`p-1 rounded-md flex justify-center capitalize  ${
+                      item.method === "expense"
+                        ? "bg-rose-200 text-rose-800"
+                        : "bg-[#DAF4F0] text-[#0AB39C]"
+                    }`}
+                  >
+                    {item.method}
+                  </span>
+                </td>
+                <td>
+                  <span
+                    className={`p-1 rounded-md flex justify-center capitalize  ${
+                      item.custom_type === "cash"
+                        ? "bg-[#E2E5ED] text-[#405189]"
+                        : "bg-stone-200 text-stone-800"
+                    }`}
+                  >
+                    {item.custom_type}
+                  </span>
+                </td>
                 <td>{item.amount}</td>
                 <td>
                   <div className="flex gap-2">
@@ -393,4 +423,4 @@ const LocalOtherList = () => {
   );
 };
 
-export default LocalOtherList;
+export default LocalHubList;

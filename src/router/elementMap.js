@@ -5,10 +5,11 @@ import LocalEntry from "../pages/LocalEntry";
 import LocalExpenseApprove from "../pages/LocalExpenseApprove";
 import LocalExpenseEntry from "../pages/LocalExpenseEntry";
 import LocalList from "../pages/LocalList";
-import LocalOtherList from "../pages/LocalOtherList/page";
+import LocalHubList from "../pages/LocalHubList";
 import LocalPaidList from "../pages/LocalPaidList";
 import LocalPartyList from "../pages/LocalPartyList";
 import LocalPendingList from "../pages/LocalPendingList";
+import LocalProductionList from "../pages/LocalProductionList";
 import Login from "../pages/Login";
 import PriceList from "../pages/PriceList";
 import QuotationEntry from "../pages/QuotationEntry";
@@ -23,7 +24,8 @@ export const elementMap = {
   LocalPartyList,
   LocalExpenseEntry,
   LocalExpenseApprove,
-  LocalOtherList,
+  LocalProductionList,
+  LocalHubList,
   AdminList,
   DebtList,
   QuotationEntry,

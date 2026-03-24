@@ -6,8 +6,9 @@ const LOCALPAIDLIST = "/localpaidlist";
 const LOCALPENDINGLIST = "/localpendinglist";
 const LOCALPARTYLIST = "/localpartylist";
 const LOCALEXPENSEENTRY = "/localexpenseentry";
-const LOCALOTHERLIST = "/localotherlist";
+const LOCALHUBLIST = "/localhublist";
 const LOCALEXPENSEAPPROVE = "/localexpenseapprove";
+const LOCALPRODUCTIONLIST = "/localproductionlist";
 const GSTSALESENTRY = "/gstsalesentry";
 const GSTSALESLIST = "/gstsaleslist";
 const GSTDELIVERYSLIP = "/gstsalesdelivery";
@@ -34,11 +35,12 @@ export {
   LOCALENTRY,
   LOCALEXPENSEAPPROVE,
   LOCALEXPENSEENTRY,
+  LOCALHUBLIST,
   LOCALLIST,
-  LOCALOTHERLIST,
   LOCALPAIDLIST,
   LOCALPARTYLIST,
   LOCALPENDINGLIST,
+  LOCALPRODUCTIONLIST,
   LOGIN,
   OUTSTANDINGACCOUNT,
   OUTSTANDINGCASH,
