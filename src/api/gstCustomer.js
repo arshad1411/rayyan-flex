@@ -1,8 +1,22 @@
 import axiosInstance from "./axiosInstance";
 
 export const getGstCustomers = async () => {
-  const response = await axiosInstance.get("/gst-customers?populate=*");
-  return response.data.data;
+  let allCustomers = [];
+  let page = 1;
+  let pageSize = 100;
+
+  while (true) {
+    const response = await axiosInstance.get(
+      `/gst-customers?pagination[page]=${page}&pagination[pageSize]=${pageSize}&sort[0]=createdAt:desc`,
+    );
+    const data = response.data.data;
+    allCustomers = allCustomers.concat(data);
+
+    if (data.length < pageSize) break;
+    page++;
+  }
+
+  return allCustomers;
 };
 
 export const getGstCustomerById = async (id) => {

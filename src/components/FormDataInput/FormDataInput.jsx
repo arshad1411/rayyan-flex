@@ -30,12 +30,7 @@ const FormDataInput = ({ sizeData = [], setSizeData }) => {
     if (!lastRow) return true;
 
     if (lastRow.type === "flex") {
-      if (
-        !lastRow.width ||
-        !lastRow.height ||
-        !lastRow.material ||
-        !lastRow.sq_ft_price
-      ) {
+      if (!lastRow.width || !lastRow.height || !lastRow.sq_ft_price) {
         setErrorMsg("Please complete the current flex row first.");
         return false;
       }

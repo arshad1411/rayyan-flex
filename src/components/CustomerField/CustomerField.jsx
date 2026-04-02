@@ -19,6 +19,8 @@ const CustomerField = ({
   setPhoneno,
   address,
   setAddress,
+  deliveryAddress,
+  setDeliveryAddress,
   gstNo,
   setGstNo,
   SelectCustomerID,
@@ -30,12 +32,15 @@ const CustomerField = ({
   const resetFields = useCallback(() => {
     setCustomerName("");
     setSelectedCustomerID("");
-    isGstCustomer ? (setAddress(""), setGstNo("")) : setPhoneno("");
+    isGstCustomer
+      ? (setAddress(""), setDeliveryAddress(""), setGstNo(""))
+      : setPhoneno("");
   }, [
     isGstCustomer,
     setCustomerName,
     setSelectedCustomerID,
     setAddress,
+    setDeliveryAddress,
     setGstNo,
     setPhoneno,
   ]);
@@ -49,7 +54,8 @@ const CustomerField = ({
 
       if (isGstCustomer) {
         setAddress(customer.address || "");
-        setGstNo(customer.gstno || "");
+        setDeliveryAddress(customer.delivery_address || "");
+        setGstNo(customer.gst_no || "");
       } else {
         setPhoneno(customer.phonenumber || "");
       }
@@ -59,6 +65,7 @@ const CustomerField = ({
       setSelectedCustomerID,
       setCustomerName,
       setAddress,
+      setDeliveryAddress,
       setGstNo,
       setPhoneno,
       resetFields,
@@ -77,10 +84,13 @@ const CustomerField = ({
           return normalize(customer.phonenumber) === normalize(value);
 
         if (field === "gst" && isGstCustomer)
-          return normalize(customer.gstno) === normalize(value);
+          return normalize(customer.gst_no) === normalize(value);
 
         if (field === "address" && isGstCustomer)
           return normalize(customer.address) === normalize(value);
+
+        if (field === "delivery_address" && isGstCustomer)
+          return normalize(customer.delivery_address) === normalize(value);
 
         return false;
       });
@@ -101,7 +111,8 @@ const CustomerField = ({
         ? await updateGstCustomer(SelectCustomerID, {
             name: customerName,
             address,
-            gstno: gstNo,
+            delivery_address: deliveryAddress,
+            gst_no: gstNo,
           })
         : await updateCustomer(SelectCustomerID, {
             name: customerName,
@@ -133,8 +144,15 @@ const CustomerField = ({
     [customerData],
   );
 
+  const deliveryAddressOptions = useMemo(
+    () => [
+      ...new Set(customerData.map((c) => c.delivery_address).filter(Boolean)),
+    ],
+    [customerData],
+  );
+
   const gstOptions = useMemo(
-    () => [...new Set(customerData.map((c) => c.gstno).filter(Boolean))],
+    () => [...new Set(customerData.map((c) => c.gst_no).filter(Boolean))],
     [customerData],
   );
 
@@ -160,15 +178,23 @@ const CustomerField = ({
             onChange={(e, v) => handleCustomerChange(v, "address")}
             options={addressOptions}
           />
+          <AutocompleteField
+            label="GST No"
+            value={gstNo}
+            onInputChange={(e, v) => setGstNo((v || "").toUpperCase())}
+            onChange={(e, v) => handleCustomerChange(v, "gst")}
+            options={gstOptions}
+          />
 
           <div className="flex gap-2 items-end">
             <AutocompleteField
-              label="GST No"
-              value={gstNo}
-              onInputChange={(e, v) => setGstNo(v)}
-              onChange={(e, v) => handleCustomerChange(v, "gst")}
-              options={gstOptions}
+              label="Delivery Address"
+              value={deliveryAddress}
+              onInputChange={(e, v) => setDeliveryAddress(v)}
+              onChange={(e, v) => handleCustomerChange(v, "delivery_address")}
+              options={deliveryAddressOptions}
             />
+
             {SelectCustomerID && (
               <div className="h-9">
                 <EditButton onClick={() => setOpen(true)} />
@@ -219,10 +245,18 @@ const CustomerField = ({
                     onChange={(e) => setAddress(e.target.value)}
                   />
                   <InputField
-                    name="gstNo"
+                    name="gst_no"
                     placeholder="GST No"
                     value={gstNo}
-                    onChange={(e) => setGstNo(e.target.value)}
+                    onChange={(e) =>
+                      setGstNo((e.target.value || "").toUpperCase())
+                    }
+                  />
+                  <InputField
+                    name="delivery_address"
+                    placeholder="Delivery Address"
+                    value={deliveryAddress}
+                    onChange={(e) => setDeliveryAddress(e.target.value)}
                   />
                 </>
               ) : (

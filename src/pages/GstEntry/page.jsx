@@ -1,17 +1,14 @@
-import dayjs from "dayjs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useReactToPrint } from "react-to-print";
 import { toast } from "react-toastify";
+import { toPng } from "html-to-image";
 
 import Button from "../../components/Button/Button";
-
 import CustomerField from "../../components/CustomerField/CustomerField";
 import { DateUiPicker } from "../../components/Datepicker/Datepicker";
 import FormDataInput from "../../components/FormDataInput/FormDataInput";
 import InputField from "../../components/InputField/InputField";
-import PrintUi from "../../components/PrintUi/PrintUi";
-import PrintUipdf from "../../components/PrintUipdf/PrintUipdf";
 import MainLayout from "../../layouts/MainLayout";
 
 import {
@@ -21,114 +18,123 @@ import {
   SavePdfIcon,
 } from "../../components/icons";
 
-import {
-  createLocalList,
-  getLastLocalList,
-  getLocalListById,
-  updateLocalList,
-} from "../../api/localList";
-
-import { toPng } from "html-to-image";
-
 import { useAuth } from "../../context/auth-context";
 import { LOCALENTRY } from "../../router/paths";
 import { setCurrentTime } from "../../utils/DatewithTime";
 import { formattedAmount } from "../../utils/FormatAmount";
 import { transformBillingData } from "../../utils/transformBillingData";
+
 import { createGstCustomer, getGstCustomers } from "../../api/gstCustomer";
 
-const num = (v) => Number(v) || 0;
+import {
+  createGstList,
+  getGstListById,
+  getLastGstList,
+  updateGstList,
+} from "../../api/gstList";
+
+const toNumber = (val) => Number(val) || 0;
+
+const DEFAULTS = {
+  HSN: "3910",
+  UOM: "NOS",
+  GST: "18",
+  METHOD: "gst",
+};
 
 const GstEntry = () => {
+  const navigate = useNavigate();
+  const { role } = useAuth();
   const [searchParams] = useSearchParams();
   const editId = searchParams.get("editId");
 
-  const navigate = useNavigate();
-  const { role } = useAuth();
-
-  const contentRef = useRef(null);
   const printRef = useRef(null);
+  const contentRef = useRef(null);
 
   const [loading, setLoading] = useState(false);
   const [documentId, setDocumentId] = useState(null);
 
   const [billNo, setBillNo] = useState("");
   const [date, setDate] = useState(setCurrentTime(new Date()));
-  const [hsnCode, setHsnCode] = useState("");
-  const [uom, setUom] = useState("");
-
-  const [method, setMethod] = useState("gst");
-  const [gstPercentage, setGstPercentage] = useState("18");
+  const [hsnCode, setHsnCode] = useState(DEFAULTS.HSN);
+  const [uom, setUom] = useState(DEFAULTS.UOM);
+  const [gstPercentage, setGstPercentage] = useState(DEFAULTS.GST);
+  const [method, setMethod] = useState(DEFAULTS.METHOD);
 
   const [customerId, setCustomerId] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [address, setAddress] = useState("");
   const [gstNo, setGstNo] = useState("");
-  const [customerList, setCustomerList] = useState([]);
+  const [deliveryAddress, setDeliveryAddress] = useState("");
 
+  const [customerList, setCustomerList] = useState([]);
   const [sizeData, setSizeData] = useState([]);
 
-  const [status, setStatus] = useState("status");
-
-  const loadLastBillNo = useCallback(async () => {
-    try {
-      const res = await getLastLocalList();
-      const lastEntry = res?.[0];
-
-      if (lastEntry?.bill_no) {
-        const lastBill = Number(lastEntry.bill_no) || 0;
-        setBillNo(String(lastBill + 1));
-      } else {
-        setBillNo("1");
-      }
-    } catch (err) {
-      console.log(err);
-      setBillNo("1");
-    }
-  }, []);
+  /* ================= CALCULATIONS ================= */
 
   const totalAmount = useMemo(() => {
-    const sizeTotal = sizeData.reduce(
-      (sum, item) => sum + num(item.per_piece_total),
+    return sizeData.reduce(
+      (sum, item) => sum + toNumber(item.per_piece_total),
       0,
     );
-
-    return sizeTotal;
   }, [sizeData]);
+
+  const gstSummary = useMemo(() => {
+    const gst = toNumber(gstPercentage);
+
+    const tax = (totalAmount * gst) / 100;
+    const final = totalAmount + tax;
+
+    const rounded = Math.round(final);
+    const roundOff = +(rounded - final).toFixed(2);
+
+    return {
+      taxAmount: tax.toFixed(2),
+      finalAmount: rounded.toFixed(2),
+      roundOff: roundOff.toFixed(2),
+    };
+  }, [totalAmount, gstPercentage]);
+
+  /* ================= API ================= */
 
   const loadCustomers = useCallback(async () => {
     try {
-      const data = await getGstCustomers();
-      setCustomerList(data || []);
-    } catch (error) {
-      console.error("Error fetching customers:", error);
+      const res = await getGstCustomers();
+      setCustomerList(res || []);
+    } catch {
       setCustomerList([]);
+    }
+  }, []);
+
+  const loadLastBillNo = useCallback(async () => {
+    try {
+      const res = await getLastGstList();
+      const last = res?.[0]?.bill_no;
+      setBillNo(String((Number(last) || 0) + 1));
+    } catch {
+      setBillNo("1");
     }
   }, []);
 
   const loadEditData = useCallback(async (id) => {
     try {
-      const res = await getLocalListById(id);
-
-      const data = res?.data?.[0] || res?.data || res;
+      const res = await getGstListById(id);
+      const data = res?.data?.[0] || res?.data;
 
       if (!data) return;
+
+      const transformed = transformBillingData(data);
 
       setDocumentId(data.documentId);
       setBillNo(data.bill_no);
       setDate(data.date);
       setHsnCode(data.hsn_code);
       setUom(data.uom);
+      setMethod(data.method || DEFAULTS.METHOD);
 
-      setCustomerName(data.customer?.name);
-
-      const cleanedData = transformBillingData(data);
-
-      setCustomerId(cleanedData.customer || "");
-
-      setSizeData(cleanedData.size_data || []);
-
-      setStatus(data.current_status || "status");
+      setCustomerId(transformed.customer || "");
+      setCustomerName(data.customer?.name || "");
+      setSizeData(transformed.size_data || []);
     } catch {
       toast.error("Failed to load entry");
     }
@@ -142,86 +148,89 @@ const GstEntry = () => {
     } else {
       loadLastBillNo();
     }
-  }, [editId, loadCustomers, loadEditData, loadLastBillNo]);
+  }, [editId]);
+
+  /* ================= HELPERS ================= */
+
+  const buildParticulars = () => {
+    return sizeData
+      .map((item) => {
+        if (item.type === "instruction") {
+          return {
+            text: `${item.instruction} - ${item.piece_count} pcs - ${formattedAmount(item.per_piece_total)}`,
+          };
+        }
+
+        if (item.type === "flex") {
+          return {
+            text: `${item.width} x ${item.height} ${item.material} - ${item.sq_ft_price} sqft - ${item.piece_count} pcs - ${formattedAmount(item.per_piece_total)}`,
+          };
+        }
+
+        return null;
+      })
+      .filter(Boolean);
+  };
+
+  const ensureCustomer = async () => {
+    if (customerId) return customerId;
+
+    if (!customerName.trim()) {
+      throw new Error("Customer name is required");
+    }
+
+    const res = await createGstCustomer({
+      name: customerName,
+      address,
+      delivery_address: deliveryAddress,
+      gst_no: gstNo,
+    });
+
+    const id = res?.data?.documentId;
+    setCustomerId(id);
+    await loadCustomers();
+
+    return id;
+  };
+
+  /* ================= ACTIONS ================= */
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (sizeData.length === 0) {
-      toast.error("Please add at least one size");
+    if (!sizeData.length) {
+      toast.error("Add at least one item");
       return;
     }
 
     try {
       setLoading(true);
 
-      let finalCustomerId = customerId;
-
-      if (!customerId) {
-        if (!customerName.trim()) {
-          toast.error("Customer name is required");
-          return;
-        }
-
-        const createdCustomer = await createGstCustomer({
-          name: customerName,
-          address: address,
-          gst_no: gstNo,
-        });
-
-        finalCustomerId = createdCustomer?.data?.documentId;
-        setCustomerId(finalCustomerId);
-
-        await loadCustomers();
-      }
-
-      const particulars = sizeData
-        .map((s) => {
-          if (s.type === "instruction") {
-            return {
-              text: `${s.instruction} - ${s.piece_count} pcs - ${formattedAmount(
-                s.per_piece_total,
-              )}`,
-            };
-          }
-
-          if (s.type === "flex") {
-            return {
-              text: `${s.width} x ${s.height} ${s.material} - ${s.sq_ft_price} sqft - ${s.piece_count} pcs - ${formattedAmount(
-                s.per_piece_total,
-              )}`,
-            };
-          }
-
-          return null;
-        })
-        .filter(Boolean);
+      const finalCustomerId = await ensureCustomer();
 
       const payload = {
         bill_no: billNo,
         date,
         hsn_code: hsnCode,
         uom,
+        method,
         customer: finalCustomerId,
         size_data: sizeData,
-
+        gst_percentage: gstPercentage,
         total_amount: totalAmount,
-        particulars,
-        current_status: status,
+        particulars: buildParticulars(),
       };
 
-      if (!documentId) {
-        const created = await createLocalList(payload);
-        setDocumentId(created?.documentId);
-        toast.success("Local list created successfully");
+      if (documentId) {
+        await updateGstList(documentId, payload);
+        toast.success("Updated successfully");
       } else {
-        await updateLocalList(documentId, payload);
-
-        toast.success("Local list updated successfully");
+        const created = await createGstList(payload);
+        setDocumentId(created?.documentId);
+        toast.success("Created successfully");
       }
-    } catch (error) {
-      console.log(error);
-      toast.error("Failed to save entry");
+    } catch (err) {
+      toast.error(err.message || "Save failed");
     } finally {
       setLoading(false);
     }
@@ -233,68 +242,66 @@ const GstEntry = () => {
   });
 
   const downloadImage = async () => {
-    if (printRef.current === null) return;
+    if (!printRef.current) return;
 
     try {
       const dataUrl = await toPng(printRef.current, {
         pixelRatio: 3,
-        backgroundColor: "#ffffff",
-        style: {
-          transform: "scale(1)",
-          transformOrigin: "top left",
-        },
-        cacheBust: true,
+        backgroundColor: "#fff",
       });
 
       const link = document.createElement("a");
       link.download = `Invoice-${billNo}.png`;
       link.href = dataUrl;
       link.click();
-    } catch (err) {
-      console.error("Export failed", err);
+    } catch {
+      toast.error("Export failed");
     }
   };
-  const clearForm = async () => {
+
+  const resetForm = async () => {
     setDocumentId(null);
     setDate(setCurrentTime(new Date()));
-    setHsnCode("");
-    setUom("");
+    setHsnCode(DEFAULTS.HSN);
+    setUom(DEFAULTS.UOM);
+    setMethod(DEFAULTS.METHOD);
 
     setCustomerId("");
     setCustomerName("");
     setAddress("");
+    setDeliveryAddress("");
     setGstNo("");
-
     setSizeData([]);
 
     await loadLastBillNo();
-
     navigate(LOCALENTRY);
   };
 
+  /* ================= UI ================= */
+
   return (
     <MainLayout>
-      <h1 className="text-2xl font-medium">Gst Entry</h1>
+      <h1 className="text-2xl font-medium">GST Entry</h1>
 
       <div className="flex justify-end">
         <Button
           type="button"
-          onClick={clearForm}
           label="Add New"
+          onClick={resetForm}
           icon1={<AddIcon color="#fff" />}
-          icon2={<AddIcon color="#fff" />}
-          className="bg-[#0b6bcb] text-white border-0"
+          className="bg-blue-600 text-white"
         />
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6 mt-4">
-        <div className="grid grid-cols-4 gap-4 my-2">
+        <div className="grid grid-cols-4 gap-4">
           <InputField
-            placeholder="Bill No"
             value={billNo}
+            placeholder="Bill No"
             disabled={role !== "superadmin"}
             onChange={(e) => setBillNo(e.target.value)}
           />
+
           <DateUiPicker
             value={date}
             label="Date"
@@ -303,19 +310,20 @@ const GstEntry = () => {
           />
 
           <InputField
-            placeholder="HSN/SAC Code"
             value={hsnCode}
+            placeholder="HSN Code"
             onChange={(e) => setHsnCode(e.target.value)}
           />
+
           <InputField
-            placeholder="UOM"
             value={uom}
+            placeholder="UOM"
             onChange={(e) => setUom(e.target.value)}
           />
         </div>
 
         <CustomerField
-          isGstCustomer={true}
+          isGstCustomer
           customerData={customerList}
           fetchCustomers={loadCustomers}
           setCustomerData={setCustomerList}
@@ -327,26 +335,33 @@ const GstEntry = () => {
           setGstNo={setGstNo}
           address={address}
           setAddress={setAddress}
+          deliveryAddress={deliveryAddress}
+          setDeliveryAddress={setDeliveryAddress}
         />
 
         <FormDataInput sizeData={sizeData} setSizeData={setSizeData} />
 
-        <div className="grid grid-cols-2 gap-4 my-2">
+        <div className="grid grid-cols-3 gap-4">
           <InputField
-            placeholder="Method"
             value={method}
             onChange={(e) => setMethod(e.target.value)}
+            placeholder="Method"
           />
           <InputField
-            placeholder="Gst Percentage"
             value={gstPercentage}
             onChange={(e) => setGstPercentage(e.target.value)}
+            placeholder="GST %"
           />
         </div>
 
-        <div className="grid grid-cols-3 gap-4 my-2">
-          <InputField placeholder="Amount" value={""} readOnly />
-          <InputField placeholder="Total Amount" value={totalAmount} readOnly />
+        <div className="grid grid-cols-3 gap-4">
+          <InputField value={totalAmount} readOnly placeholder="Amount" />
+          <InputField value={gstSummary.taxAmount} readOnly placeholder="Tax" />
+          <InputField
+            value={gstSummary.finalAmount}
+            readOnly
+            placeholder="Total"
+          />
         </div>
 
         <div className="flex justify-end gap-4">
@@ -354,20 +369,17 @@ const GstEntry = () => {
             <>
               <Button
                 type="button"
-                label="Save as PDF"
+                label="PDF"
                 onClick={downloadImage}
                 icon1={<SavePdfIcon color="#fff" />}
-                icon2={<SavePdfIcon color="#fff" />}
                 className="bg-green-600 text-white"
               />
-
               <Button
                 type="button"
                 label="Print"
                 onClick={handlePrint}
                 icon1={<PrinterIcon color="#fff" />}
-                icon2={<PrinterIcon color="#fff" />}
-                className="bg-[#14B8A6] text-white"
+                className="bg-teal-500 text-white"
               />
             </>
           )}
@@ -375,37 +387,12 @@ const GstEntry = () => {
           <Button
             type="submit"
             label={documentId ? "Update" : "Save"}
-            icon1={<SaveIcon color="#fff" />}
-            icon2={<SaveIcon color="#fff" />}
             disabled={loading}
+            icon1={<SaveIcon color="#fff" />}
             className="bg-indigo-600 text-white"
           />
         </div>
       </form>
-      {/* 
-      <PrintUi
-        ref={contentRef}
-        billNo={billNo}
-        name={customerName}
-        date={dayjs(date).format("DD-MM-YYYY")}
-        amount={totalAmount}
-        advance={receivedAmount}
-        balance={balanceAmount}
-        sizeData={sizeData}
-      /> */}
-
-      <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
-        {/* <PrintUipdf
-          ref={printRef}
-          billNo={billNo}
-          name={customerName}
-          date={dayjs(date).format("DD-MM-YYYY")}
-          amount={totalAmount}
-          advance={receivedAmount}
-          balance={balanceAmount}
-          sizeData={sizeData}
-        /> */}
-      </div>
     </MainLayout>
   );
 };
