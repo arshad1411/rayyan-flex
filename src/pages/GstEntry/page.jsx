@@ -70,6 +70,8 @@ const GstEntry = () => {
   const [customerList, setCustomerList] = useState([]);
   const [sizeData, setSizeData] = useState([]);
 
+  const [status, setStatus] = useState("status");
+
   /* ================= CALCULATIONS ================= */
 
   const totalAmount = useMemo(() => {
@@ -135,6 +137,7 @@ const GstEntry = () => {
       setCustomerId(transformed.customer || "");
       setCustomerName(data.customer?.name || "");
       setSizeData(transformed.size_data || []);
+      setStatus(data.current_status || "status");
     } catch {
       toast.error("Failed to load entry");
     }
@@ -186,11 +189,10 @@ const GstEntry = () => {
       gst_no: gstNo,
     });
 
-    const id = res?.data?.documentId;
-    setCustomerId(id);
+    setCustomerId(res?.documentId);
     await loadCustomers();
 
-    return id;
+    return res?.documentId;
   };
 
   /* ================= ACTIONS ================= */
@@ -214,11 +216,12 @@ const GstEntry = () => {
         hsn_code: hsnCode,
         uom,
         method,
-        customer: finalCustomerId,
+        gst_customer: finalCustomerId,
         size_data: sizeData,
         gst_percentage: gstPercentage,
         total_amount: totalAmount,
         particulars: buildParticulars(),
+        current_status: status,
       };
 
       if (documentId) {
@@ -372,6 +375,7 @@ const GstEntry = () => {
                 label="PDF"
                 onClick={downloadImage}
                 icon1={<SavePdfIcon color="#fff" />}
+                icon2={<SavePdfIcon color="#fff" />}
                 className="bg-green-600 text-white"
               />
               <Button
@@ -379,6 +383,7 @@ const GstEntry = () => {
                 label="Print"
                 onClick={handlePrint}
                 icon1={<PrinterIcon color="#fff" />}
+                icon2={<PrinterIcon color="#fff" />}
                 className="bg-teal-500 text-white"
               />
             </>
@@ -389,6 +394,7 @@ const GstEntry = () => {
             label={documentId ? "Update" : "Save"}
             disabled={loading}
             icon1={<SaveIcon color="#fff" />}
+            icon2={<SaveIcon color="#fff" />}
             className="bg-indigo-600 text-white"
           />
         </div>

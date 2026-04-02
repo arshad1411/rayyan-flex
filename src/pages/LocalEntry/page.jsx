@@ -240,7 +240,7 @@ const LocalEntry = () => {
           phonenumber: phone,
         });
 
-        finalCustomerId = createdCustomer?.data?.documentId;
+        finalCustomerId = createdCustomer?.documentId;
         setCustomerId(finalCustomerId);
 
         await loadCustomers();
