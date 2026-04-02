@@ -154,7 +154,7 @@ export const appConfig = [
         label: "Entry",
         icon: EntryIcon,
         path: GSTSALESENTRY,
-        elementKey: "GstSalesEntry",
+        elementKey: "GstEntry",
         roles: [ROLES.SuperAdmin, ROLES.Authenticated],
       },
       {

@@ -14,6 +14,7 @@ import Login from "../pages/Login";
 import PriceList from "../pages/PriceList";
 import QuotationEntry from "../pages/QuotationEntry";
 import QuotationList from "../pages/QuotationList";
+import GstEntry from "../pages/GstEntry/page";
 
 export const elementMap = {
   Dashboard,
@@ -26,6 +27,7 @@ export const elementMap = {
   LocalExpenseApprove,
   LocalProductionList,
   LocalHubList,
+  GstEntry,
   AdminList,
   DebtList,
   QuotationEntry,
