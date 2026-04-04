@@ -32,6 +32,7 @@ import {
   getLastGstList,
   updateGstList,
 } from "../../api/gstList";
+import PrintGstUi from "../../components/PrintGstUI/PrintGstUi";
 
 const toNumber = (val) => Number(val) || 0;
 
@@ -84,19 +85,19 @@ const GstEntry = () => {
   const gstSummary = useMemo(() => {
     const gst = toNumber(gstPercentage);
 
-    const tax = (totalAmount * gst) / 100;
-    const final = totalAmount + tax;
+    const totalGST = (totalAmount * gst) / 100;
+
+    const final = totalAmount + totalGST;
 
     const rounded = Math.round(final);
     const roundOff = +(rounded - final).toFixed(2);
 
     return {
-      taxAmount: tax.toFixed(2),
+      taxAmount: totalGST.toFixed(2),
       finalAmount: rounded.toFixed(2),
       roundOff: roundOff.toFixed(2),
     };
   }, [totalAmount, gstPercentage]);
-
   /* ================= API ================= */
 
   const loadCustomers = useCallback(async () => {
@@ -399,6 +400,43 @@ const GstEntry = () => {
           />
         </div>
       </form>
+
+      <PrintGstUi
+        ref={contentRef}
+        billNo={billNo}
+        date={date}
+        name={customerName}
+        address={address}
+        deliveryAddress={deliveryAddress}
+        gstNo={gstNo}
+        sizeData={sizeData}
+        hsn={hsnCode}
+        uom={uom}
+        method={method}
+        gstPercentage={gstPercentage}
+        baseAmount={totalAmount}
+        taxAmount={gstSummary.taxAmount}
+        less={gstSummary.roundOff}
+        finalAmount={gstSummary.finalAmount}
+      />
+
+      <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
+        <PrintGstUi
+          ref={printRef}
+          billNo={billNo}
+          date={date}
+          name={customerName}
+          address={address}
+          deliveryAddress={deliveryAddress}
+          gstNo={gstNo}
+          sizeData={sizeData}
+          hsn={hsnCode}
+          uom={uom}
+          totalValue={totalAmount}
+          taxAmount={gstSummary.taxAmount}
+          less={gstSummary.finalAmount}
+        />
+      </div>
     </MainLayout>
   );
 };
