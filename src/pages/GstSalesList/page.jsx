@@ -500,8 +500,7 @@ const GstSalesList = () => {
                         options={[
                           { value: "status", label: "Status" },
                           { value: "paid", label: "Paid" },
-                          { value: "pending", label: "Pending" },
-                          { value: "party", label: "Party" },
+                          { value: "manual_paid", label: "Manual Paid" },
                         ]}
                         onChange={(e) =>
                           handleStatusChange(item.documentId, e.target.value)
