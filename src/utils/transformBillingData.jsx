@@ -6,7 +6,7 @@ export const transformBillingData = (data) => {
   return {
     ...rest,
 
-    customer: data?.customer?.documentId,
+    customer: data?.customer?.documentId || data?.gst_customer?.id || null,
 
     size_data: data?.size_data?.map(({ id, ...rest }) => rest),
 

@@ -5,18 +5,15 @@ import Button from "../Button/Button";
 import { AddIcon, DeleteIcon } from "../icons";
 import InputField from "../InputField/InputField";
 
-const num = (v) => Number(v) || 0;
-const display = (v) => (v === 0 ? "" : v);
-
 const createRow = (type) => ({
   type,
-  width: 0,
-  height: 0,
+  width: "",
+  height: "",
   material: "",
-  sq_ft_price: 0,
-  piece_count: 1,
+  sq_ft_price: "",
+  piece_count: "1",
   instruction: "",
-  per_piece_amount: 0,
+  per_piece_amount: "",
   per_piece_total: 0,
 });
 
@@ -54,9 +51,7 @@ const FormDataInput = ({ sizeData = [], setSizeData }) => {
 
   const addRow = (type) => {
     setErrorMsg("");
-
     if (!validateLastRow()) return;
-
     setSizeData([...sizeData, createRow(type)]);
   };
 
@@ -73,26 +68,18 @@ const FormDataInput = ({ sizeData = [], setSizeData }) => {
   const updateRow = (index, name, value) => {
     const updated = [...sizeData];
 
-    const numericFields = [
-      "width",
-      "height",
-      "sq_ft_price",
-      "piece_count",
-      "per_piece_amount",
-    ];
-
-    // Store numeric fields as numbers
-    updated[index][name] = numericFields.includes(name) ? num(value) : value;
+    updated[index][name] = value;
 
     const row = updated[index];
 
+    const width = parseFloat(row.width) || 0;
+    const height = parseFloat(row.height) || 0;
+    const rate = parseFloat(row.sq_ft_price) || 0;
+    const pieces = parseFloat(row.piece_count) || 1;
+    const amount = parseFloat(row.per_piece_amount) || 0;
+
     /* ---------- FLEX CALCULATION ---------- */
     if (row.type === "flex") {
-      const width = row.width;
-      const height = row.height;
-      const rate = row.sq_ft_price;
-      const pieces = row.piece_count || 1;
-
       const area = width * height;
       const calculated = area * rate * pieces;
 
@@ -112,8 +99,6 @@ const FormDataInput = ({ sizeData = [], setSizeData }) => {
 
     /* ---------- INSTRUCTION CALCULATION ---------- */
     if (row.type === "instruction") {
-      const pieces = row.piece_count || 1;
-      const amount = row.per_piece_amount;
       row.per_piece_total = pieces * amount;
     }
 
@@ -123,7 +108,6 @@ const FormDataInput = ({ sizeData = [], setSizeData }) => {
   return (
     <div>
       {sizeData.map((row, index) => {
-        /* ---------- FLEX ROW ---------- */
         if (row.type === "flex") {
           return (
             <div key={`flex-${index}`} className="flex gap-4 my-4">
@@ -137,16 +121,18 @@ const FormDataInput = ({ sizeData = [], setSizeData }) => {
 
               <InputField
                 placeholder="Width"
-                value={display(row.width)}
+                type="number"
+                step="any"
+                value={row.width}
                 onChange={(e) => updateRow(index, "width", e.target.value)}
-                required
               />
 
               <InputField
                 placeholder="Height"
-                value={display(row.height)}
+                type="number"
+                step="any"
+                value={row.height}
                 onChange={(e) => updateRow(index, "height", e.target.value)}
-                required
               />
 
               <AutocompleteField
@@ -161,18 +147,18 @@ const FormDataInput = ({ sizeData = [], setSizeData }) => {
 
               <InputField
                 placeholder="Sq.ft Rate"
-                value={display(row.sq_ft_price)}
+                type="number"
+                step="any"
+                value={row.sq_ft_price}
                 onChange={(e) =>
                   updateRow(index, "sq_ft_price", e.target.value)
                 }
-                required
               />
 
               <InputField
                 placeholder="Piece Count"
                 type="number"
-                dontallowDecimal
-                value={display(row.piece_count)}
+                value={row.piece_count}
                 onChange={(e) =>
                   updateRow(index, "piece_count", e.target.value)
                 }
@@ -188,7 +174,6 @@ const FormDataInput = ({ sizeData = [], setSizeData }) => {
           );
         }
 
-        /* ---------- INSTRUCTION ROW ---------- */
         if (row.type === "instruction") {
           return (
             <div key={`instruction-${index}`} className="flex gap-4 my-4">
@@ -198,14 +183,12 @@ const FormDataInput = ({ sizeData = [], setSizeData }) => {
                 onChange={(e) =>
                   updateRow(index, "instruction", e.target.value)
                 }
-                required
               />
 
               <InputField
                 placeholder="Piece Count"
                 type="number"
-                dontallowDecimal
-                value={display(row.piece_count)}
+                value={row.piece_count}
                 onChange={(e) =>
                   updateRow(index, "piece_count", e.target.value)
                 }
@@ -213,11 +196,12 @@ const FormDataInput = ({ sizeData = [], setSizeData }) => {
 
               <InputField
                 placeholder="Amount"
-                value={display(row.per_piece_amount)}
+                type="number"
+                step="any"
+                value={row.per_piece_amount}
                 onChange={(e) =>
                   updateRow(index, "per_piece_amount", e.target.value)
                 }
-                required
               />
 
               <Button
@@ -233,7 +217,6 @@ const FormDataInput = ({ sizeData = [], setSizeData }) => {
         return null;
       })}
 
-      {/* ACTION BUTTONS */}
       <div className="flex gap-4 items-center justify-end mt-4">
         <p className="text-red-500 mr-4">{errorMsg}</p>
 

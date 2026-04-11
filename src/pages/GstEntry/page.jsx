@@ -1,8 +1,8 @@
+import { toPng } from "html-to-image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useReactToPrint } from "react-to-print";
 import { toast } from "react-toastify";
-import { toPng } from "html-to-image";
 
 import Button from "../../components/Button/Button";
 import CustomerField from "../../components/CustomerField/CustomerField";
@@ -122,7 +122,7 @@ const GstEntry = () => {
   const loadEditData = useCallback(async (id) => {
     try {
       const res = await getGstListById(id);
-      const data = res?.data?.[0] || res?.data;
+      const data = res;
 
       if (!data) return;
 
@@ -136,7 +136,10 @@ const GstEntry = () => {
       setMethod(data.method || DEFAULTS.METHOD);
 
       setCustomerId(transformed.customer || "");
-      setCustomerName(data.customer?.name || "");
+      setCustomerName(data.gst_customer?.name || "");
+      setAddress(data.gst_customer?.address || "");
+      setDeliveryAddress(data.gst_customer?.delivery_address || "");
+      setGstNo(data.gst_customer?.gst_no || "");
       setSizeData(transformed.size_data || []);
       setStatus(data.current_status || "status");
     } catch {
@@ -220,7 +223,10 @@ const GstEntry = () => {
         gst_customer: finalCustomerId,
         size_data: sizeData,
         gst_percentage: gstPercentage,
-        total_amount: totalAmount,
+        total_amount: gstSummary.finalAmount,
+        tax_amount: gstSummary.taxAmount,
+        base_amount: totalAmount,
+        round_off: gstSummary.roundOff,
         particulars: buildParticulars(),
         current_status: status,
       };
