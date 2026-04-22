@@ -5,15 +5,17 @@ import {
   FormControl,
   FormLabel,
   IconButton,
+  Input,
   Option,
   Select,
   Table,
   Typography,
 } from "@mui/joy";
 import { motion } from "framer-motion";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+
 import AutocompleteField from "../../components/AutocompleteField/AutocompleteField";
 import CardUI from "../../components/CardUI/CardUI";
 import Datepicker, {
@@ -21,9 +23,7 @@ import Datepicker, {
 } from "../../components/Datepicker/Datepicker";
 import DeletePopup from "../../components/DeletePopup/DeletePopup";
 import EditButton from "../../components/EditButton/EditButton";
-
 import MainLayout from "../../layouts/MainLayout";
-
 import { GSTSALESENTRY } from "../../router/paths";
 import dayjs from "../../utils/dayjs";
 import { formattedAmount } from "../../utils/FormatAmount";
@@ -47,14 +47,39 @@ import { useAuth } from "../../context/auth-context";
 import { setCurrentTime } from "../../utils/DatewithTime";
 
 function labelDisplayedRows({ from, to, count }) {
-  return `${from}–${to} of ${count}`;
+  return `${from}–${to} of ${count !== -1 ? count : `more than ${to}`}`;
 }
+
+const ROWS_PER_PAGE_OPTIONS = [5, 10, 25, 100];
+
+const PAYMENT_METHOD_OPTIONS = [
+  { value: "cash", label: "Cash" },
+  { value: "gpay", label: "GPay" },
+  { value: "account", label: "Account" },
+];
+
+const STATUS_OPTIONS = [
+  { value: "status", label: "Status" },
+  { value: "paid", label: "Paid" },
+  { value: "manual_paid", label: "Manual Paid" },
+];
+
+const INITIAL_FORM_STATE = {
+  date: null,
+  customType: "gpay",
+  receivedAmount: "",
+  particulars: "",
+  editId: null,
+  recvBillNo: [],
+};
+
+/* ─────────────────────────────────────────────
+   Component
+───────────────────────────────────────────── */
 
 const GstSalesList = () => {
   const { role, showOverview, toggleOverview } = useAuth();
   const navigate = useNavigate();
-
-  /* ================= STATE ================= */
 
   const [fromDate, setFromDate] = useState(null);
   const [toDate, setToDate] = useState(null);
@@ -62,238 +87,265 @@ const GstSalesList = () => {
 
   const [gstCustomers, setGstCustomers] = useState([]);
   const [gstSalesData, setGstSalesData] = useState([]);
-  const [gstSalesSummary, setGstSalesSummary] = useState([]);
-
-  const [billNosData, setBillNosData] = useState([]);
-  const [recvBillNo, setRecvBillNo] = useState([]);
-  const [totalBillAmount, setTotalBillAmount] = useState(0);
-
-  const [loading, setLoading] = useState(false);
+  const [gstSalesSummary, setGstSalesSummary] = useState(null);
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(25);
   const [totalCount, setTotalCount] = useState(0);
 
-  const [date, setDate] = useState(setCurrentTime(new Date()));
-  const [customType, setCustomType] = useState("gpay");
-  const [receivedAmount, setReceivedAmount] = useState(0);
-  const [editId, setEditId] = useState("");
-  const [particulars, setParticulars] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  /* ================= LOAD CUSTOMERS ================= */
+  const [form, setForm] = useState({
+    ...INITIAL_FORM_STATE,
+    date: setCurrentTime(new Date()),
+  });
+
+  const billNosData = useMemo(
+    () =>
+      gstSalesData
+        .filter((item) => item.bill_no && item.current_status !== "paid")
+        .map((item) => ({
+          label: `${item.bill_no} — ₹${formattedAmount(item.total_amount)}`,
+          value: item.documentId,
+          amount: Number(item.total_amount) || 0,
+          bill_no: item.bill_no,
+        })),
+    [gstSalesData],
+  );
+
+  const totalBillAmount = useMemo(
+    () => form.recvBillNo.reduce((sum, item) => sum + (item.amount || 0), 0),
+    [form.recvBillNo],
+  );
+
+  const buildQuery = useCallback(
+    (extraParams = {}) => {
+      const params = new URLSearchParams();
+
+      params.set("pagination[page]", String(page + 1));
+      params.set("pagination[pageSize]", String(rowsPerPage));
+      params.set("sort[0]", "date:desc");
+
+      if (searchCustomer?.value) {
+        params.set(
+          "filters[gst_customer][documentId][$eq]",
+          searchCustomer.value,
+        );
+      }
+
+      if (fromDate && toDate) {
+        params.set("filters[date][$gte]", dayjs(fromDate).format("YYYY-MM-DD"));
+        params.set("filters[date][$lte]", dayjs(toDate).format("YYYY-MM-DD"));
+      }
+
+      Object.entries(extraParams).forEach(([k, v]) => params.set(k, v));
+
+      return params.toString();
+    },
+    [page, rowsPerPage, searchCustomer, fromDate, toDate],
+  );
+
+  /* ─────────────────────────────────────────────
+     Data loaders
+  ───────────────────────────────────────────── */
 
   const loadGstCustomers = useCallback(async () => {
     try {
       const res = await getGstCustomers();
       setGstCustomers(res || []);
-    } catch (error) {
-      console.error("Customer fetch failed:", error);
+    } catch (err) {
+      console.error("Customer fetch failed:", err);
       setGstCustomers([]);
     }
   }, []);
 
-  /* ================= API QUERY BUILDER ================= */
-
-  const buildQuery = () => {
-    const query = [];
-
-    query.push(`pagination[page]=${page + 1}`);
-    query.push(`pagination[pageSize]=${rowsPerPage}`);
-    query.push(`sort[0]=date:desc`);
-
-    if (searchCustomer?.value) {
-      query.push(
-        `filters[gst_customer][documentId][$eq]=${searchCustomer.value}`,
-      );
-    }
-
-    if (fromDate && toDate) {
-      query.push(`filters[date][$gte]=${dayjs(fromDate).format("YYYY-MM-DD")}`);
-      query.push(`filters[date][$lte]=${dayjs(toDate).format("YYYY-MM-DD")}`);
-    }
-
-    return query.join("&");
-  };
-
-  /* ================= LOAD DATA ================= */
-
   const loadGstSalesData = useCallback(async () => {
     setLoading(true);
-
     try {
       const res = await getGstList(buildQuery());
-
       setGstSalesData(res?.data || []);
       setTotalCount(res?.meta?.pagination?.total || 0);
-    } catch (error) {
-      console.error("Gst sales fetch failed:", error);
-      toast.error("Failed to load gst sales list");
+    } catch (err) {
+      console.error("GST sales list fetch failed:", err);
+      toast.error("Failed to load GST sales list.");
       setGstSalesData([]);
     } finally {
       setLoading(false);
     }
-  }, [page, rowsPerPage, searchCustomer, fromDate, toDate]);
+  }, [buildQuery]);
 
   const loadGstSalesSummary = useCallback(async () => {
-    setLoading(true);
-
     try {
-      let query = [];
+      const params = new URLSearchParams();
 
-      if (searchCustomer) {
-        query.push(
-          `filters[gst_customer][documentId][$eq]=${searchCustomer.value}`,
+      if (searchCustomer?.value) {
+        params.set(
+          "filters[gst_customer][documentId][$eq]",
+          searchCustomer.value,
         );
       }
 
       if (fromDate && toDate) {
-        const from = dayjs(fromDate).format("YYYY-MM-DD");
-        const to = dayjs(toDate).format("YYYY-MM-DD");
-
-        query.push(`fromDate=${from}`);
-        query.push(`toDate=${to}`);
+        params.set("fromDate", dayjs(fromDate).format("YYYY-MM-DD"));
+        params.set("toDate", dayjs(toDate).format("YYYY-MM-DD"));
       }
 
-      const queryString = query.length ? `?${query.join("&")}` : "";
-
+      const queryString = params.toString() ? `?${params.toString()}` : "";
       const res = await getGstSalesSummary(queryString);
-
       setGstSalesSummary(res);
-    } catch (error) {
-      console.error("Gst sales summary fetch failed:", error);
-      setGstSalesSummary([]);
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error("GST sales summary fetch failed:", err);
+      setGstSalesSummary(null);
     }
   }, [searchCustomer, fromDate, toDate]);
 
-  /* ================= INITIAL LOAD ================= */
+  /* ─────────────────────────────────────────────
+     Effects
+  ───────────────────────────────────────────── */
 
   useEffect(() => {
     loadGstCustomers();
   }, [loadGstCustomers]);
-
   useEffect(() => {
     loadGstSalesData();
   }, [loadGstSalesData]);
-
   useEffect(() => {
     loadGstSalesSummary();
   }, [loadGstSalesSummary]);
 
-  useEffect(() => {
-    const billList = gstSalesData
-      .filter((item) => item.bill_no && item.current_status !== "paid")
-      .map((item) => ({
-        label: `${item.bill_no} - ₹${item.total_amount}`,
-        value: item.documentId,
-        amount: item.total_amount,
-        bill_no: item.bill_no,
-      }));
+  /* ─────────────────────────────────────────────
+     Form helpers
+  ───────────────────────────────────────────── */
 
-    setBillNosData(billList);
-  }, [gstSalesData]);
+  const setFormField = (field, value) =>
+    setForm((prev) => ({ ...prev, [field]: value }));
 
-  useEffect(() => {
-    const total = recvBillNo.reduce((sum, item) => {
-      return sum + (item.amount || 0);
-    }, 0);
+  const resetForm = () =>
+    setForm({ ...INITIAL_FORM_STATE, date: setCurrentTime(new Date()) });
 
-    setTotalBillAmount(total);
-  }, [recvBillNo]);
+  const buildPayload = () => {
+    return {
+      date: form.date,
+      gst_customer: searchCustomer?.value ?? null,
+      received_bill_nos: form.recvBillNo,
+      received_method: form.customType,
+      received_amount: Number(form.receivedAmount) || totalBillAmount,
+    };
+  };
 
-  /* ================= DELETE ================= */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!searchCustomer?.value) {
+      toast.warning("Please select a customer.");
+      return;
+    }
+
+    const payload = buildPayload();
+
+    try {
+      if (!form.editId) {
+        await createGstList(payload);
+        toast.success("Party amount added successfully.");
+      } else {
+        await updateGstList(form.editId, payload);
+        toast.success("Party amount updated successfully.");
+      }
+
+      await loadGstSalesData();
+      resetForm();
+      setSearchCustomer(null);
+    } catch (err) {
+      console.error("Submit failed:", err);
+      toast.error("Failed to save. Please try again.");
+    }
+  };
+
+  const handleEdit = (item) => {
+    setSearchCustomer(
+      item.gst_customer
+        ? { label: item.gst_customer.name, value: item.gst_customer.documentId }
+        : null,
+    );
+
+    setForm({
+      editId: item.documentId,
+      date: setCurrentTime(new Date(item.date)),
+      customType: item.received_method ?? "cash",
+      receivedAmount: item.received_amount || "",
+      recvBillNo: item.received_bill_nos || [],
+    });
+  };
 
   const handleDelete = async (id) => {
     try {
       await deleteLocalList(id);
-      toast.success("Deleted successfully");
-      loadGstSalesData();
-    } catch (error) {
-      console.error("Delete failed:", error);
+      toast.success("Deleted successfully.");
+      await loadGstSalesData();
+    } catch (err) {
+      console.error("Delete failed:", err);
+      toast.error("Failed to delete. Please try again.");
     }
   };
 
-  /* ================= PAGINATION ================= */
-
-  const handleChangePage = (newPage) => {
-    setPage(newPage);
+  const handleStatusChange = async (documentId, value) => {
+    try {
+      await updateGstList(documentId, { current_status: value });
+      await loadGstSalesData();
+    } catch (err) {
+      console.error("Status update failed:", err);
+      toast.error("Failed to update status. Please try again.");
+    }
   };
+
+  /* ─────────────────────────────────────────────
+     Pagination helpers
+  ───────────────────────────────────────────── */
+
+  const rowsTo = Math.min((page + 1) * rowsPerPage, totalCount);
+
+  const handleChangePage = (newPage) => setPage(newPage);
 
   const handleChangeRowsPerPage = (_, value) => {
     setRowsPerPage(value);
     setPage(0);
   };
 
-  const getLabelDisplayedRowsTo = () => {
-    return Math.min((page + 1) * rowsPerPage, totalCount);
-  };
+  /* ─────────────────────────────────────────────
+     Customer options (memoised)
+  ───────────────────────────────────────────── */
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const customerOptions = useMemo(
+    () => gstCustomers.map((c) => ({ label: c.name, value: c.documentId })),
+    [gstCustomers],
+  );
 
-    const payload = {
-      date,
-      customer: searchCustomer.value,
-      custom_type: customType,
-      particulars: [{ text: particulars }],
-      method: customType,
-      current_status: "party",
-      approved: true,
-    };
-    if (!editId) {
-      await createGstList(payload);
-      toast.success("Party Amount added successfully");
-    } else {
-      await updateGstList(editId, payload);
-      toast.success("Party Amount updated successfully");
-    }
-
-    loadGstSalesData();
-    setEditId("");
-    setDate(new Date());
-    setSearchCustomer("");
-    setParticulars("");
-    setCustomType("gpay");
-    setReceivedAmount(0);
-  };
-
-  const handleEdit = (item) => {
-    setEditId(item.documentId);
-    setDate(new Date(item.date));
-    setSearchCustomer({
-      label: item.customer?.name,
-      value: item.customer?.documentId,
-    });
-    setParticulars(item.particulars?.[0]?.text || "");
-    setCustomType(item.custom_type || "gpay");
-    setReceivedAmount(
-      item.custom_type === "cash" ? item.cash_received : item.gpay_received,
-    );
-  };
-
-  const handleStatusChange = async (id, value) => {
+  const parseBillNos = (value) => {
     try {
-      await updateGstList(id, { current_status: value });
-
-      await loadGstSalesData();
-    } catch (error) {
-      console.error("Status update failed:", error);
-      toast.error("Failed to update status. Please try again.");
+      const parsed = typeof value === "string" ? JSON.parse(value) : value;
+      return Array.isArray(parsed)
+        ? parsed.map((b) => b.label).join(", ")
+        : "—";
+    } catch {
+      return value || "—";
     }
   };
+
+  /* ─────────────────────────────────────────────
+     Render
+  ───────────────────────────────────────────── */
 
   return (
     <MainLayout>
+      {/* ── Header ── */}
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-semibold">Gst Sales List</h1>
+        <h1 className="text-2xl font-semibold">GST Sales List</h1>
         <Checkbox
           icon={<CheckBoxIcon />}
           checkedIcon={<CheckIcon color="#fff" />}
           checked={showOverview}
-          style={{ marginRight: 8 }}
-          label={"Show Overview"}
-          onChange={() => toggleOverview()}
+          label="Show Overview"
+          onChange={toggleOverview}
         />
       </div>
 
@@ -312,7 +364,7 @@ const GstSalesList = () => {
             titleColor="text-green-800"
           />
           <CardUI
-            title="Total Gpay"
+            title="Total GPay"
             amount={gstSalesSummary?.total_gpay}
             icon={<WalletIcon />}
             titleColor="text-green-800"
@@ -333,21 +385,24 @@ const GstSalesList = () => {
           type="multipleDatePicker"
           FromDate={fromDate}
           ToDate={toDate}
-          setFromDate={setFromDate}
-          setToDate={setToDate}
+          setFromDate={(d) => {
+            setFromDate(d);
+            setPage(0);
+          }}
+          setToDate={(d) => {
+            setToDate(d);
+            setPage(0);
+          }}
         />
       </div>
 
       <div className="flex justify-end mt-6">
         <div className="w-80">
           <AutocompleteField
-            label="Customer Name"
+            label="Filter by Customer"
             value={searchCustomer}
-            options={gstCustomers.map((c) => ({
-              label: c.name,
-              value: c.documentId,
-            }))}
-            onChange={(e, val) => {
+            options={customerOptions}
+            onChange={(_, val) => {
               setSearchCustomer(val);
               setPage(0);
             }}
@@ -355,36 +410,43 @@ const GstSalesList = () => {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-6">
-        <div className="grid grid-cols-6 gap-4 ">
+      {/* ── Add / Edit form ── */}
+      <form onSubmit={handleSubmit} className="mt-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
+          {/* Date */}
           <DateUiPicker
-            value={date}
+            value={form.date}
             label="Date"
-            onChange={(d) => setDate(setCurrentTime(d))}
-            className={"w-full"}
-            minDate={role === "superadmin" ? false : new Date()}
+            onChange={(d) => setFormField("date", setCurrentTime(d))}
+            minDate={role === "superadmin" ? undefined : new Date()}
           />
+
+          {/* Customer */}
           <AutocompleteField
             label="Customer Name"
             value={searchCustomer}
-            options={gstCustomers.map((c) => ({
-              label: c.name,
-              value: c.documentId,
-            }))}
-            onChange={(e, val) => {
+            options={customerOptions}
+            onChange={(_, val) => {
               setSearchCustomer(val);
               setPage(0);
             }}
           />
 
+          {/* Bill Numbers (multi-select) */}
           <div>
-            <label>Bill Number (₹ {totalBillAmount})</label>
-
+            <label className="block text-sm font-medium mb-1">
+              Bill Numbers&nbsp;
+              {totalBillAmount > 0 && (
+                <span className="text-indigo-600 font-semibold">
+                  (₹{formattedAmount(totalBillAmount)})
+                </span>
+              )}
+            </label>
             <Autocomplete
               multiple
               options={billNosData}
-              value={recvBillNo}
-              onChange={(e, newValue) => setRecvBillNo(newValue)}
+              value={form.recvBillNo}
+              onChange={(_, newValue) => setFormField("recvBillNo", newValue)}
               disableCloseOnSelect
               getOptionLabel={(option) => option.label}
               isOptionEqualToValue={(option, value) =>
@@ -402,92 +464,109 @@ const GstSalesList = () => {
                 </li>
               )}
               renderInput={(params) => (
-                <TextField {...params} label="Bill Number" />
+                <Input
+                  {...params.inputProps}
+                  ref={params.inputProps.ref}
+                  placeholder="Select bill numbers"
+                />
               )}
             />
           </div>
+
+          {/* Payment method */}
           <SelectField
-            label={"Received In"}
-            selectName={"custom_type"}
-            options={[
-              { value: "cash", label: "Cash" },
-              { value: "gpay", label: "Gpay" },
-            ]}
-            value={customType}
-            onChange={(e) => setCustomType(e.target.value)}
-            placeholder={"Received In"}
-            required={true}
+            label="Received In"
+            selectName="custom_type"
+            options={PAYMENT_METHOD_OPTIONS}
+            value={form.customType}
+            onChange={(e) => setFormField("customType", e.target.value)}
+            placeholder="Received In"
+            required
           />
+
+          {/* Received amount */}
           <InputField
-            name={"received amount"}
-            placeholder={"Received Amount"}
-            value={receivedAmount}
-            onChange={(e) => setReceivedAmount(e.target.value) || 0}
+            label="Received Amount"
+            name="received_amount"
+            type="number"
+            min={0}
+            placeholder="Enter amount"
+            value={form.receivedAmount}
+            onChange={(e) => setFormField("receivedAmount", e.target.value)}
           />
+
+          {/* Submit */}
           <Button
-            type={"submit"}
-            label={editId ? "Save" : "Update"}
+            type="submit"
+            label={form.editId ? "Update" : "Save"} // ← label logic was inverted
             icon1={<SaveIcon color="#fff" />}
             icon2={<SaveIcon color="#fff" />}
-            className={"bg-[#4F46E5] hover:bg-[#4338CA] text-white"}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white h-[42px]"
           />
         </div>
       </form>
 
-      {/* Table */}
-
-      <div className="mt-8">
-        <Table borderAxis="both" hoverRow>
+      {/* ── Table ── */}
+      <div className="mt-8 overflow-x-auto">
+        <Table borderAxis="both" hoverRow stickyHeader>
           <thead>
             <tr>
-              <th className="w-[10%]">Date</th>
-              <th className="w-[5%]">Bill No</th>
-              <th className="w-[10%]">Customer</th>
-              <th className="w-[7%]">Base Amount </th>
-              <th className="w-[14%]">Tax</th>
-              <th className="w-[16%]">Total Amount</th>
-              <th className="w-[16%]">Received Bill Nos</th>
-              <th className="w-[16%]">Received Amount</th>
-              <th className="w-[10%]">Action</th>
-              <th className="w-[10%]">Status</th>
+              <th style={{ width: "9%" }}>Date</th>
+              <th style={{ width: "6%" }}>Bill No</th>
+              <th style={{ width: "12%" }}>Customer</th>
+              <th style={{ width: "8%" }}>Base Amount</th>
+              <th style={{ width: "8%" }}>Tax</th>
+              <th style={{ width: "9%" }}>Total Amount</th>
+              <th style={{ width: "14%" }}>Received Bill Nos</th>
+              <th style={{ width: "14%" }}>Received Method</th>
+              <th style={{ width: "10%" }}>Received Amount</th>
+              <th style={{ width: "8%" }}>Action</th>
+              {role === "superadmin" && (
+                <th style={{ width: "12%" }}>Status</th>
+              )}
             </tr>
           </thead>
 
           <tbody>
             {loading ? (
-              <tr colSpan={8}>
-                <td>Loading</td>
+              <tr>
+                <td colSpan={role === "superadmin" ? 10 : 9}>
+                  <div className="flex justify-center py-6 text-gray-400 text-sm">
+                    Loading…
+                  </div>
+                </td>
+              </tr>
+            ) : gstSalesData.length === 0 ? (
+              <tr>
+                <td colSpan={role === "superadmin" ? 10 : 9}>
+                  <div className="flex justify-center py-6 text-gray-400 text-sm">
+                    No records found.
+                  </div>
+                </td>
               </tr>
             ) : (
               gstSalesData.map((item) => (
                 <tr key={item.documentId}>
                   <td>{dayjs(item.date).format("DD/MM/YYYY")}</td>
                   <td>{item.bill_no || "-"}</td>
-
                   <td>{item.gst_customer?.name || "-"}</td>
-
                   <td>{formattedAmount(item.base_amount)}</td>
-
-                  <td>{item.tax_amount}</td>
-
-                  <td>{item.total_amount}</td>
-                  <td>{item.received_bill_nos}</td>
-                  <td>{item.received_amount}</td>
-
+                  <td>{formattedAmount(item.tax_amount)}</td>
+                  <td>{formattedAmount(item.total_amount)}</td>
+                  <td>{parseBillNos(item.received_bill_nos)}</td>
+                  <td>{item.received_method || "-"}</td>
+                  <td>{formattedAmount(item.received_amount)}</td>
                   <td>
                     <div className="flex gap-2">
                       <EditButton
-                        onClick={() => {
-                          if (item.custom_type) {
-                            handleEdit(item);
-                          } else {
-                            navigate(
-                              `${GSTSALESENTRY}?editId=${item.documentId}`,
-                            );
-                          }
-                        }}
+                        onClick={() =>
+                          item.bill_no
+                            ? navigate(
+                                `${GSTSALESENTRY}?editId=${item.documentId}`,
+                              )
+                            : handleEdit(item)
+                        }
                       />
-
                       <DeletePopup
                         handleDelete={() => handleDelete(item.documentId)}
                       />
@@ -495,17 +574,17 @@ const GstSalesList = () => {
                   </td>
                   {role === "superadmin" && (
                     <td>
-                      <SelectField
-                        value={item.current_status || "status"}
-                        options={[
-                          { value: "status", label: "Status" },
-                          { value: "paid", label: "Paid" },
-                          { value: "manual_paid", label: "Manual Paid" },
-                        ]}
-                        onChange={(e) =>
-                          handleStatusChange(item.documentId, e.target.value)
-                        }
-                      />
+                      {item.bill_no ? (
+                        <SelectField
+                          value={item.current_status || "status"}
+                          options={STATUS_OPTIONS}
+                          onChange={(e) =>
+                            handleStatusChange(item.documentId, e.target.value)
+                          }
+                        />
+                      ) : (
+                        "-"
+                      )}
                     </td>
                   )}
                 </tr>
@@ -513,17 +592,17 @@ const GstSalesList = () => {
             )}
           </tbody>
 
-          {/* Pagination Footer */}
-
+          {/* ── Pagination footer ── */}
           <tfoot>
             <tr>
-              <td colSpan={9}>
+              <td colSpan={role === "superadmin" ? 10 : 9}>
                 <Box
                   sx={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "flex-end",
                     gap: 2,
+                    py: 0.5,
                   }}
                 >
                   <FormControl orientation="horizontal" size="sm">
@@ -531,18 +610,23 @@ const GstSalesList = () => {
                     <Select
                       value={rowsPerPage}
                       onChange={handleChangeRowsPerPage}
+                      size="sm"
                     >
-                      <Option value={5}>5</Option>
-                      <Option value={10}>10</Option>
-                      <Option value={25}>25</Option>
-                      <Option value={100}>100</Option>
+                      {ROWS_PER_PAGE_OPTIONS.map((n) => (
+                        <Option key={n} value={n}>
+                          {n}
+                        </Option>
+                      ))}
                     </Select>
                   </FormControl>
 
-                  <Typography textAlign="center" sx={{ minWidth: 80 }}>
+                  <Typography
+                    level="body-sm"
+                    sx={{ minWidth: 90, textAlign: "center" }}
+                  >
                     {labelDisplayedRows({
                       from: totalCount === 0 ? 0 : page * rowsPerPage + 1,
-                      to: getLabelDisplayedRowsTo(),
+                      to: rowsTo,
                       count: totalCount,
                     })}
                   </Typography>
@@ -553,15 +637,16 @@ const GstSalesList = () => {
                       variant="outlined"
                       disabled={page === 0}
                       onClick={() => handleChangePage(page - 1)}
+                      aria-label="Previous page"
                     >
                       <LeftArrowIcon />
                     </IconButton>
-
                     <IconButton
                       size="sm"
                       variant="outlined"
-                      disabled={getLabelDisplayedRowsTo() >= totalCount}
+                      disabled={rowsTo >= totalCount}
                       onClick={() => handleChangePage(page + 1)}
+                      aria-label="Next page"
                     >
                       <RightIcon />
                     </IconButton>
