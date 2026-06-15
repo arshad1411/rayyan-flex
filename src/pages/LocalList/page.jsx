@@ -16,7 +16,12 @@ import CardUI from "../../components/CardUI/CardUI";
 import Datepicker from "../../components/Datepicker/Datepicker";
 import DeletePopup from "../../components/DeletePopup/DeletePopup";
 import EditButton from "../../components/EditButton/EditButton";
-import { CheckBoxIcon, CheckIcon, WalletIcon } from "../../components/icons";
+import {
+  CheckBoxIcon,
+  CheckIcon,
+  LocalExpenseIcon,
+  WalletIcon,
+} from "../../components/icons";
 import SelectField from "../../components/SelectField/SelectField";
 import { useAuth } from "../../context/auth-context";
 import MainLayout from "../../layouts/MainLayout";
@@ -250,14 +255,14 @@ const LocalList = () => {
           <CardUI
             title="Total Gpay"
             amount={localAmount?.local_list?.total_gpay}
-            icon={<WalletIcon />}
+            icon={<LocalExpenseIcon color="#292D32" />}
             titleColor="text-green-800"
           />
           <CardUI
             title="Total Balance"
             amount={localAmount?.local_list?.total_balance}
             icon={<WalletIcon />}
-            titleColor="text-green-800"
+            titleColor="text-red-500"
           />
         </motion.div>
       )}

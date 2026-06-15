@@ -267,6 +267,7 @@ const LocalEntry = () => {
           return null;
         })
         .filter(Boolean);
+      console.log(sizeData);
 
       const payload = {
         bill_no: billNo,

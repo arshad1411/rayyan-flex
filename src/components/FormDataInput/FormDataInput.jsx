@@ -7,13 +7,13 @@ import InputField from "../InputField/InputField";
 
 const createRow = (type) => ({
   type,
-  width: "",
-  height: "",
+  width: 0,
+  height: 0,
   material: "",
-  sq_ft_price: "",
-  piece_count: "1",
+  sq_ft_price: 0,
+  piece_count: 1,
   instruction: "",
-  per_piece_amount: "",
+  per_piece_amount: 0,
   per_piece_total: 0,
 });
 
@@ -24,6 +24,7 @@ const FormDataInput = ({ sizeData = [], setSizeData }) => {
 
   const validateLastRow = () => {
     const lastRow = sizeData[sizeData.length - 1];
+
     if (!lastRow) return true;
 
     if (lastRow.type === "flex") {
@@ -64,19 +65,32 @@ const FormDataInput = ({ sizeData = [], setSizeData }) => {
   };
 
   /* ---------------- UPDATE ROW ---------------- */
+  const numberFields = [
+    "width",
+    "height",
+    "sq_ft_price",
+    "piece_count",
+    "per_piece_total",
+    "per_piece_amount",
+  ];
 
   const updateRow = (index, name, value) => {
     const updated = [...sizeData];
 
-    updated[index][name] = value;
+    // convert numeric fields to number
+    updated[index][name] = numberFields.includes(name)
+      ? value === ""
+        ? ""
+        : Number(value)
+      : value;
 
     const row = updated[index];
 
-    const width = parseFloat(row.width) || 0;
-    const height = parseFloat(row.height) || 0;
-    const rate = parseFloat(row.sq_ft_price) || 0;
-    const pieces = parseFloat(row.piece_count) || 1;
-    const amount = parseFloat(row.per_piece_amount) || 0;
+    const width = Number(row.width) || 0;
+    const height = Number(row.height) || 0;
+    const rate = Number(row.sq_ft_price) || 0;
+    const pieces = Number(row.piece_count) || 1;
+    const amount = Number(row.per_piece_amount) || 0;
 
     /* ---------- FLEX CALCULATION ---------- */
     if (row.type === "flex") {
@@ -123,7 +137,7 @@ const FormDataInput = ({ sizeData = [], setSizeData }) => {
                 placeholder="Width"
                 type="number"
                 step="any"
-                value={row.width}
+                value={row.width === 0 ? "" : row.width}
                 onChange={(e) => updateRow(index, "width", e.target.value)}
               />
 
@@ -131,7 +145,7 @@ const FormDataInput = ({ sizeData = [], setSizeData }) => {
                 placeholder="Height"
                 type="number"
                 step="any"
-                value={row.height}
+                value={row.height === 0 ? "" : row.height}
                 onChange={(e) => updateRow(index, "height", e.target.value)}
               />
 
@@ -149,7 +163,7 @@ const FormDataInput = ({ sizeData = [], setSizeData }) => {
                 placeholder="Sq.ft Rate"
                 type="number"
                 step="any"
-                value={row.sq_ft_price}
+                value={row.sq_ft_price === 0 ? "" : row.sq_ft_price}
                 onChange={(e) =>
                   updateRow(index, "sq_ft_price", e.target.value)
                 }
@@ -158,7 +172,7 @@ const FormDataInput = ({ sizeData = [], setSizeData }) => {
               <InputField
                 placeholder="Piece Count"
                 type="number"
-                value={row.piece_count}
+                value={row.piece_count === 0 ? "" : row.piece_count}
                 onChange={(e) =>
                   updateRow(index, "piece_count", e.target.value)
                 }
@@ -188,7 +202,7 @@ const FormDataInput = ({ sizeData = [], setSizeData }) => {
               <InputField
                 placeholder="Piece Count"
                 type="number"
-                value={row.piece_count}
+                value={row.piece_count === 0 ? "" : row.piece_count}
                 onChange={(e) =>
                   updateRow(index, "piece_count", e.target.value)
                 }
@@ -198,7 +212,7 @@ const FormDataInput = ({ sizeData = [], setSizeData }) => {
                 placeholder="Amount"
                 type="number"
                 step="any"
-                value={row.per_piece_amount}
+                value={row.per_piece_amount === 0 ? "" : row.per_piece_amount}
                 onChange={(e) =>
                   updateRow(index, "per_piece_amount", e.target.value)
                 }
