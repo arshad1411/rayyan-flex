@@ -37,10 +37,12 @@ import {
 } from "../../api/localList";
 import Button from "../../components/Button/Button";
 import {
+  CashIcon,
   CheckBoxIcon,
   CheckIcon,
+  GpayIcon,
+  PendingIcon,
   SaveIcon,
-  WalletIcon,
 } from "../../components/icons";
 import LeftArrowIcon from "../../components/icons/LeftArrowIcon";
 import RightIcon from "../../components/icons/RightIcon";
@@ -108,7 +110,8 @@ const LocalPartyList = () => {
 
     if (fromDate && toDate) {
       query.push(`filters[date][$gte]=${dayjs(fromDate).format("YYYY-MM-DD")}`);
-      query.push(`filters[date][$lte]=${dayjs(toDate).format("YYYY-MM-DD")}`);
+      fromDate !== dayjs(toDate).format("YYYY-MM-DD") &&
+        query.push(`filters[date][$lte]=${dayjs(toDate).format("YYYY-MM-DD")}`);
     }
 
     return query.join("&");
@@ -276,20 +279,20 @@ const LocalPartyList = () => {
           <CardUI
             title="Total Cash"
             amount={localAmount?.local_party?.total_cash}
-            icon={<WalletIcon />}
+            icon={<CashIcon color="#292D32" width="34" height="34" />}
             titleColor="text-green-800"
           />
           <CardUI
             title="Total Gpay"
             amount={localAmount?.local_party?.total_gpay}
-            icon={<WalletIcon />}
+            icon={<GpayIcon color="#292D32" width="34" height="34" />}
             titleColor="text-green-800"
           />
           <CardUI
             title="Total Balance"
             amount={localAmount?.local_party?.total_balance}
-            icon={<WalletIcon />}
-            titleColor="text-green-800"
+            icon={<PendingIcon color="#292D32" width="34" height="34" />}
+            titleColor="text-red-500"
           />
         </motion.div>
       )}

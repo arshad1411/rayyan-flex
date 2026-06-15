@@ -19,7 +19,12 @@ import CardUI from "../../components/CardUI/CardUI";
 import Datepicker from "../../components/Datepicker/Datepicker";
 import DeletePopup from "../../components/DeletePopup/DeletePopup";
 import EditButton from "../../components/EditButton/EditButton";
-import { CheckBoxIcon, CheckIcon, WalletIcon } from "../../components/icons";
+import {
+  CashIcon,
+  CheckBoxIcon,
+  CheckIcon,
+  GpayIcon,
+} from "../../components/icons";
 
 import MainLayout from "../../layouts/MainLayout";
 
@@ -85,7 +90,8 @@ const LocalPaidList = () => {
 
     if (fromDate && toDate) {
       query.push(`filters[date][$gte]=${dayjs(fromDate).format("YYYY-MM-DD")}`);
-      query.push(`filters[date][$lte]=${dayjs(toDate).format("YYYY-MM-DD")}`);
+      fromDate !== dayjs(toDate).format("YYYY-MM-DD") &&
+        query.push(`filters[date][$lte]=${dayjs(toDate).format("YYYY-MM-DD")}`);
     }
 
     return query.join("&");
@@ -209,13 +215,13 @@ const LocalPaidList = () => {
           <CardUI
             title="Total Cash"
             amount={localAmount?.local_paid?.total_cash}
-            icon={<WalletIcon />}
+            icon={<CashIcon color="#292D32" width="34" height="34" />}
             titleColor="text-green-800"
           />
           <CardUI
             title="Total Gpay"
             amount={localAmount?.local_paid?.total_gpay}
-            icon={<WalletIcon />}
+            icon={<GpayIcon color="#292D32" width="34" height="34" />}
             titleColor="text-green-800"
           />
         </motion.div>

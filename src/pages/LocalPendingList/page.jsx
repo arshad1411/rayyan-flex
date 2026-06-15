@@ -19,7 +19,13 @@ import CardUI from "../../components/CardUI/CardUI";
 import Datepicker from "../../components/Datepicker/Datepicker";
 import DeletePopup from "../../components/DeletePopup/DeletePopup";
 import EditButton from "../../components/EditButton/EditButton";
-import { CheckBoxIcon, CheckIcon, WalletIcon } from "../../components/icons";
+import {
+  CashIcon,
+  CheckBoxIcon,
+  CheckIcon,
+  GpayIcon,
+  PendingIcon,
+} from "../../components/icons";
 import MainLayout from "../../layouts/MainLayout";
 
 import { useAuth } from "../../context/auth-context";
@@ -93,7 +99,8 @@ const LocalPendingList = () => {
 
     if (fromDate && toDate) {
       query.push(`filters[date][$gte]=${dayjs(fromDate).format("YYYY-MM-DD")}`);
-      query.push(`filters[date][$lte]=${dayjs(toDate).format("YYYY-MM-DD")}`);
+      fromDate !== dayjs(toDate).format("YYYY-MM-DD") &&
+        query.push(`filters[date][$lte]=${dayjs(toDate).format("YYYY-MM-DD")}`);
     }
 
     return query.join("&");
@@ -211,6 +218,12 @@ const LocalPendingList = () => {
     }
   };
 
+  const BalanceAmount = (item) => {
+    const totalCash = item.cash?.reduce((sum, c) => sum + c.amount, 0) || 0;
+    const totalGpay = item.gpay?.reduce((sum, g) => sum + g.amount, 0) || 0;
+    return item.total_amount - (totalCash + totalGpay);
+  };
+
   return (
     <MainLayout>
       <div className="flex justify-between items-center mb-8">
@@ -236,20 +249,20 @@ const LocalPendingList = () => {
           <CardUI
             title="Total Cash"
             amount={localAmount?.local_pending?.total_cash}
-            icon={<WalletIcon />}
+            icon={<CashIcon color="#292D32" width="34" height="34" />}
             titleColor="text-green-800"
           />
           <CardUI
             title="Total Gpay"
             amount={localAmount?.local_pending?.total_gpay}
-            icon={<WalletIcon />}
+            icon={<GpayIcon color="#292D32" width="34" height="34" />}
             titleColor="text-green-800"
           />
           <CardUI
             title="Total Balance"
             amount={localAmount?.local_pending?.total_balance}
-            icon={<WalletIcon />}
-            titleColor="text-green-800"
+            icon={<PendingIcon color="#292D32" width="34" height="34" />}
+            titleColor="text-red-500"
           />
         </motion.div>
       )}
@@ -290,6 +303,7 @@ const LocalPendingList = () => {
               <th>Phone</th>
               <th>Particulars</th>
               <th>Total</th>
+              <th>Balance</th>
               <th>Cash</th>
               <th>GPay</th>
               <th>Action</th>
@@ -318,7 +332,9 @@ const LocalPendingList = () => {
                   </td>
 
                   <td>{formattedAmount(item.total_amount)}</td>
-
+                  <td className={BalanceAmount(item) > 0 ? "text-red-500" : ""}>
+                    {formattedAmount(BalanceAmount(item))}
+                  </td>
                   <td>
                     {item.cash?.length === 0
                       ? "-"
@@ -382,7 +398,7 @@ const LocalPendingList = () => {
 
           <tfoot>
             <tr>
-              <td colSpan={9}>
+              <td colSpan={10}>
                 <Box
                   sx={{
                     display: "flex",
