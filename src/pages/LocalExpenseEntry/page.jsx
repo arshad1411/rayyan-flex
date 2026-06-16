@@ -21,10 +21,11 @@ import Datepicker, {
 import DeletePopup from "../../components/DeletePopup/DeletePopup";
 import EditButton from "../../components/EditButton/EditButton";
 import {
+  CashIcon,
   CheckBoxIcon,
   CheckIcon,
+  GpayIcon,
   SaveIcon,
-  WalletIcon,
 } from "../../components/icons";
 import InputField from "../../components/InputField/InputField";
 import SelectField from "../../components/SelectField/SelectField";
@@ -86,6 +87,7 @@ const LocalExpenseEntry = () => {
 
   const loadLocalTotalAmount = useCallback(async () => {
     setLoading(true);
+
     try {
       const query = [];
 
@@ -93,12 +95,16 @@ const LocalExpenseEntry = () => {
         query.push(
           `filters[date][$gte]=${dayjs(fromDate).startOf("day").toISOString()}`,
         );
+
         query.push(
           `filters[date][$lte]=${dayjs(toDate).endOf("day").toISOString()}`,
         );
       }
 
-      const res = await getLocalExpenseAmounts(query.join("&"));
+      const queryString = query.length ? `?${query.join("&")}` : "";
+
+      const res = await getLocalExpenseAmounts(queryString);
+
       setLocalExpenseAmount(res);
     } catch (error) {
       console.error("Local amounts fetch failed:", error);
@@ -279,26 +285,28 @@ const LocalExpenseEntry = () => {
           transition={{ duration: 0.5, ease: "easeInOut" }}
         >
           <CardUI
-            title="Total Cash"
-            amount={localExpenseAmount?.total_cash}
-            icon={<WalletIcon />}
+            title="Total Expense Cash"
+            amount={localExpenseAmount?.expense_cash}
+            icon={<CashIcon color="#292D32" width="34" height="34" />}
+            titleColor="text-red-800"
+          />
+          <CardUI
+            title="Total Expense Gpay"
+            amount={localExpenseAmount?.expense_gpay}
+            icon={<GpayIcon color="#292D32" width="34" height="34" />}
+            titleColor="text-red-800"
+          />
+          <CardUI
+            title="Total Received Cash"
+            amount={localExpenseAmount?.receive_cash}
+            icon={<CashIcon color="#292D32" width="34" height="34" />}
             titleColor="text-green-800"
           />
           <CardUI
-            title="Total Gpay"
-            amount={localExpenseAmount?.total_gpay}
-            icon={<WalletIcon />}
+            title="Total Received Gpay"
+            amount={localExpenseAmount?.receive_gpay}
+            icon={<GpayIcon color="#292D32" width="34" height="34" />}
             titleColor="text-green-800"
-          />
-          <CardUI
-            title="Total Cash"
-            amount={localExpenseAmount?.total_cash}
-            icon={<WalletIcon />}
-          />
-          <CardUI
-            title="Total Gpay"
-            amount={localExpenseAmount?.total_gpay}
-            icon={<WalletIcon />}
           />
         </motion.div>
       )}

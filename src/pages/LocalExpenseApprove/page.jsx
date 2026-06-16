@@ -28,12 +28,13 @@ import Datepicker, {
 import DeletePopup from "../../components/DeletePopup/DeletePopup";
 import EditButton from "../../components/EditButton/EditButton";
 import {
+  CashIcon,
   CheckBoxIcon,
   CheckIcon,
+  GpayIcon,
   LeftArrowIcon,
   RightIcon,
   SaveIcon,
-  WalletIcon,
 } from "../../components/icons";
 import InputField from "../../components/InputField/InputField";
 import SelectField from "../../components/SelectField/SelectField";
@@ -105,6 +106,10 @@ const LocalExpenseApprove = () => {
 
     try {
       let query = [];
+
+      query.push(`sort[0]=date:desc`);
+      query.push(`filters[approved][$eq]=true`);
+      query.push(`filters[current_status][$eq]=approved`);
 
       if (fromDate && toDate) {
         query.push(
@@ -229,15 +234,27 @@ const LocalExpenseApprove = () => {
           transition={{ duration: 0.5, ease: "easeInOut" }}
         >
           <CardUI
-            title="Total Cash"
-            amount={localExpenseAmount?.total_cash}
-            icon={<WalletIcon />}
+            title="Total Expense Cash"
+            amount={localExpenseAmount?.expense_cash}
+            icon={<CashIcon color="#292D32" width="34" height="34" />}
+            titleColor="text-red-800"
+          />
+          <CardUI
+            title="Total Expense Gpay"
+            amount={localExpenseAmount?.expense_gpay}
+            icon={<GpayIcon color="#292D32" width="34" height="34" />}
+            titleColor="text-red-800"
+          />
+          <CardUI
+            title="Total Received Cash"
+            amount={localExpenseAmount?.receive_cash}
+            icon={<CashIcon color="#292D32" width="34" height="34" />}
             titleColor="text-green-800"
           />
           <CardUI
-            title="Total Gpay"
-            amount={localExpenseAmount?.total_gpay}
-            icon={<WalletIcon />}
+            title="Total Received Gpay"
+            amount={localExpenseAmount?.receive_gpay}
+            icon={<GpayIcon color="#292D32" width="34" height="34" />}
             titleColor="text-green-800"
           />
         </motion.div>
