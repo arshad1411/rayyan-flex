@@ -89,9 +89,12 @@ const LocalPaidList = () => {
     }
 
     if (fromDate && toDate) {
-      query.push(`filters[date][$gte]=${dayjs(fromDate).format("YYYY-MM-DD")}`);
-      fromDate !== dayjs(toDate).format("YYYY-MM-DD") &&
-        query.push(`filters[date][$lte]=${dayjs(toDate).format("YYYY-MM-DD")}`);
+      query.push(
+        `filters[date][$gte]=${dayjs(fromDate).startOf("day").toISOString()}`,
+      );
+      query.push(
+        `filters[date][$lte]=${dayjs(toDate).endOf("day").toISOString()}`,
+      );
     }
 
     return query.join("&");
