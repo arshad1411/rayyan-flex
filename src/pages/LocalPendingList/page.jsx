@@ -405,7 +405,7 @@ const LocalPendingList = () => {
 
           <tfoot>
             <tr>
-              <td colSpan={10}>
+              <td colSpan={role === "superadmin" ? 10 : 9}>
                 <Box
                   sx={{
                     display: "flex",
