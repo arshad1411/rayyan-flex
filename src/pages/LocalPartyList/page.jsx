@@ -403,13 +403,17 @@ const LocalPartyList = () => {
             value={receivedAmount}
             onChange={(e) => setReceivedAmount(e.target.value) || 0}
           />
-          <Button
-            type={"submit"}
-            label={editId ? "Save" : "Update"}
-            icon1={<SaveIcon color="#fff" />}
-            icon2={<SaveIcon color="#fff" />}
-            className={"bg-[#4F46E5] hover:bg-[#4338CA] text-white"}
-          />
+          <div className="flex items-center gap-2">
+            <Button
+              type={"submit"}
+              label={editId ? "Update" : "Save"}
+              icon1={<SaveIcon color="#fff" />}
+              icon2={<SaveIcon color="#fff" />}
+              className={
+                "bg-[#4F46E5] hover:bg-[#4338CA] text-white h-max mt-2 w-full"
+              }
+            />
+          </div>
         </div>
       </form>
 

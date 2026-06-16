@@ -258,17 +258,19 @@ const LocalExpenseEntry = () => {
     <MainLayout>
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-semibold">Local Expense List</h1>
-        <Checkbox
-          icon={<CheckBoxIcon />}
-          checkedIcon={<CheckIcon color="#fff" />}
-          checked={showOverview}
-          style={{ marginRight: 8 }}
-          label={"Show Overview"}
-          onChange={() => toggleOverview()}
-        />
+        {role === "superadmin" && (
+          <Checkbox
+            icon={<CheckBoxIcon />}
+            checkedIcon={<CheckIcon color="#fff" />}
+            checked={showOverview}
+            style={{ marginRight: 8 }}
+            label={"Show Overview"}
+            onChange={() => toggleOverview()}
+          />
+        )}
       </div>
 
-      {showOverview && (
+      {showOverview && role === "superadmin" && (
         <motion.div
           className="flex gap-4 items-center justify-start mt-6 mb-6"
           initial={{ opacity: 0, y: -20 }}
@@ -311,15 +313,18 @@ const LocalExpenseEntry = () => {
       </div>
       {/* FORM */}
       <form onSubmit={handleSubmit} className="mt-10">
-        <div className="grid grid-cols-6 gap-4 ">
-          <DateUiPicker
-            value={date}
-            label="Date"
-            onChange={(d) => setDate(setCurrentTime(d))}
-            className={"w-full"}
-            minDate={role === "superadmin" ? false : new Date()}
-          />
-
+        <div
+          className={`grid ${role === "superadmin" ? "grid-cols-6" : "grid-cols-5"} gap-4 `}
+        >
+          {role === "superadmin" && (
+            <DateUiPicker
+              value={date}
+              label="Date"
+              onChange={(d) => setDate(setCurrentTime(d))}
+              className={"w-full"}
+              minDate={role === "superadmin" ? false : new Date()}
+            />
+          )}
           <InputField
             placeholder="Instruction"
             value={instruction}
@@ -359,13 +364,17 @@ const LocalExpenseEntry = () => {
             onChange={(e) => setAmount(e.target.value) || 0}
           />
 
-          <Button
-            type={"submit"}
-            label={editId ? "Update" : "Save"}
-            icon1={<SaveIcon color="#fff" />}
-            icon2={<SaveIcon color="#fff" />}
-            className={"bg-[#4F46E5] hover:bg-[#4338CA] text-white"}
-          />
+          <div className="flex items-center gap-2">
+            <Button
+              type={"submit"}
+              label={editId ? "Update" : "Save"}
+              icon1={<SaveIcon color="#fff" />}
+              icon2={<SaveIcon color="#fff" />}
+              className={
+                "bg-[#4F46E5] hover:bg-[#4338CA] text-white h-max mt-2 w-full"
+              }
+            />
+          </div>
         </div>
       </form>
 
