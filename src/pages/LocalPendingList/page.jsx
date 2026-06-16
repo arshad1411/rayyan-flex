@@ -98,12 +98,16 @@ const LocalPendingList = () => {
     }
 
     if (fromDate && toDate) {
-      query.push(
-        `filters[date][$gte]=${dayjs(fromDate).startOf("day").toISOString()}`,
-      );
-      query.push(
-        `filters[date][$lte]=${dayjs(toDate).endOf("day").toISOString()}`,
-      );
+      const startDate = dayjs(fromDate).startOf("day").toISOString();
+      const endDate = dayjs(toDate).endOf("day").toISOString();
+
+      // GPay date filter
+      query.push(`filters[$or][0][gpay][date][$gte]=${startDate}`);
+      query.push(`filters[$or][0][gpay][date][$lte]=${endDate}`);
+
+      // Cash date filter
+      query.push(`filters[$or][1][cash][date][$gte]=${startDate}`);
+      query.push(`filters[$or][1][cash][date][$lte]=${endDate}`);
     }
 
     return query.join("&");

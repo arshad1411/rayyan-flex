@@ -109,12 +109,19 @@ const LocalPartyList = () => {
     }
 
     if (fromDate && toDate) {
-      query.push(
-        `filters[date][$gte]=${dayjs(fromDate).startOf("day").toISOString()}`,
-      );
-      query.push(
-        `filters[date][$lte]=${dayjs(toDate).endOf("day").toISOString()}`,
-      );
+      const startDate = dayjs(fromDate).startOf("day").toISOString();
+      const endDate = dayjs(toDate).endOf("day").toISOString();
+
+      // Main bill date filter
+      query.push(`filters[date][$gte]=${startDate}`);
+      query.push(`filters[date][$lte]=${endDate}`);
+
+      // GPay OR Cash payment date filter
+      query.push(`filters[$or][0][gpay][date][$gte]=${startDate}`);
+      query.push(`filters[$or][0][gpay][date][$lte]=${endDate}`);
+
+      query.push(`filters[$or][1][cash][date][$gte]=${startDate}`);
+      query.push(`filters[$or][1][cash][date][$lte]=${endDate}`);
     }
 
     return query.join("&");
