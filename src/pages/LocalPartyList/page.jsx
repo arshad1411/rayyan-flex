@@ -112,10 +112,6 @@ const LocalPartyList = () => {
       const startDate = dayjs(fromDate).startOf("day").toISOString();
       const endDate = dayjs(toDate).endOf("day").toISOString();
 
-      // Main bill date filter
-      query.push(`filters[date][$gte]=${startDate}`);
-      query.push(`filters[date][$lte]=${endDate}`);
-
       // GPay OR Cash payment date filter
       query.push(`filters[$or][0][gpay][date][$gte]=${startDate}`);
       query.push(`filters[$or][0][gpay][date][$lte]=${endDate}`);
@@ -226,13 +222,36 @@ const LocalPartyList = () => {
     const payload = {
       date,
       customer: searchCustomer.value,
-      custom_type: customType,
       particulars: [{ text: particulars }],
-      cash_received: customType === "cash" ? receivedAmount : 0,
-      gpay_received: customType === "gpay" ? receivedAmount : 0,
+
+      cash:
+        customType === "cash"
+          ? [
+              {
+                date,
+                amount: Number(receivedAmount),
+              },
+            ]
+          : [],
+
+      gpay:
+        customType === "gpay"
+          ? [
+              {
+                date,
+                amount: Number(receivedAmount),
+              },
+            ]
+          : [],
+
+      received_amount: Number(receivedAmount),
+      balance_amount: 0,
+      total_amount: Number(receivedAmount),
+
       current_status: "party",
       approved: true,
     };
+
     if (!editId) {
       await createLocalList(payload);
       toast.success("Party Amount added successfully");
@@ -242,6 +261,7 @@ const LocalPartyList = () => {
     }
 
     loadLocalPartyData();
+
     setEditId("");
     setDate(new Date());
     setSearchCustomer("");
@@ -258,9 +278,11 @@ const LocalPartyList = () => {
       value: item.customer?.documentId,
     });
     setParticulars(item.particulars?.[0]?.text || "");
-    setCustomType(item.custom_type || "gpay");
+    setCustomType(item.cash?.length ? "cash" : "gpay");
     setReceivedAmount(
-      item.custom_type === "cash" ? item.cash_received : item.gpay_received,
+      item.custom_type === "cash"
+        ? item.cash?.[0]?.amount || 0
+        : item.gpay?.[0]?.amount || 0,
     );
   };
 
