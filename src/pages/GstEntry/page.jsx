@@ -11,6 +11,12 @@ import FormDataInput from "../../components/FormDataInput/FormDataInput";
 import InputField from "../../components/InputField/InputField";
 import MainLayout from "../../layouts/MainLayout";
 
+import DialogContent from "@mui/joy/DialogContent";
+import DialogTitle from "@mui/joy/DialogTitle";
+import Modal from "@mui/joy/Modal";
+import ModalDialog from "@mui/joy/ModalDialog";
+import Stack from "@mui/joy/Stack";
+
 import {
   AddIcon,
   PrinterIcon,
@@ -74,6 +80,9 @@ const GstEntry = () => {
 
   const [status, setStatus] = useState("status");
 
+  const [copyType, setCopyType] = useState("original");
+  const [openCopyModal, setOpenCopyModal] = useState(false);
+  const [actionType, setActionType] = useState("");
   /* ================= CALCULATIONS ================= */
 
   const totalAmount = useMemo(() => {
@@ -127,6 +136,8 @@ const GstEntry = () => {
 
       if (!data) return;
 
+      console.log("Edit Data:", data);
+
       const transformed = transformBillingData(data);
 
       setDocumentId(data.documentId);
@@ -136,7 +147,7 @@ const GstEntry = () => {
       setUom(data.uom);
       setMethod(data.method || DEFAULTS.METHOD);
 
-      setCustomerId(transformed.customer || "");
+      setCustomerId(data.gst_customer?.documentId || "");
       setCustomerName(data.gst_customer?.name || "");
       setAddress(data.gst_customer?.address || "");
       setDeliveryAddress(data.gst_customer?.delivery_address || "");
@@ -157,6 +168,32 @@ const GstEntry = () => {
       loadLastBillNo();
     }
   }, [editId]);
+
+  const handlePrintClick = () => {
+    setActionType("print");
+    setOpenCopyModal(true);
+  };
+
+  const handlePdfClick = () => {
+    setActionType("pdf");
+    setOpenCopyModal(true);
+  };
+
+  const handleCopySelection = async (type) => {
+    setCopyType(type);
+    setOpenCopyModal(false);
+
+    // wait for state update
+    setTimeout(async () => {
+      if (actionType === "print") {
+        handlePrint();
+      }
+
+      if (actionType === "pdf") {
+        await downloadImage();
+      }
+    }, 100);
+  };
 
   /* ================= HELPERS ================= */
 
@@ -386,15 +423,16 @@ const GstEntry = () => {
               <Button
                 type="button"
                 label="PDF"
-                onClick={downloadImage}
+                onClick={handlePdfClick}
                 icon1={<SavePdfIcon color="#fff" />}
                 icon2={<SavePdfIcon color="#fff" />}
                 className="bg-green-600 text-white"
               />
+
               <Button
                 type="button"
                 label="Print"
-                onClick={handlePrint}
+                onClick={handlePrintClick}
                 icon1={<PrinterIcon color="#fff" />}
                 icon2={<PrinterIcon color="#fff" />}
                 className="bg-teal-500 text-white"
@@ -430,6 +468,7 @@ const GstEntry = () => {
         taxAmount={gstSummary.taxAmount}
         less={gstSummary.roundOff}
         finalAmount={gstSummary.finalAmount}
+        printStatus={copyType === "original" ? "ORIGINAL" : "DUPLICATE"}
       />
 
       <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
@@ -447,8 +486,32 @@ const GstEntry = () => {
           totalValue={totalAmount}
           taxAmount={gstSummary.taxAmount}
           less={gstSummary.finalAmount}
+          printStatus={copyType === "original" ? "ORIGINAL" : "DUPLICATE"}
         />
       </div>
+      <Modal open={openCopyModal} onClose={() => setOpenCopyModal(false)}>
+        <ModalDialog size="md">
+          <DialogTitle>Select Copy Type</DialogTitle>
+
+          <DialogContent>
+            Choose whether to print/download the Original or Duplicate copy.
+          </DialogContent>
+
+          <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+            <Button
+              label="Original"
+              onClick={() => handleCopySelection("original")}
+              className="bg-green-600 text-white"
+            />
+
+            <Button
+              label="Duplicate"
+              onClick={() => handleCopySelection("duplicate")}
+              className="bg-orange-500 text-white"
+            />
+          </Stack>
+        </ModalDialog>
+      </Modal>
     </MainLayout>
   );
 };

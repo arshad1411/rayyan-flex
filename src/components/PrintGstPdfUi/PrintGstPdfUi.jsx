@@ -1,9 +1,10 @@
+import dayjs from "dayjs";
 import numberToWords from "number-to-words";
 import { forwardRef, useMemo } from "react";
 import Logo from "../../assets/logo2.jpg";
 import { GlobelIcon, LocationIcon, MobileIcon, SmsIcon } from "../icons";
 
-const PrintGstPdfUi = forwardRef((props, ref) => {
+const PrintGstUi = forwardRef((props, ref) => {
   const {
     finalTotalAmount,
     billNo,
@@ -38,7 +39,7 @@ const PrintGstPdfUi = forwardRef((props, ref) => {
 
   return (
     <div>
-      <div className="w-[794px] h-[842px] relative" ref={ref}>
+      <div className="w-[794px] h-[1040px] relative" ref={ref}>
         <div className="m-[25px]">
           {/* Header */}
           <div className="flex justify-between">
@@ -72,7 +73,9 @@ const PrintGstPdfUi = forwardRef((props, ref) => {
             <p className="pl-[5px] w-[15%] border-r">Number</p>
             <p className="pl-[5px] w-[15%] border-r">{billNo}</p>
             <p className="pl-[5px] w-[15%] border-r">Date</p>
-            <p className="pl-[5px] w-[15%] border-r">{date}</p>
+            <p className="pl-[5px] w-[15%] border-r">
+              {dayjs(date).format("DD-MM-YYYY")}
+            </p>
             <p className="pl-[5px] w-[15%] border-r">Eway Bill</p>
             <p className="pl-[5px] w-[15%] border-r"></p>
             <p className="pl-[5px] w-[15%] border-r">{printStatus}</p>
@@ -80,14 +83,14 @@ const PrintGstPdfUi = forwardRef((props, ref) => {
 
           {/* Address Section */}
           <div className="flex border-t border-l text-sm h-[110px]">
-            <div className="w-[50%] border-r pt-[5px]">
+            <div className="w-[49.9%] border-r pt-[5px]">
               <h5 className="pl-[5px]">To</h5>
               <p className="pl-[20px]">{name}</p>
               <p className="pl-[20px]">{address}</p>
               {gstNo && <p className="pl-[20px]">GSTIN: {gstNo}</p>}
             </div>
 
-            <div className="w-[50%] border-r pt-[5px]">
+            <div className="w-[50.1%] border-r pt-[5px]">
               <h5 className="pl-[5px]">Delivery To</h5>
               <p className="pl-[20px]">{name}</p>
               <p className="pl-[20px]">
@@ -114,7 +117,7 @@ const PrintGstPdfUi = forwardRef((props, ref) => {
               {[5, 45, 10, 7, 10, 10, 13].map((w, i) => (
                 <div
                   key={i}
-                  className={`w-[${w}%] ${i === 6 ? "" : "border-r"} h-full`}
+                  className={`w-[${w}%]  ${i === 6 ? "" : "border-r"} h-full`}
                 />
               ))}
             </div>
@@ -254,6 +257,6 @@ const PrintGstPdfUi = forwardRef((props, ref) => {
   );
 });
 
-PrintGstPdfUi.displayName = "PrintGstPdfUi";
+PrintGstUi.displayName = "PrintGstUi";
 
-export default PrintGstPdfUi;
+export default PrintGstUi;

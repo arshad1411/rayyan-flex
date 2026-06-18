@@ -29,10 +29,15 @@ import dayjs from "../../utils/dayjs";
 import { formattedAmount } from "../../utils/FormatAmount";
 
 import { getGstCustomers } from "../../api/gstCustomer";
-import { createGstList, getGstList, updateGstList } from "../../api/gstList";
+import {
+  createGstList,
+  deleteGstList,
+  getGstList,
+  updateGstList,
+} from "../../api/gstList";
 import { getGstSalesSummary } from "../../api/gstsales";
-import { deleteLocalList } from "../../api/localList";
 import Button from "../../components/Button/Button";
+import Filter from "../../components/Fitler/Filter";
 import {
   CheckBoxIcon,
   CheckIcon,
@@ -94,6 +99,7 @@ const GstSalesList = () => {
   const [totalCount, setTotalCount] = useState(0);
 
   const [loading, setLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("");
 
   const [form, setForm] = useState({
     ...INITIAL_FORM_STATE,
@@ -105,7 +111,7 @@ const GstSalesList = () => {
       gstSalesData
         .filter((item) => item.bill_no && item.current_status !== "paid")
         .map((item) => ({
-          label: `${item.bill_no} — ₹${formattedAmount(item.total_amount)}`,
+          label: `${item.bill_no} — ₹ ${formattedAmount(item.total_amount)}`,
           value: item.documentId,
           amount: Number(item.total_amount) || 0,
           bill_no: item.bill_no,
@@ -134,15 +140,23 @@ const GstSalesList = () => {
       }
 
       if (fromDate && toDate) {
-        params.set("filters[date][$gte]", dayjs(fromDate).format("YYYY-MM-DD"));
-        params.set("filters[date][$lte]", dayjs(toDate).format("YYYY-MM-DD"));
+        const startDate = dayjs(fromDate).startOf("day").toISOString();
+        const endDate = dayjs(toDate).endOf("day").toISOString();
+
+        params.set("filters[date][$gte]", startDate);
+        params.set("filters[date][$lte]", endDate);
+      }
+      console.log(statusFilter);
+      if (statusFilter.length) {
+        console.log(statusFilter);
+        params.set("filters[current_status][$in]", statusFilter.join(","));
       }
 
       Object.entries(extraParams).forEach(([k, v]) => params.set(k, v));
 
       return params.toString();
     },
-    [page, rowsPerPage, searchCustomer, fromDate, toDate],
+    [page, rowsPerPage, searchCustomer, fromDate, toDate, statusFilter],
   );
 
   /* ─────────────────────────────────────────────
@@ -229,7 +243,7 @@ const GstSalesList = () => {
       gst_customer: searchCustomer?.value ?? null,
       received_bill_nos: form.recvBillNo,
       received_method: form.customType,
-      received_amount: Number(form.receivedAmount) || totalBillAmount,
+      received_amount: Number(form.receivedAmount),
     };
   };
 
@@ -246,15 +260,34 @@ const GstSalesList = () => {
     try {
       if (!form.editId) {
         await createGstList(payload);
+
+        // Update all selected bills to paid
+        await Promise.all(
+          form.recvBillNo.map((bill) =>
+            updateGstList(bill.value, {
+              current_status: "paid",
+            }),
+          ),
+        );
+
         toast.success("Party amount added successfully.");
       } else {
         await updateGstList(form.editId, payload);
+
+        await Promise.all(
+          form.recvBillNo.map((bill) =>
+            updateGstList(bill.value, {
+              current_status: "paid",
+            }),
+          ),
+        );
+
         toast.success("Party amount updated successfully.");
       }
 
-      await loadGstSalesData();
-      resetForm();
       setSearchCustomer(null);
+      resetForm();
+      await loadGstSalesData();
     } catch (err) {
       console.error("Submit failed:", err);
       toast.error("Failed to save. Please try again.");
@@ -277,9 +310,25 @@ const GstSalesList = () => {
     });
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (item) => {
     try {
-      await deleteLocalList(id);
+      // If this is a receipt entry
+      if (
+        !item.bill_no &&
+        Array.isArray(item.received_bill_nos) &&
+        item.received_bill_nos.length
+      ) {
+        await Promise.all(
+          item.received_bill_nos.map((bill) =>
+            updateGstList(bill.value, {
+              current_status: "status",
+            }),
+          ),
+        );
+      }
+
+      await deleteGstList(item.documentId);
+
       toast.success("Deleted successfully.");
       await loadGstSalesData();
     } catch (err) {
@@ -396,11 +445,11 @@ const GstSalesList = () => {
         />
       </div>
 
-      <div className="flex justify-end mt-6">
+      <div className="flex justify-end items-end gap-4 mt-6">
         <div className="w-80">
           <AutocompleteField
             label="Filter by Customer"
-            value={searchCustomer}
+            value={searchCustomer || ""}
             options={customerOptions}
             onChange={(_, val) => {
               setSearchCustomer(val);
@@ -408,28 +457,39 @@ const GstSalesList = () => {
             }}
           />
         </div>
+        <Filter
+          options={STATUS_OPTIONS}
+          setSelected={setStatusFilter}
+          onApply={() => {
+            setPage(0);
+            loadGstSalesData();
+          }}
+        />
       </div>
 
       {/* ── Add / Edit form ── */}
       <form onSubmit={handleSubmit} className="mt-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
+        <div className="grid grid-cols-6 gap-4 ">
           {/* Date */}
           <DateUiPicker
             value={form.date}
             label="Date"
             onChange={(d) => setFormField("date", setCurrentTime(d))}
             minDate={role === "superadmin" ? undefined : new Date()}
+            required
           />
 
           {/* Customer */}
           <AutocompleteField
             label="Customer Name"
-            value={searchCustomer}
+            value={searchCustomer || ""}
             options={customerOptions}
             onChange={(_, val) => {
               setSearchCustomer(val);
               setPage(0);
+              setFormField("recvBillNo", []);
             }}
+            required
           />
 
           {/* Bill Numbers (multi-select) */}
@@ -449,11 +509,12 @@ const GstSalesList = () => {
               onChange={(_, newValue) => setFormField("recvBillNo", newValue)}
               disableCloseOnSelect
               getOptionLabel={(option) => option.label}
+              placeholder="Select bill numbers"
               isOptionEqualToValue={(option, value) =>
                 option.value === value.value
               }
               renderOption={(props, option, { selected }) => (
-                <li {...props}>
+                <li {...props} className="pl-3 flex items-center mb-1">
                   <Checkbox
                     icon={<CheckBoxIcon />}
                     checkedIcon={<CheckIcon color="#fff" />}
@@ -467,7 +528,7 @@ const GstSalesList = () => {
                 <Input
                   {...params.inputProps}
                   ref={params.inputProps.ref}
-                  placeholder="Select bill numbers"
+                  required
                 />
               )}
             />
@@ -493,16 +554,20 @@ const GstSalesList = () => {
             placeholder="Enter amount"
             value={form.receivedAmount}
             onChange={(e) => setFormField("receivedAmount", e.target.value)}
+            required
           />
 
-          {/* Submit */}
-          <Button
-            type="submit"
-            label={form.editId ? "Update" : "Save"} // ← label logic was inverted
-            icon1={<SaveIcon color="#fff" />}
-            icon2={<SaveIcon color="#fff" />}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white h-[42px]"
-          />
+          <div className="flex items-center gap-2">
+            <Button
+              type={"submit"}
+              label={form.editId ? "Update" : "Save"}
+              icon1={<SaveIcon color="#fff" />}
+              icon2={<SaveIcon color="#fff" />}
+              className={
+                "bg-[#4F46E5] hover:bg-[#4338CA] text-white h-max mt-2 w-full"
+              }
+            />
+          </div>
         </div>
       </form>
 
@@ -549,13 +614,21 @@ const GstSalesList = () => {
                 <tr key={item.documentId}>
                   <td>{dayjs(item.date).format("DD/MM/YYYY")}</td>
                   <td>{item.bill_no || "-"}</td>
-                  <td>{item.gst_customer?.name || "-"}</td>
+                  <td
+                    className={`${item.current_status === "status" && "text-red-600"}`}
+                  >
+                    {item.gst_customer?.name || "-"}
+                  </td>
                   <td>{formattedAmount(item.base_amount)}</td>
                   <td>{formattedAmount(item.tax_amount)}</td>
                   <td>{formattedAmount(item.total_amount)}</td>
                   <td>{parseBillNos(item.received_bill_nos)}</td>
                   <td>{item.received_method || "-"}</td>
-                  <td>{formattedAmount(item.received_amount)}</td>
+                  <td>
+                    {item.received_amount === 0 || item.received_amount === null
+                      ? "-"
+                      : formattedAmount(item.received_amount)}
+                  </td>
                   <td>
                     <div className="flex gap-2">
                       <EditButton
@@ -567,9 +640,7 @@ const GstSalesList = () => {
                             : handleEdit(item)
                         }
                       />
-                      <DeletePopup
-                        handleDelete={() => handleDelete(item.documentId)}
-                      />
+                      <DeletePopup handleDelete={() => handleDelete(item)} />
                     </div>
                   </td>
                   {role === "superadmin" && (
@@ -595,7 +666,7 @@ const GstSalesList = () => {
           {/* ── Pagination footer ── */}
           <tfoot>
             <tr>
-              <td colSpan={role === "superadmin" ? 10 : 9}>
+              <td colSpan={role === "superadmin" ? 11 : 10}>
                 <Box
                   sx={{
                     display: "flex",
