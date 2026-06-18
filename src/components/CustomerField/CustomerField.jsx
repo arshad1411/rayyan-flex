@@ -177,6 +177,7 @@ const CustomerField = ({
             onInputChange={(e, v) => setAddress(v)}
             onChange={(e, v) => handleCustomerChange(v, "address")}
             options={addressOptions}
+            disabled={!!SelectCustomerID}
           />
           <AutocompleteField
             label="GST No"
@@ -184,6 +185,7 @@ const CustomerField = ({
             onInputChange={(e, v) => setGstNo((v || "").toUpperCase())}
             onChange={(e, v) => handleCustomerChange(v, "gst")}
             options={gstOptions}
+            disabled={!!SelectCustomerID}
           />
 
           <div className="flex gap-2 items-end">
@@ -193,6 +195,7 @@ const CustomerField = ({
               onInputChange={(e, v) => setDeliveryAddress(v)}
               onChange={(e, v) => handleCustomerChange(v, "delivery_address")}
               options={deliveryAddressOptions}
+              disabled={!!SelectCustomerID}
             />
 
             {SelectCustomerID && (
@@ -211,6 +214,7 @@ const CustomerField = ({
             onChange={(e, v) => handleCustomerChange(v, "phone")}
             options={phoneOptions}
             type="tel"
+            disabled={!!SelectCustomerID}
           />
           {SelectCustomerID && (
             <div className="h-9">

@@ -1,8 +1,9 @@
-import dayjs from "dayjs";
 import numberToWords from "number-to-words";
 import { forwardRef, useMemo } from "react";
+import Logo from "../../assets/logo2.jpg";
+import { GlobelIcon, LocationIcon, MobileIcon, SmsIcon } from "../icons";
 
-const PrintGstUi = forwardRef((props, ref) => {
+const PrintGstPdfUi = forwardRef((props, ref) => {
   const {
     finalTotalAmount,
     billNo,
@@ -40,7 +41,28 @@ const PrintGstUi = forwardRef((props, ref) => {
       <div className="w-[794px] h-[842px] relative" ref={ref}>
         <div className="m-[25px]">
           {/* Header */}
-          <div className="flex items-center border text-sm border-b-[0px] mt-[190px]">
+          <div className="flex justify-between">
+            <img src={Logo} width={180} height={200} alt="" />
+
+            <ul className="text-sm">
+              <li className="mt-2 flex gap-2 items-center">
+                <MobileIcon width={15} /> +91 63809 74082
+              </li>
+              <li className="mt-2 flex gap-2 items-center">
+                {" "}
+                <SmsIcon />
+                rayyanflex@gmail.com
+              </li>
+              <li className="mt-2 flex gap-2 items-center">
+                <GlobelIcon /> www.rayyangraphics.com
+              </li>
+              <li className="mt-2 flex gap-2 items-center">
+                <LocationIcon />
+                62/74, Police Station Road <br /> Sivakasi
+              </li>
+            </ul>
+          </div>
+          <div className="flex items-center border text-sm border-b-[0px] mt-[25px]">
             <p className="pl-[5px]">GSTIN No: 33ABJFR6249N1ZL</p>
             <h4 className="pl-[100px] font-bold">TAX INVOICE</h4>
           </div>
@@ -50,9 +72,7 @@ const PrintGstUi = forwardRef((props, ref) => {
             <p className="pl-[5px] w-[15%] border-r">Number</p>
             <p className="pl-[5px] w-[15%] border-r">{billNo}</p>
             <p className="pl-[5px] w-[15%] border-r">Date</p>
-            <p className="pl-[5px] w-[15%] border-r">
-              {dayjs(date).format("DD-MM-YYYY")}
-            </p>
+            <p className="pl-[5px] w-[15%] border-r">{date}</p>
             <p className="pl-[5px] w-[15%] border-r">Eway Bill</p>
             <p className="pl-[5px] w-[15%] border-r"></p>
             <p className="pl-[5px] w-[15%] border-r">{printStatus}</p>
@@ -60,14 +80,14 @@ const PrintGstUi = forwardRef((props, ref) => {
 
           {/* Address Section */}
           <div className="flex border-t border-l text-sm h-[110px]">
-            <div className="w-[49.9%] border-r pt-[5px]">
+            <div className="w-[50%] border-r pt-[5px]">
               <h5 className="pl-[5px]">To</h5>
               <p className="pl-[20px]">{name}</p>
               <p className="pl-[20px]">{address}</p>
               {gstNo && <p className="pl-[20px]">GSTIN: {gstNo}</p>}
             </div>
 
-            <div className="w-[50.1%] border-r pt-[5px]">
+            <div className="w-[50%] border-r pt-[5px]">
               <h5 className="pl-[5px]">Delivery To</h5>
               <p className="pl-[20px]">{name}</p>
               <p className="pl-[20px]">
@@ -94,7 +114,7 @@ const PrintGstUi = forwardRef((props, ref) => {
               {[5, 45, 10, 7, 10, 10, 13].map((w, i) => (
                 <div
                   key={i}
-                  className={`w-[${w}%]  ${i === 6 ? "" : "border-r"} h-full`}
+                  className={`w-[${w}%] ${i === 6 ? "" : "border-r"} h-full`}
                 />
               ))}
             </div>
@@ -234,6 +254,6 @@ const PrintGstUi = forwardRef((props, ref) => {
   );
 });
 
-PrintGstUi.displayName = "PrintGstUi";
+PrintGstPdfUi.displayName = "PrintGstPdfUi";
 
-export default PrintGstUi;
+export default PrintGstPdfUi;

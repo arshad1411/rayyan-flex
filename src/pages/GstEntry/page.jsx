@@ -32,6 +32,7 @@ import {
   getLastGstList,
   updateGstList,
 } from "../../api/gstList";
+import PrintGstPdfUi from "../../components/PrintGstPdfUI/PrintGstPdfUi";
 import PrintGstUi from "../../components/PrintGstUI/PrintGstUi";
 
 const toNumber = (val) => Number(val) || 0;
@@ -257,7 +258,12 @@ const GstEntry = () => {
     try {
       const dataUrl = await toPng(printRef.current, {
         pixelRatio: 3,
-        backgroundColor: "#fff",
+        backgroundColor: "#ffffff",
+        style: {
+          transform: "scale(1)",
+          transformOrigin: "top left",
+        },
+        cacheBust: true,
       });
 
       const link = document.createElement("a");
@@ -427,7 +433,7 @@ const GstEntry = () => {
       />
 
       <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
-        <PrintGstUi
+        <PrintGstPdfUi
           ref={printRef}
           billNo={billNo}
           date={date}
