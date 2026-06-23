@@ -483,9 +483,12 @@ const GstEntry = () => {
           sizeData={sizeData}
           hsn={hsnCode}
           uom={uom}
-          totalValue={totalAmount}
+          method={method}
+          gstPercentage={gstPercentage}
+          baseAmount={totalAmount}
           taxAmount={gstSummary.taxAmount}
-          less={gstSummary.finalAmount}
+          less={gstSummary.roundOff}
+          finalAmount={gstSummary.finalAmount}
           printStatus={copyType === "original" ? "ORIGINAL" : "DUPLICATE"}
         />
       </div>

@@ -187,7 +187,6 @@ const PrintGstUi = forwardRef((props, ref) => {
               ) : (
                 <>
                   <p className="text-sm pl-[50px]">IGST @ {gstPercentage} %</p>
-                  <p className="text-transparent">empty</p>
                 </>
               )}
 
@@ -200,6 +199,7 @@ const PrintGstUi = forwardRef((props, ref) => {
                   "Add:"
                 )}
               </p>
+              {method !== "gst" && <p style={{ color: "#ffffff00" }}>empty</p>}
 
               <h5 className="text-[15px] pl-[50px] pt-[3px] font-semibold">
                 Total Amount
@@ -215,7 +215,6 @@ const PrintGstUi = forwardRef((props, ref) => {
               ) : (
                 <>
                   <p>{formatCurrency(taxAmount)}</p>
-                  <p className="text-transparent">empty</p>
                 </>
               )}
 
@@ -226,6 +225,7 @@ const PrintGstUi = forwardRef((props, ref) => {
                   less
                 )}
               </p>
+              {method !== "gst" && <p style={{ color: "#ffffff00" }}>empty</p>}
               <h5 className="text-[15px] border-t border-dotted pt-[3px] font-semibold">
                 {formatCurrency(finalAmount)}
               </h5>

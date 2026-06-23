@@ -25,7 +25,7 @@ import {
 } from "../router/paths";
 
 import {
-  AcountIcon,
+  AccountIcon,
   AdminIcon,
   ApproveListIcon,
   CashIcon,
@@ -249,7 +249,7 @@ export const appConfig = [
     children: [
       {
         label: "Account",
-        icon: AcountIcon,
+        icon: AccountIcon,
         path: OUTSTANDINGACCOUNT,
         elementKey: "OutstandingAccount",
         roles: [ROLES.SuperAdmin],

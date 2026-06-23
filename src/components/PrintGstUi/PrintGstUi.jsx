@@ -22,6 +22,8 @@ const PrintGstUi = forwardRef((props, ref) => {
     gstPercentage,
   } = props;
 
+  console.log(method, "method");
+
   const totalInWords = useMemo(() => {
     const amount = Math.round(Number(finalAmount || 0));
 
@@ -183,7 +185,6 @@ const PrintGstUi = forwardRef((props, ref) => {
               ) : (
                 <>
                   <p className="text-sm pl-[50px]">IGST @ {gstPercentage} %</p>
-                  <p className="text-transparent">empty</p>
                 </>
               )}
 
@@ -196,7 +197,7 @@ const PrintGstUi = forwardRef((props, ref) => {
                   "Add:"
                 )}
               </p>
-
+              {method !== "gst" && <p style={{ color: "#ffffff00" }}>empty</p>}
               <h5 className="text-[15px] pl-[50px] pt-[3px] font-semibold">
                 Total Amount
               </h5>
@@ -211,7 +212,6 @@ const PrintGstUi = forwardRef((props, ref) => {
               ) : (
                 <>
                   <p>{formatCurrency(taxAmount)}</p>
-                  <p className="text-transparent">empty</p>
                 </>
               )}
 
@@ -222,6 +222,7 @@ const PrintGstUi = forwardRef((props, ref) => {
                   less
                 )}
               </p>
+              {method !== "gst" && <p style={{ color: "#ffffff00" }}>empty</p>}
               <h5 className="text-[15px] border-t border-dotted pt-[3px] font-semibold">
                 {formatCurrency(finalAmount)}
               </h5>
