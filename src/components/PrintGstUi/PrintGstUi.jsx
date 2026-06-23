@@ -4,7 +4,6 @@ import { forwardRef, useMemo } from "react";
 
 const PrintGstUi = forwardRef((props, ref) => {
   const {
-    finalTotalAmount,
     billNo,
     date,
     printStatus,
@@ -23,17 +22,20 @@ const PrintGstUi = forwardRef((props, ref) => {
     gstPercentage,
   } = props;
 
-  const parsedFinalTotal = useMemo(() => {
-    const value = parseFloat(finalTotalAmount);
-    return isNaN(value) ? 0 : value;
-  }, [finalTotalAmount]);
-
   const totalInWords = useMemo(() => {
-    const words = numberToWords.toWords(parsedFinalTotal || 0);
-    return words.charAt(0).toUpperCase() + words.slice(1);
-  }, [parsedFinalTotal]);
+    const amount = Math.round(Number(finalAmount || 0));
 
-  const formatCurrency = (value) => `₹ ${parseFloat(value || 0).toFixed(2)}`;
+    return (
+      numberToWords.toWords(amount).charAt(0).toUpperCase() +
+      numberToWords.toWords(amount).slice(1)
+    );
+  }, [finalAmount]);
+
+  const formatCurrency = (value) =>
+    `₹ ${Number(value || 0).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
 
   return (
     <div>
@@ -100,34 +102,51 @@ const PrintGstUi = forwardRef((props, ref) => {
             </div>
 
             {/* Data rows */}
-            <div className="flex flex-col absolute top-[20px]">
-              {sizeData?.map((data, index) => (
-                <div className="flex items-center pt-[10px]" key={index}>
-                  <p className="w-[38px] text-[14px] text-center">
-                    {index + 1}
-                  </p>
+            <div className="flex flex-col absolute top-[20px] w-full">
+              {sizeData?.map((data, index) => {
+                const particulars =
+                  data.type?.toLowerCase() === "flex"
+                    ? `${data.width} X ${data.height} ${data.material || ""}`
+                    : data.type?.toLowerCase() === "instruction"
+                      ? data.instruction
+                      : data.instruction || "-";
 
-                  <p className="w-[334px] text-[14px] pl-[5px] break-words">
-                    {data.type === "Flex"
-                      ? `${data.instruction} ${data.width} X ${data.height}`
-                      : data.type === "Party"
-                        ? data.instruction
-                        : ""}
-                  </p>
+                const rate =
+                  Number(data.per_piece_amount) > 0
+                    ? Number(data.per_piece_amount)
+                    : Number(data.sq_ft_price || 0);
 
-                  <p className="w-[74px] text-[14px] text-center">{hsn}</p>
-                  <p className="w-[50px] text-[14px] text-center">{uom}</p>
-                  <p className="w-[72px] text-[14px] text-center">
-                    {data.quantity}
-                  </p>
-                  <p className="w-[72px] text-[14px] text-right pr-[3px]">
-                    {parseFloat(data.per_piece_amnt || 0).toFixed(2)}
-                  </p>
-                  <p className="w-[95px] text-[14px] text-right pr-[3px]">
-                    {formatCurrency(data.piece_total_amount)}
-                  </p>
-                </div>
-              ))}
+                return (
+                  <div
+                    className="flex items-center pt-[10px]"
+                    key={data.id || index}
+                  >
+                    <p className="w-[38px] text-[14px] text-center">
+                      {index + 1}
+                    </p>
+
+                    <p className="w-[334px] text-[14px] pl-[5px] break-words">
+                      {particulars}
+                    </p>
+
+                    <p className="w-[74px] text-[14px] text-center">{hsn}</p>
+
+                    <p className="w-[50px] text-[14px] text-center">{uom}</p>
+
+                    <p className="w-[72px] text-[14px] text-center">
+                      {data.piece_count || 0}
+                    </p>
+
+                    <p className="w-[72px] text-[14px] text-right pr-[3px]">
+                      {rate.toFixed(2)}
+                    </p>
+
+                    <p className="w-[95px] text-[14px] text-right pr-[3px]">
+                      {formatCurrency(data.per_piece_total)}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -186,8 +205,8 @@ const PrintGstUi = forwardRef((props, ref) => {
               <p>{formatCurrency(baseAmount)}</p>
               {method === "gst" ? (
                 <>
-                  <p>{formatCurrency(taxAmount / 2)}</p>
-                  <p>{formatCurrency(taxAmount / 2)}</p>
+                  <p>{formatCurrency(Number(taxAmount || 0) / 2)}</p>
+                  <p>{formatCurrency(Number(taxAmount || 0) / 2)}</p>
                 </>
               ) : (
                 <>

@@ -1,4 +1,4 @@
-const MoneyReciveIcon = ({
+const MoneyReceiveIcon = ({
   width = 24,
   height = 24,
   color = "#292D32",
@@ -52,4 +52,4 @@ const MoneyReciveIcon = ({
   );
 };
 
-export default MoneyReciveIcon;
+export default MoneyReceiveIcon;

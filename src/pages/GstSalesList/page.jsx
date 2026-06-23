@@ -33,18 +33,24 @@ import {
   createGstList,
   deleteGstList,
   getGstList,
+  getGstSalesSummary,
   updateGstList,
 } from "../../api/gstList";
-import { getGstSalesSummary } from "../../api/gstsales";
 import Button from "../../components/Button/Button";
 import Filter from "../../components/Fitler/Filter";
 import {
+  AccountIcon,
+  CashIcon,
   CheckBoxIcon,
   CheckIcon,
+  GpayIcon,
+  MoneyExpenseIcon,
+  MoneyReceiveIcon,
+  PendingIcon,
   SaveIcon,
-  WalletIcon,
 } from "../../components/icons";
 import LeftArrowIcon from "../../components/icons/LeftArrowIcon";
+import RefreshIcon from "../../components/icons/RefreshIcon";
 import RightIcon from "../../components/icons/RightIcon";
 import InputField from "../../components/InputField/InputField";
 import SelectField from "../../components/SelectField/SelectField";
@@ -56,6 +62,16 @@ function labelDisplayedRows({ from, to, count }) {
 }
 
 const ROWS_PER_PAGE_OPTIONS = [5, 10, 25, 100];
+
+const FILTER_OPTIONS = [
+  { value: "status", label: "status", type: "status" },
+  { value: "paid", label: "Paid", type: "status" },
+  { value: "manual_paid", label: "Manual Paid", type: "status" },
+
+  { value: "cash", label: "Cash", type: "method" },
+  { value: "gpay", label: "GPay", type: "method" },
+  { value: "account", label: "Account", type: "method" },
+];
 
 const PAYMENT_METHOD_OPTIONS = [
   { value: "cash", label: "Cash" },
@@ -146,10 +162,13 @@ const GstSalesList = () => {
         params.set("filters[date][$gte]", startDate);
         params.set("filters[date][$lte]", endDate);
       }
-      console.log(statusFilter);
-      if (statusFilter.length) {
-        console.log(statusFilter);
-        params.set("filters[current_status][$in]", statusFilter.join(","));
+      console.log("Status filter:", statusFilter);
+      if (statusFilter.type === "status") {
+        params.set("filters[current_status][$in]", statusFilter.value);
+      }
+
+      if (statusFilter.type === "method") {
+        params.set("filters[received_method][$eq]", statusFilter.value);
       }
 
       Object.entries(extraParams).forEach(([k, v]) => params.set(k, v));
@@ -388,7 +407,18 @@ const GstSalesList = () => {
     <MainLayout>
       {/* ── Header ── */}
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-semibold">GST Sales List</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-semibold">GST Sales List</h1>
+
+          <button
+            onClick={() => {
+              window.location.reload();
+            }}
+          >
+            <RefreshIcon />
+          </button>
+        </div>
+
         <Checkbox
           icon={<CheckBoxIcon />}
           checkedIcon={<CheckIcon color="#fff" />}
@@ -400,29 +430,60 @@ const GstSalesList = () => {
 
       {showOverview && (
         <motion.div
-          className="flex gap-4 items-center justify-start mt-6 mb-6"
+          className="grid grid-cols-4 gap-2 mt-6 mb-6"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.5, ease: "easeInOut" }}
         >
           <CardUI
-            title="Total Cash"
-            amount={gstSalesSummary?.total_cash}
-            icon={<WalletIcon />}
-            titleColor="text-green-800"
+            title="Total Sales"
+            amount={gstSalesSummary?.total_sales}
+            icon={<MoneyReceiveIcon color="#292D32" width="34" height="34" />}
+            titleColor="text-violet-900"
+            className="w-full"
           />
           <CardUI
-            title="Total GPay"
-            amount={gstSalesSummary?.total_gpay}
-            icon={<WalletIcon />}
-            titleColor="text-green-800"
+            title="Manual Paid"
+            amount={gstSalesSummary?.total_manual_paid}
+            icon={<MoneyReceiveIcon color="#292D32" width="34" height="34" />}
+            titleColor="text-orange-800"
+            className="w-full"
+          />
+          <CardUI
+            title="Total Tax"
+            amount={gstSalesSummary?.total_tax}
+            icon={<MoneyExpenseIcon color="#292D32" width="34" height="34" />}
+            titleColor="text-blue-800"
+            className="w-full"
           />
           <CardUI
             title="Total Balance"
             amount={gstSalesSummary?.total_balance}
-            icon={<WalletIcon />}
+            icon={<PendingIcon color="#292D32" width="34" height="34" />}
+            titleColor="text-red-500"
+            className="w-full"
+          />
+          <CardUI
+            title="Total Account"
+            amount={gstSalesSummary?.total_account}
+            icon={<AccountIcon color="#292D32" width="34" height="34" />}
             titleColor="text-green-800"
+            className="w-full"
+          />
+          <CardUI
+            title="Total Cash"
+            amount={gstSalesSummary?.total_cash}
+            icon={<CashIcon color="#292D32" width="34" height="34" />}
+            titleColor="text-green-800"
+            className="w-full"
+          />
+          <CardUI
+            title="Total Gpay"
+            amount={gstSalesSummary?.total_gpay}
+            icon={<GpayIcon color="#292D32" width="34" height="34" />}
+            titleColor="text-green-800"
+            className="w-full"
           />
         </motion.div>
       )}
@@ -458,7 +519,7 @@ const GstSalesList = () => {
           />
         </div>
         <Filter
-          options={STATUS_OPTIONS}
+          options={FILTER_OPTIONS}
           setSelected={setStatusFilter}
           onApply={() => {
             setPage(0);

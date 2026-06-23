@@ -1,11 +1,11 @@
-import { Checkbox } from "@mui/joy";
+import { Radio } from "@mui/joy";
 import { useEffect, useRef, useState } from "react";
 import Button from "../Button/Button";
 import { FilterIcon } from "../icons";
 
 const Filter = ({ options = [], setSelected, onApply }) => {
   const [open, setOpen] = useState(false);
-  const [filterValues, setFilterValues] = useState([]);
+  const [filterValue, setFilterValue] = useState(null);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -20,13 +20,8 @@ const Filter = ({ options = [], setSelected, onApply }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleChange = (value) => {
-    console.log(value, "value");
-    setFilterValues((prev) =>
-      prev.includes(value)
-        ? prev.filter((item) => item !== value)
-        : [...prev, value],
-    );
+  const handleChange = (item) => {
+    setFilterValue(item);
   };
 
   return (
@@ -47,11 +42,11 @@ const Filter = ({ options = [], setSelected, onApply }) => {
         >
           <div className="flex flex-col gap-2">
             {options.map((item) => (
-              <Checkbox
+              <Radio
                 key={item.value}
                 label={item.label}
-                checked={filterValues.includes(item.value)}
-                onChange={() => handleChange(item.value)}
+                checked={filterValue?.value === item.value}
+                onChange={() => handleChange(item)}
               />
             ))}
           </div>
@@ -59,8 +54,8 @@ const Filter = ({ options = [], setSelected, onApply }) => {
           <button
             type="button"
             onClick={() => {
+              setSelected(filterValue);
               onApply?.();
-              setSelected(filterValues);
               setOpen(false);
             }}
             className="mt-4 w-full bg-indigo-600 text-white py-2 rounded"

@@ -1,6 +1,7 @@
 import AdminList from "../pages/AdminList";
 import Dashboard from "../pages/Dashboard";
 import DebtList from "../pages/DebtList";
+import GstDeliverySlip from "../pages/GstDeliverySlip";
 import GstEntry from "../pages/GstEntry";
 import GstSalesList from "../pages/GstSalesList";
 import LocalEntry from "../pages/LocalEntry";
@@ -36,4 +37,5 @@ export const elementMap = {
   QuotationList,
   PriceList,
   Login,
+  GstDeliverySlip,
 };

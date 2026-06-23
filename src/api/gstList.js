@@ -38,3 +38,8 @@ export const deleteGstList = async (documentId) => {
   const response = await axiosInstance.delete(`/gst-lists/${documentId}`);
   return response.data.data;
 };
+
+export const getGstSalesSummary = async (params = "") => {
+  const response = await axiosInstance.get(`/gst-sales-amounts${params}`);
+  return response.data;
+};

@@ -1,5 +1,5 @@
 "use client";
-export { default as AcountIcon } from "./AcountIcon";
+export { default as AccountIcon } from "./AccountIcon";
 export { default as AddIcon } from "./AddIcon";
 export { default as AdminIcon } from "./AdminIcon";
 export { default as ApproveIcon } from "./ApproveIcon";
@@ -34,7 +34,7 @@ export { default as LogoutIcon } from "./LogoutIcon";
 export { default as MailIcon } from "./MailIcon";
 export { default as MobileIcon } from "./MobileIcon";
 export { default as MoneyExpenseIcon } from "./MoneyExpenseIcon";
-export { default as MoneyReciveIcon } from "./MoneyReciveIcon";
+export { default as MoneyReceiveIcon } from "./MoneyReceiveIcon";
 export { default as OthersIcon } from "./OthersIcon";
 export { default as OutstandingIcon } from "./OutstandingIcon";
 export { default as PartyIcon } from "./PartyIcon";

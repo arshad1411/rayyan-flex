@@ -1,4 +1,4 @@
-const AcountIcon = ({
+const AccountIcon = ({
   color = "#ffffff",
   width = "20",
   height = "20",
@@ -89,4 +89,4 @@ const AcountIcon = ({
   );
 };
 
-export default AcountIcon;
+export default AccountIcon;
