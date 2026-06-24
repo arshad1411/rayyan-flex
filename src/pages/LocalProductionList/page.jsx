@@ -282,6 +282,7 @@ const LocalProductionList = () => {
             placeholder="Instruction"
             value={instruction}
             onChange={(e) => setInstruction(e.target.value)}
+            required={true}
           />
 
           <SelectField
@@ -312,8 +313,9 @@ const LocalProductionList = () => {
           <InputField
             name={"received amount"}
             placeholder={"Received Amount"}
-            value={amount}
+            value={amount === 0 ? "" : amount}
             onChange={(e) => setAmount(e.target.value) || 0}
+            required={true}
           />
           <div className="flex items-center gap-2">
             <Button
