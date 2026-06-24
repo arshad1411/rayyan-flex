@@ -7,7 +7,7 @@ export const getLocalList = async (params = "") => {
 
 export const getLastLocalList = async () => {
   const response = await axiosInstance.get(
-    `/local-lists?filters[bill_no][$notNull]=true&filters[bill_no][$ne]=&sort=createdAt:desc&pagination[limit]=1`,
+    `/local-lists?filters[bill_no][$notNull]=true&sort=createdAt:desc&pagination[limit]=1`,
   );
 
   return response.data.data;

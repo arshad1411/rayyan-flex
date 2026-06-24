@@ -3,6 +3,8 @@ import Dashboard from "../pages/Dashboard";
 import DebtList from "../pages/DebtList";
 import GstDeliverySlip from "../pages/GstDeliverySlip";
 import GstEntry from "../pages/GstEntry";
+import GstExpenseEntry from "../pages/GstExpenseEntry";
+import GstExpenseList from "../pages/GstExpenseList/page";
 import GstSalesList from "../pages/GstSalesList";
 import LocalEntry from "../pages/LocalEntry";
 import LocalExpenseApprove from "../pages/LocalExpenseApprove";
@@ -31,6 +33,8 @@ export const elementMap = {
   LocalHubList,
   GstEntry,
   GstSalesList,
+  GstExpenseList,
+  GstExpenseEntry,
   AdminList,
   DebtList,
   QuotationEntry,
